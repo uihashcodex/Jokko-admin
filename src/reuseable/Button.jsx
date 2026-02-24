@@ -1,0 +1,29 @@
+import { Button } from "antd";
+import theme from "../config/theme";
+const ReButton = ({
+  name,
+  type = "default",
+  onClick,
+  htmlType = "button",
+  loading = false,
+  disabled = false,
+  icon,
+  block = false
+}) => {
+  return (
+    <Button
+      type={type}
+      onClick={onClick}
+      style={{ backgroundColor: theme.button.backgroundColor }}
+      htmlType={htmlType}
+      loading={loading}
+      disabled={disabled}
+      icon={icon}
+      block={block}
+    >
+      {name}
+    </Button>
+  );
+};
+
+export default ReButton;

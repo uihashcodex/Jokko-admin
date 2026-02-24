@@ -1,0 +1,75 @@
+{
+  "logo": {
+    "image": "/img/logo.png",
+    "height": 40
+  },
+  "project": {
+    "name": "Jokko-admin"
+  },
+  "dashboardheaderimg": {
+    "image": "/img/headerbg1.jpg",
+    "height": 150
+  },
+  "sidebarType": "wallet",
+  "sidebarSettings": {
+    "backgroundColor": "#001529",
+    "textColor": "#ffffff",
+    "collapsedWidth": 60,
+    "width": 200
+  },
+  "sidebars": {
+    "wallet": {
+      "menuItems": [
+        {
+          "key": "/dashboard",
+          "icon": "DashboardOutlined",
+          "label": "Dashboard"
+        },
+        {
+          "key": "/assets",
+          "icon": "GoldOutlined",
+          "label": "Assets"
+        },
+        {
+          "key": "/network",
+          "icon": "ClusterOutlined",
+          "label": "Network"
+        },
+        {
+          "key": "/viewdetails",
+          "icon": "EyeOutlined",
+          "label": "User Details"
+        },
+        {
+          "key": "/wallet",
+          "icon": "WalletOutlined",
+          "label": "Wallet List"
+        },
+        {
+          "key": "/transaction",
+          "icon": "TransactionOutlined",
+          "label": "Transaction History"
+        },
+        {
+          "key": "/addressgeneration",
+          "icon": "TransactionOutlined",
+          "label": "Address Generation"
+        },
+        {
+          "key": "/reports",
+          "icon": "FileTextOutlined",
+          "label": "Reports"
+        },
+        {
+          "key": "/profile",
+          "icon": "SettingOutlined",
+          "label": "Profile"
+        }
+      ]
+    }
+  },
+  "button": {
+    "backgroundColor1": "primary"
+  },
+  "projectName": "Jokko-admin"
+}

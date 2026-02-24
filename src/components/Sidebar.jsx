@@ -1,0 +1,230 @@
+import { useNavigate, useLocation } from "react-router-dom";
+import { Grid, Layout, Menu, Button, Drawer } from "antd";
+import Anticon from "../reuseable/Anticon";
+import { useState } from "react";
+import theme from "../config/theme.json";
+import { constant } from "../const";
+
+const { Sider } = Layout;
+const { useBreakpoint } = Grid;
+
+const Sidebar = ({ collapsed, setCollapsed }) => {
+  const screens = useBreakpoint();
+  const isMobile = !screens.lg;
+
+  const navigate = useNavigate();
+  const location = useLocation();
+  console.log(location.pathname, 'pathname');
+
+
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  // ✅ Get Active Sidebar Based on Type
+  const activeSidebar = theme.sidebars?.[theme.sidebarType];
+
+  const buildMenuItems = (items) =>
+  items?.map((item) => {
+    if (item.children) {
+      return {
+        key: item.key,
+        icon: <Anticon name={item.icon} />,
+        label: item.label,
+        children: buildMenuItems(item.children),
+      };
+    }
+
+    return {
+      key: item.key,
+      icon: <Anticon name={item.icon} />,
+      label: item.label,
+    };
+  });
+
+  // ✅ Safe Menu Items
+  const menuItems =buildMenuItems(activeSidebar?.menuItems || []);
+
+  const handleLogout = () => {
+    localStorage.clear(); // or removeItem("token")
+    navigate(`/${constant.adminRoute}`);
+  };
+  // ===========================
+  // 📱 MOBILE VIEW
+  // ===========================
+  if (isMobile) {
+    return (
+      <>
+        {/* Mobile Top Bar */}
+        <div
+          style={{
+            height: 60,
+            background: theme.sidebarSettings.backgroundColor,
+            display: "flex",
+            alignItems: "center",
+            padding: "0 16px",
+            justifyContent: "space-between",
+          }}
+        >
+          <div onClick={() => navigate("/")}>
+            <img
+              src={theme.logo.image}
+              alt="logo"
+              style={{ height: theme.logo.height }}
+            />
+          </div>
+
+          <Button
+            type="text"
+            icon={<Anticon name="MenuUnfoldOutlined" />}
+            onClick={() => setMobileOpen(true)}
+            style={{ color: "white", fontSize: 20 }}
+          />
+        </div>
+
+        {/* Drawer Sidebar */}
+        <Drawer
+          placement="left"
+          open={mobileOpen}
+          onClose={() => setMobileOpen(false)}
+          styles={{ body: { padding: 0 } }}
+        >
+          {/* Drawer Logo */}
+          <div
+            style={{
+              height: 60,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              borderBottom: "1px solid #f0f0f0",
+              cursor: "pointer",
+            }}
+            onClick={() => {
+              navigate("/");
+              setMobileOpen(false);
+            }}
+          >
+            <img
+              src={theme.logo.image}
+              alt="logo"
+              style={{ height: theme.logo.height }}
+            />
+          </div>
+
+          <Menu
+            mode="inline"
+            selectedKeys={[location.pathname]}
+            onClick={({ key }) => {
+              navigate(key);
+              setMobileOpen(false);
+            }}
+            items={menuItems}
+          />
+          <div
+            onClick={() => {
+              handleLogout();
+              setMobileOpen(false);
+            }}
+            style={{
+              padding: 16,
+              cursor: "pointer",
+              color: "red",
+              borderTop: "1px solid #f0f0f0",
+            }}
+          >
+            <Anticon name="LogoutOutlined" />{" "}
+            <span style={{ marginLeft: 10 }}>Logout</span>
+          </div>
+        </Drawer>
+      </>
+    );
+  }
+
+  // ===========================
+  // 💻 DESKTOP VIEW
+  // ===========================
+  return (
+    <Sider
+      collapsible
+      collapsed={collapsed}
+      trigger={null}
+      width={theme.sidebarSettings.width}
+      collapsedWidth={theme.sidebarSettings.collapsedWidth}
+      style={{
+        background: theme.sidebarSettings.backgroundColor,
+        position: "fixed",
+        height: "100vh",
+        left: 0,
+      }}
+    >
+      {/* Logo Section */}
+      <div
+        style={{
+          height: 60,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: collapsed ? "center" : "space-between",
+          padding: collapsed ? 0 : "0 16px",
+          cursor: "pointer",
+        }}
+        onClick={() => navigate("/")}
+      >
+        <img
+          src={theme.logo.image}
+          alt="logo"
+          style={{
+            height: theme.logo.height,
+            transition: "0.3s",
+          }}
+        />
+
+        {!collapsed && (
+          <Button
+            type="text"
+            icon={<Anticon name="MenuFoldOutlined" />}
+            onClick={(e) => {
+              e.stopPropagation();
+              setCollapsed(!collapsed);
+            }}
+            style={{ fontSize: 18, color: "white" }}
+          />
+        )}
+      </div>
+
+      {collapsed && (
+        <div style={{ textAlign: "center", paddingBottom: 10 }}>
+          <Button
+            type="text"
+            icon={<Anticon name="MenuUnfoldOutlined" />}
+            onClick={() => setCollapsed(!collapsed)}
+            style={{ fontSize: 18, color: "white" }}
+          />
+        </div>
+      )}
+
+      <Menu
+        theme="dark"
+        mode="inline"
+        selectedKeys={[location.pathname?.replace(/^\/[^/]+/, "")]}
+        onClick={({ key }) => navigate(`/${constant?.adminRoute}/${key}`)}
+        items={menuItems}
+      />
+      <div
+        onClick={handleLogout}
+        style={{
+          position: "absolute",
+          bottom: 20,
+          width: "100%",
+          textAlign: collapsed ? "center" : "left",
+          paddingLeft: collapsed ? 0 : 24,
+          cursor: "pointer",
+          color: "red",
+          fontWeight: 500,
+        }}
+      >
+        <Anticon name="LogoutOutlined" />{" "}
+        {!collapsed && <span style={{ marginLeft: 10 }}>Logout</span>}
+      </div>
+    </Sider>
+  );
+};
+
+export default Sidebar;
