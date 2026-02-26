@@ -70,6 +70,74 @@ const Tablecomp = ({ data }) => {
 
   return (
     <>
+    <style>
+{`
+  /* TABLE WRAPPER */
+  .custom-table .ant-table {
+    background: #5E5E5E33 !important;
+    color: white !important;
+    margin-top:10px !important;
+  }
+
+  .custom-table .ant-table-thead > tr > th {
+    background: #5E5E5E33 !important;
+    color: white !important;
+  }
+
+  .custom-table .ant-table-tbody > tr > td {
+    background: #5E5E5E33 !important;
+    color: white !important;
+  }
+
+  .custom-table .ant-table-tbody > tr:hover > td {
+    background: rgba(94,94,94,0.3) !important;
+  }
+
+  /* SEARCH INPUT */
+   /* Outer wrapper (IMPORTANT) */
+  .custom-search .ant-input-affix-wrapper {
+    background: #5E5E5E33 !important;
+    border: 1px solid #5E5E5E33 !important;
+    color: white !important;
+    border:none !important;
+  }
+
+  /* Actual input */
+  .custom-search .ant-input {
+    background: transparent !important;
+    color: white !important;
+  }
+
+  /* Placeholder */
+  .custom-search .ant-input::placeholder {
+    color: #ddd !important;
+  }
+
+  /* Prefix icon color */
+  .custom-search .ant-input-prefix {
+    color: white !important;
+  }
+
+  /* Remove blue focus glow */
+  .custom-search .ant-input-affix-wrapper:focus,
+  .custom-search .ant-input-affix-wrapper-focused {
+    box-shadow: none !important;
+    border-color: #5E5E5E33 !important;
+  }
+
+  /* RESET BUTTON */
+  .custom-reset-btn {
+    background: #5E5E5E33 !important;
+    color: white !important;
+    border: none !important;
+  }
+
+  .custom-reset-btn:hover {
+    background: rgba(94,94,94,0.4) !important;
+    color: white !important;
+  }
+`}
+</style>
       <div className="flex! items-center justify-between gap-4 mb-4 flex-wrap">
         <div className="flex flex-col md:flex-row lg:flex-col xl:flex-row justify-between ">
           {/* <Input
@@ -83,14 +151,15 @@ const Tablecomp = ({ data }) => {
           <Button onClick={handleReset} className="w-[100px] mt-4 mb-4">
             Reset
           </Button>*/}
-          <InputField icon="SearchOutlined" style={{ width: '50%' }}
+          <InputField icon="SearchOutlined" style={{backgroundColor:"#5E5E5E33"}} className="custom-search w-full md:w-[50%]"
             placeholder="Search by First Name"
             value={searchText}
             onChange={(e) => handleSearch(e.target.value)}
           />
-          <ReButton name="Reset" style={{ backgroundColor: theme.button.backgroundColor2 }} onClick={handleReset} />
+          <ReButton name="Reset" className="custom-reset-btn mt-2 md:mt-0" onClick={handleReset} />
         </div>
         <Table
+          className="custom-table"
           dataSource={filteredData}
           pagination={{ pageSize: 5 }}
           scroll={{ x: "max-content" }}

@@ -30,8 +30,8 @@ export default function DashboardCharts() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-7">
       
-      <div className="bg-white p-5 rounded-xl shadow-md h-[350px]">
-        <h2 className="text-lg font-semibold mb-4">Growth Overview</h2>
+      <div className="bg-[#5E5E5E33] p-5 rounded-xl shadow-md h-[350px]">
+        <h2 className="text-lg font-semibold mb-4 text-white">Growth Overview</h2>
         <ResponsiveContainer width="100%" height="85%">
           <LineChart data={growthData}>
             <XAxis dataKey="name" />
@@ -47,8 +47,8 @@ export default function DashboardCharts() {
         </ResponsiveContainer>
       </div>
 
-      <div className="bg-white p-5 rounded-xl shadow-md h-[350px]">
-        <h2 className="text-lg font-semibold mb-4">Revenue Distribution</h2>
+      <div className="bg-[#5E5E5E33] p-5 rounded-xl shadow-md h-[350px]">
+        <h2 className="text-lg font-semibold text-white mb-4">Revenue Distribution</h2>
         <ResponsiveContainer width="100%" height="89%">
           <PieChart>
             <Pie

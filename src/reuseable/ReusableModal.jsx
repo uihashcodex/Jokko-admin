@@ -214,6 +214,7 @@ const ReusableModal = ({
           paddingBottom: 20,
           maxHeight: "80vh",
           overflowY: "auto",
+          overflowX:"hidden"
         },
       }}
     >

@@ -40,10 +40,10 @@ const Assets = () => {
     ];
 
     const fields = [
-        { label: "Token Name", name: "tokenName" },
-        { label: "Token Symbol", name: "tokenSymbol" },
-        { label: "Token Decimals", name: "tokenDecimals" },
-        { label: "Contract Address", name: "contractAddress" },
+        { label: "Token Name", name: "tokenName" ,span:12 },
+        { label: "Token Symbol", name: "tokenSymbol" ,span:12},
+        { label: "Token Decimals", name: "tokenDecimals" ,span:12},
+        { label: "Contract Address", name: "contractAddress" ,span:12},
         {
             label: "Network Id",
             name: "network_id",

@@ -3,18 +3,47 @@ import InputField from "../reuseable/InputField";
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { constant } from "../const";
+import axios from "axios";
+import { message } from "antd";
 
 const Login = () => {
     const navigate = useNavigate();
-    const onFinish = (values) => {
-    console.log("Success:", values);
+const onFinish = async (values) => {
+    try {
+        const response = await axios.post(
+            `${constant.backend_url}/admin-login`,
+            {
+                email: values.email,
+                password: values.password,
+            }
+        );
 
-    // ✅ fake login success
-    localStorage.setItem("isLoggedIn", "true");
+        console.log("API Response:", response.data);
 
-    // ✅ redirect to dashboard
-   navigate(`/${constant?.adminRoute}/dashboard`);
-   console.log(constant?.adminRoute)
+        if (response.data?.success) {
+
+            // ✅ Save token correctly
+            localStorage.setItem(
+                "token",
+                response.data.result.token
+            );
+
+            message.success(response.data.message);
+
+            // ✅ Redirect
+            navigate(`/${constant?.adminRoute}/dashboard`);
+
+        } else {
+            message.error(response.data?.message || "Login failed");
+        }
+
+    } catch (error) {
+        console.error("Login Error:", error);
+
+        message.error(
+            error.response?.data?.message || "Something went wrong!"
+        );
+    }
 };
 
     return (
@@ -46,12 +75,12 @@ const Login = () => {
                 >
                     <Form.Item
                         label={<span className="text-white font-semibold">Username</span>}
-                        name="username"
+                        name="email"
                         rules={[{ required: true, message: "Please input your username!" }]}
                     >
                         <InputField
                             prefix={<UserOutlined />}
-                            placeholder="Enter username"
+                            placeholder="Enter Email"
                         />
                     </Form.Item>
 
