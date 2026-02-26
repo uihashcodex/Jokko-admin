@@ -1,21 +1,27 @@
 {
   "logo": {
     "image": "/img/logo.png",
-    "height": 40
+    "height": 30
   },
   "project": {
     "name": "Jokko-admin"
   },
   "dashboardheaderimg": {
-    "image": "/img/headerbg1.jpg",
+    "image": "/img/headerbg3.jpg",
     "height": 150
   },
   "sidebarType": "wallet",
   "sidebarSettings": {
-    "backgroundColor": "#001529",
+    "backgroundColor": "#04231EF0",
     "textColor": "#ffffff",
+    "activeBgColor": "#C9F07B",
+    "activeTextColor": "black",
+    "hoverBgColor": "#0a2a4a",
     "collapsedWidth": 60,
     "width": 200
+  },
+   "layoutSettings": {
+    "layoutBackground": "#04231E"
   },
   "sidebars": {
     "wallet": {

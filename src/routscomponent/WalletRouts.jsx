@@ -25,9 +25,9 @@ const WalletRouts = () => {
       <Route path={`/${constant?.adminRoute}/viewdetails`} element={<Viewdetail />} />
       <Route path={`/${constant?.adminRoute}/viewuser/:id`} element={<Viewuser />} />
       <Route path={`/${constant?.adminRoute}/wallet`} element={<Walletlist />} />
-      <Route path={`/${constant?.adminRoute}/wallet/:id`} element={<Walletlist />} />
+      <Route path={`/wallet/:id`} element={<Walletlist />} />
       <Route path={`/${constant?.adminRoute}/transaction`} element={<TransectionHistory />} />
-      <Route path={`/${constant?.adminRoute}/transaction/:id`} element={<TransectionHistory />} />
+      <Route path={`/transaction/:id`} element={<TransectionHistory />} />
       <Route path={`/${constant?.adminRoute}/addressgeneration`} element={<AddressGeneration />} />
       <Route path={`/${constant?.adminRoute}/profile`} element={<Profile />} />
       <Route path={`/${constant?.adminRoute}/griddemo`} element={<Griddemo />} />

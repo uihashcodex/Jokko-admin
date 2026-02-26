@@ -36,11 +36,11 @@ const Network = () => {
         { title: "BlockExplorer Url", dataIndex: "blockExplorerUrl", key: "blockExplorerUrl" }
     ];
     const fields = [
-        { label: "Network Name", name: "networkname" },
-        { label: "Network Symbol", name: "networksymbol" },
-        { label: "RPC URL", name: "rpcUrl" },
-        { label: "Block Explorer URL", name: "blockExplorerUrl" },
-        { label: "Type", name: "type" }
+        { label: "Network Name", name: "networkname", span:12 },
+        { label: "Network Symbol", name: "networksymbol", span:12 },
+        { label: "RPC URL", name: "rpcUrl", span:12 },
+        { label: "Block Explorer URL", name: "blockExplorerUrl", span:12 },
+        { label: "Type", name: "type", span:12 }
     ];
 
     const handleCreate = () => {

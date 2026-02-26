@@ -1,7 +1,8 @@
 import config from "./config/theme";
 
 export const constant = {
-    backend_url: "http://localhost:5000",
+    //live url
+    backend_url: "https://api-jokkowallet.hashcodexperts.com/admin",
     adminRoute: config?.project?.name.split(" ")
         .map((word, index) =>
             index === 0

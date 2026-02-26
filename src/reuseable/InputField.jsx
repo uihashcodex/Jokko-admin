@@ -26,6 +26,7 @@ const InputField = ({
     <Input
       size={size}
       prefix={prefixIcon}
+      className={rest.className}
       placeholder={placeholder}
       {...rest}
     />

@@ -8,12 +8,14 @@ const ReButton = ({
   loading = false,
   disabled = false,
   icon,
-  block = false
+  block = false,
+  className
 }) => {
   return (
     <Button
       type={type}
       onClick={onClick}
+      className={className}
       style={{ backgroundColor: theme.button.backgroundColor }}
       htmlType={htmlType}
       loading={loading}
