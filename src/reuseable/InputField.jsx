@@ -29,6 +29,7 @@ const InputField = ({
       className={rest.className}
       placeholder={placeholder}
       {...rest}
+      style={{ backgroundColor: "#5E5E5E33",color:"white" }}
     />
   );
 };

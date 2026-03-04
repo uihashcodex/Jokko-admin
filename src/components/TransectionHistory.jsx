@@ -1,9 +1,13 @@
 import { useParams } from "react-router-dom";
 import ReusableTable from "../reuseable/ReusableTable";
-
+import { useLocation } from "react-router-dom";
+import { LeftCircleOutlined } from "@ant-design/icons";
+import { useNavigate } from "react-router-dom";
 
 const TransectionHistory = () => {
-const { id } = useParams(); // 👈 get id
+  const { id } = useParams();
+  const { state } = useLocation();
+  const navigate = useNavigate();
 
   const originalData = [
     {
@@ -38,9 +42,13 @@ const { id } = useParams(); // 👈 get id
     },
   ];
 
-  const filteredData = id
-    ? originalData.filter((item) => item.key === id)
-    : originalData;
+  // const filteredData = id
+  //   ? originalData.filter((item) => item.key === id)
+  //   : originalData;
+
+  const filteredData = state ? [state] : originalData;
+
+
 
   const columns = [
     { title: "Pair", dataIndex: "pair" },
@@ -54,12 +62,21 @@ const { id } = useParams(); // 👈 get id
 
   return (
     <>
-    <h2 className="text-2xl font-semibold mb-4">Transection History</h2>
-    <ReusableTable
-      columns={columns}
-      data={filteredData}
-      rowKey="key"
-    />
+      <div className="flex items-center gap-3 mb-4">
+        {state && (
+          <LeftCircleOutlined
+            onClick={() => navigate(-1)}
+            style={{ fontSize: "20px", cursor: "pointer", color: "white" }}
+            className="back-icon"
+          />
+        )}
+        <h2 className="text-2xl font-semibold  white">Transection History</h2>
+      </div>
+      <ReusableTable
+        columns={columns}
+        data={filteredData}
+        rowKey="key"
+      />
     </>
   );
 };

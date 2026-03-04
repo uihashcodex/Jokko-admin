@@ -1,103 +1,398 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ReusableTable from "../reuseable/ReusableTable";
 import TableHeader from "../reuseable/TableHeader";
 import ReusableModal from "../reuseable/ReusableModal";
+import axios from "axios";
+import { constant } from "../const";
+import Search from "antd/es/transfer/search";
+import { Flex, message } from 'antd';
+import { rule } from "postcss";
+import theme from '../config/theme';
+
+
 
 
 const Network = () => {
-    const [originalData,setOriginalData] = useState([
-        {
-            id: 1,
-            sno: 1,
-            networkname: "Ripple",
-            networksymbol: "XRP",
-            rpcUrl: "https://s1.ripple.com:51234",
-            blockExplorerUrl: "https://xrpscan.com/",
-            type: "xrp"
-        },
-        {
-            id: 2,
-            sno: 2,
-            networkname: "Zipple",
-            networksymbol: "EVM",
-            rpcUrl: "https://s1.Zipple.com:51234",
-            blockExplorerUrl: "https://evmscan.com/",
-            type: "xrp"
-        }
+    const [originalData, setOriginalData] = useState([
+        // {
+        //     id: 1,
+        //     sno: 1,
+        //     networkname: "Ripple",
+        //     networksymbol: "XRP",
+        //     rpcUrl: "https://s1.ripple.com:51234",
+        //     blockExplorerUrl: "https://xrpscan.com/",
+        //     type: "xrp"
+        // },
+        // {
+        //     id: 2,
+        //     sno: 2,
+        //     networkname: "Zipple",
+        //     networksymbol: "EVM",
+        //     rpcUrl: "https://s1.Zipple.com:51234",
+        //     blockExplorerUrl: "https://evmscan.com/",
+        //     type: "xrp"
+        // }
+
     ]);
+    const [page, setPage] = useState(1);
+    const [messageApi, contextHolder] = message.useMessage();
+
+
     const [filteredData, setFilteredData] = useState(originalData);
     const [open, setOpen] = useState(false);
     const [selectedRecord, setSelectedRecord] = useState(null);
+
     const columns = [
         { title: "S.no", dataIndex: "sno", key: "sno" },
         { title: "Network Name", dataIndex: "networkname", key: "networkname" },
         { title: "Network Symbol", dataIndex: "networksymbol", key: "networksymbol" },
         { title: "Rpc Url", dataIndex: "rpcUrl", key: "rpcUrl" },
-        { title: "BlockExplorer Url", dataIndex: "blockExplorerUrl", key: "blockExplorerUrl" }
+        { title: "BlockExplorer Url", dataIndex: "blockExplorerUrl", key: "blockExplorerUrl" },
+        { title: "Status", dataIndex: "status", key: "status" }
     ];
+
+    const statusOptions = [
+        { label: "Active", value: "active" },
+        { label: "Inactive", value: "inactive" },
+    ];
+
     const fields = [
-        { label: "Network Name", name: "networkname", span:12 },
-        { label: "Network Symbol", name: "networksymbol", span:12 },
-        { label: "RPC URL", name: "rpcUrl", span:12 },
-        { label: "Block Explorer URL", name: "blockExplorerUrl", span:12 },
-        { label: "Type", name: "type", span:12 }
+        {
+            label: "Network Name",
+            name: "networkname",
+            span: 12,
+            rules: [
+                { required: true, message: "Network Name is required" },
+                { min: 3, message: "Network Name must be at least 3 characters" },
+            ],
+
+        },
+        {
+            label: "Network Symbol",
+            name: "networksymbol",
+            span: 12,
+            rules: [
+                { required: true, message: "Network Symbol is required" },
+                { min: 3, message: "Network Symbol must be at least 3 characters" },
+            ],
+        },
+        {
+            label: "RPC URL",
+            name: "rpcUrl",
+            span: 12,
+            rules: [
+                { required: true, message: "RPC URL is required" },
+                {
+                    pattern: /^https?:\/\/.+/,
+                    message: "Enter valid RPC URL",
+                },
+            ],
+        },
+        {
+            label: "Block Explorer URL",
+            name: "blockExplorerUrl",
+            span: 12,
+            rules: [
+                { required: true, message: "Block Explorer URL is required" },
+                {
+                    pattern: /^https?:\/\/.+/,
+                    message: "Enter valid Block Explorer URL",
+                },
+            ]
+        },
+        {
+            label: "Type",
+            name: "type",
+            span: 12,
+            rules: [
+                { required: true, message: "Type is required" },
+                { min: 3, message: "Type must be at least 3 characters" },
+            ],
+
+        },
+        {
+            label: "Status",
+            name: "status",
+            type: "select",
+            options: statusOptions
+        }
     ];
 
     const handleCreate = () => {
         setOpen(true);
         setSelectedRecord(null);
     };
+    ;
 
 
+    //    const handleSubmit = (values) => {
+
+    //     if (selectedRecord) {
+    //         // UPDATE
+    //         const updatedData = originalData.map(item =>
+    //             item.id === selectedRecord.id
+    //                 ? { ...item, ...values }
+    //                 : item
+    //         );
+
+    //         setOriginalData(updatedData);
+    //         setFilteredData(updatedData);
+
+    //     } else {
+    //         // CREATE
+    //         const newItem = {
+    //             id: originalData.length + 1,
+    //             sno: originalData.length + 1,
+    //             ...values
+    //         };
+
+    //         const updatedData = [...originalData, newItem];
+
+    //         setOriginalData(updatedData);
+    //         setFilteredData(updatedData);
+    //     }
+
+    //     setOpen(false);
+    // };
+    const modalFields = selectedRecord
+        ? fields
+        : fields.filter(f => f.name !== "status");
+
+
+    const getNetworks = async () => {
+        try {
+            const response = await axios.post(
+                `${constant.backend_url}/assets/get-all-networks?page=1&limit=10`,
+
+                {
+
+                },
+                {
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+                    },
+                }
+            );
+
+            if (response.data?.success) {
+                console.log(response.data.result.docs[0]?.verifyStatus, "dfghjkl");
+                const formattedData = response.data.result.docs.map((item, index) => ({
+
+
+                    id: item?._id,
+                    sno: index + 1,
+                    networkname: item?.networkName,
+                    networksymbol: item?.networkSymbol,
+                    rpcUrl: item?.rpcUrl,
+                    blockExplorerUrl: item?.blockExplorerUrl,
+                    status: item?.verifyStatus == true ? "active" : "inactive",
+                    // status: item?.verifyStatus ? "active" : "inactive",
+                    // status: item?.verifyStatus,
+                    type: item?.type
+                }));
+                console.log(formattedData, "formattedData");
+                setOriginalData(formattedData);
+                setFilteredData(formattedData);
+
+            } else {
+                setOriginalData([]);
+                setFilteredData([]);
+            }
+
+        } catch (error) {
+            console.log(error);
+            setOriginalData([]);
+            setFilteredData([]);
+        }
+    };
+
+
+
+    useEffect(() => {
+        getNetworks();
+    }, [page]);
+
+
+
+
+
+    // const handleSubmit = async (values) => {
+    //     try {
+    //         if (selectedRecord) {
+    //             // UPDATE
+    //             const updatedData = originalData.map(item =>
+    //                 item.id === selectedRecord.id
+    //                     ? { ...item, ...values }
+    //                     : item
+    //             );
+
+    //             setOriginalData(updatedData);
+    //             setFilteredData(updatedData);
+    //         }
+    //         else {
+    //             // CREATE NETWORK API
+    //             const { data } = await axios.post(
+    //                 `${constant.backend_url}/assets/add-network`,
+    //                 values,
+    //                 {
+    //                     headers: {
+    //                         "Content-Type": "application/json",
+    //                         Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+    //                     },
+    //                 }
+    //             );
+
+    //             if (data.success) {
+    //                 getNetworks(); // refresh table
+    //                 setOpen(false);
+    //             }
+    //         }
+
+    //     } catch (error) {
+    //         console.log(error);
+    //     }
+    // };
+
+
+    const handleSubmit = async (values) => {
+        try {
+            if (selectedRecord) {
+
+                const payload = {
+                    network_id: selectedRecord.id,
+                    networkName: values.networkname,
+                    networkSymbol: values.networksymbol,
+                    rpcUrl: values.rpcUrl,
+                    blockExplorerUrl: values.blockExplorerUrl,
+                    type: values.type,
+                    verifyStatus: values.status === "active"
+                };
+
+                console.log("VALUES:", values);
+                console.log("PAYLOAD:", payload);
+                console.log(values.status);
+                const res = await axios.post(
+                    `${constant.backend_url}/assets/update-network`,
+                    payload,
+
+                    {
+                        headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+
+                        },
+                        validateStatus: () => true,
+
+
+                    }
+
+                );
+
+
+                if (res.data.success) {
+                    messageApi.success("Network updated successfully");
+                    getNetworks();
+                    setOpen(false);
+                } else {
+                    if (!res.data.success) {
+                        messageApi.warning(res.data.message || "Something went wrong");
+                        return;
+                    }
+                }
+                console.log(res, "res");
+
+
+            } else {
+                const data = await axios.post(
+                    `${constant.backend_url}/assets/add-network`,
+                    values,
+                    {
+                        headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+                        },
+                    }
+                );
+
+                if (data.success) {
+                    messageApi.success("Network added successfully");
+                    getNetworks();
+                    setOpen(false);
+                } else {
+                    if (!data.success) {
+                        messageApi.warning(data.message || "Something went wrong");
+                        return;
+                    }
+                }
+            }
+
+        } catch (error) {
+            console.log(error);
+            messageApi.error("Something went wrong");
+        }
+    };
     const handleUpdate = (record) => {
         setSelectedRecord(record);
         setOpen(true);
     };
 
-       const handleSubmit = (values) => {
 
-        if (selectedRecord) {
-            // UPDATE
-            const updatedData = originalData.map(item =>
-                item.id === selectedRecord.id
-                    ? { ...item, ...values }
-                    : item
-            );
+    // const updateNetwork = async (details) => {
+    //     try {
+    //         console.log(details)
+    //         const { data } = await axios.post(`/assets/add-network`,
+    //             details,
+    //             {
+    //                 headers: {
+    //                     Authorization: localStorage.getItem("adminToken"),
+    //                 },
+    //             }
+    //         );
+    //         if (data.success) {
+    //             toast.success("Network Updated Successfully");
+    //             getNetworks();
+    //             handleClose();
+    //         } else {
+    //             toast.error(data.message);
+    //         }
+    //     } catch (error) {
+    //         toast.error(error.message);
+    //     }
+    // }
 
-            setOriginalData(updatedData);
-            setFilteredData(updatedData);
-
-        } else {
-            // CREATE
-            const newItem = {
-                id: originalData.length + 1,
-                sno: originalData.length + 1,
-                ...values
-            };
-
-            const updatedData = [...originalData, newItem];
-
-            setOriginalData(updatedData);
-            setFilteredData(updatedData);
-        }
-
-        setOpen(false);
-    };
 
     return (
-        <>
-            <TableHeader
-                data={originalData}
-                onFilter={setFilteredData}
-                onCreate={handleCreate}
-            />
-            <ReusableTable
-                columns={columns}
-                data={filteredData}
-                onUpdate={handleUpdate}                
-            />
+        < div Style={{ display: "flex", justifyContent: "center", alignItems: "center", flexDirection: "column", width: "100%" }}>
+            <>
+                {contextHolder}
 
-            {/* <Modal
+                <div
+                    className="mb-5 w-full rounded-lg bg-cover bg-center flex items-center"
+                    style={{
+                        backgroundImage: `url(${theme.dashboardheaderimg.image})`,
+                        height: theme.dashboardheaderimg.height
+                    }}
+                >
+                    <div className="display-3 w-full">
+                        <h1 className="text-white p-7 font-bold text-2xl">
+                            Network                </h1>
+                    </div>
+                </div>
+
+                <TableHeader
+                    data={originalData}
+                    onFilter={setFilteredData}
+                    onCreate={handleCreate}
+                    showStatusFilter={true}
+                />
+                <ReusableTable
+                    columns={columns}
+                    data={filteredData}
+                    onUpdate={handleUpdate}
+                />
+
+                {/* <Modal
                 title="Update Network"
                 open={open}
                 onCancel={() => setOpen(false)}
@@ -147,16 +442,16 @@ const Network = () => {
                     </Row>
                 </Form>
             </Modal> */}
-            <ReusableModal
-                open={open}
-                onCancel={() => setOpen(false)}
-                onSubmit={handleSubmit}
-                title={selectedRecord ? "Update Network" : "Create Network"}
-                fields={fields}
-                initialValues={selectedRecord}
-            />
-
-        </>
+                <ReusableModal
+                    open={open}
+                    onCancel={() => setOpen(false)}
+                    onSubmit={handleSubmit}
+                    title={selectedRecord ? "Update Network" : "Create Network"}
+                    fields={modalFields}
+                    initialValues={selectedRecord}
+                />
+            </>
+        </div>
     );
 };
 

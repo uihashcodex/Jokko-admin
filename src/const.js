@@ -2,7 +2,7 @@ import config from "./config/theme";
 
 export const constant = {
     //live url
-    backend_url: "https://api-jokkowallet.hashcodexperts.com/admin",
+    backend_url: "https://api-jokkowallet.hashcodexperts.com/jokkoapi",
     adminRoute: config?.project?.name.split(" ")
         .map((word, index) =>
             index === 0

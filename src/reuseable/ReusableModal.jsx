@@ -90,14 +90,17 @@ import {
   Button,
   Row,
   Col,
-  Input,
-  Select,
+  // Input,
+  // Select,
   Upload,
   Switch
 } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
+import InputField from "./InputField";
+import Select from "./SelectField";
 import { useEffect } from "react";
-
+import theme from "../config/theme";
+import { ConfigProvider } from "antd";
 const ReusableModal = ({
   open,
   onCancel,
@@ -105,6 +108,7 @@ const ReusableModal = ({
   title,
   fields,
   initialValues,
+  extraContent,
   maskClosable = false
 }) => {
   const [form] = Form.useForm();
@@ -123,7 +127,7 @@ const ReusableModal = ({
     switch (field.type) {
       case "text":
         return (
-          <Input
+          <InputField
             size="large"
             placeholder={field.placeholder}
             disabled={field.disabled}
@@ -132,7 +136,7 @@ const ReusableModal = ({
 
       case "password":
         return (
-          <Input.Password
+          <InputField.Password
             size="large"
             placeholder={field.placeholder}
           />
@@ -152,7 +156,7 @@ const ReusableModal = ({
           <Select
             mode="multiple"
             size="large"
-            options={field.options}
+            options={[...field.options]}
             placeholder={field.placeholder}
           />
         );
@@ -189,7 +193,7 @@ const ReusableModal = ({
 
       default:
         return (
-          <Input
+          <InputField
             size="large"
             placeholder={field.placeholder}
           />
@@ -198,6 +202,13 @@ const ReusableModal = ({
   };
 
   return (
+    <ConfigProvider
+      theme={{
+        token: {
+          colorBgElevated: theme.sidebarSettings.backgroundColor,
+        },
+      }}
+    >
     <Modal
       open={open}
       onCancel={onCancel}
@@ -207,20 +218,38 @@ const ReusableModal = ({
       style={{ maxWidth: 700 }}
       destroyOnHidden
       maskClosable={maskClosable}
-      className="custom-modal"
+      className="custom-modal modal-style"
       styles={{
+        content: {
+          background: theme.sidebarSettings.backgroundColor,
+          borderRadius: 12,
+        },
+        header: {
+          background: theme.sidebarSettings.backgroundColor,
+          borderBottom: `1px solid ${theme.borderColor}`,
+          color: "#fff",
+        },
         body: {
           paddingTop: 20,
           paddingBottom: 20,
           maxHeight: "80vh",
           overflowY: "auto",
-          overflowX:"hidden"
+          overflowX:"hidden",
         },
       }}
+   
     >
       {/* HEADER */}
-      <div className="mb-6 border-b pb-4">
-        <h2 className="text-xl font-semibold tracking-wide">
+      <div 
+      
+        style={{
+          borderBottom: `1px solid ${theme.borderColor || "rgba(255,255,255,0.08)"}`,
+          paddingBottom: 16,
+          marginBottom: 24,
+          background: theme.sidebarSettings.backgroundColor,
+          color: "#fff"
+        }}>
+        <h2 style={{ color: theme.sidebarSettings.textColor, fontWeight: 500,fontSize:22 }}>
           {title}
         </h2>
         <p className="text-sm text-gray-500 mt-1">
@@ -228,7 +257,10 @@ const ReusableModal = ({
         </p>
       </div>
 
-      {/* FORM */}
+      {extraContent}
+
+
+      {fields && fields.length > 0 && (
       <Form
         form={form}
         layout="vertical"
@@ -245,7 +277,12 @@ const ReusableModal = ({
             >
               <Form.Item
                 label={
-                  <span className="font-medium text-gray-700">
+                  <span 
+                    style={{
+                      fontWeight: 500,
+                      color: theme.sidebarSettings.textColor
+                    }}
+                  >
                     {field.label}
                   </span>
                 }
@@ -263,7 +300,11 @@ const ReusableModal = ({
         </Row>
 
         {/* FOOTER */}
-        <div className="flex justify-end gap-3 mt-6 pt-4 border-t">
+        <div className="flex justify-end gap-3 mt-6 pt-4 border-t"
+        
+            style={{
+              borderTop: `1px solid ${theme.borderColor || "rgba(255,255,255,0.08)"}`
+            }}>
           <Button
             size="large"
             onClick={onCancel}
@@ -280,7 +321,9 @@ const ReusableModal = ({
           </Button>
         </div>
       </Form>
+      )}
     </Modal>
+    </ConfigProvider>
   );
 };
 
