@@ -7,6 +7,8 @@ import Login from "./components/Login";
 import WalletRouts from "./routscomponent/WalletRouts";
 import PrivateRoute from "../src/components/Privateroute";
 import { constant } from "./const";
+import theme from "./config/theme.json";
+
 
 const { Content } = Layout;
 const { useBreakpoint } = Grid;
@@ -97,6 +99,13 @@ function App() {
     link.rel = "icon";
     link.href = config.logo.image;
     document.head.appendChild(link);
+  }, []);
+
+  useEffect(() => {
+    const link = document.querySelector("link[rel~='icon']");
+    if (link) {
+      link.href = theme.favicon.image;
+    }
   }, []);
 
   return (

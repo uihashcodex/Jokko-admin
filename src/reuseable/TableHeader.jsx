@@ -36,6 +36,7 @@ useEffect(() => {
 
 }, [searchText, status]);
 
+  console.log(data, onFilter,"data1");
 
   return (
     <Row gutter={[16, 16]} justify="end" style={{ marginBottom: 16 }}>
@@ -45,6 +46,7 @@ useEffect(() => {
           placeholder="Search..."
           allowClear
           onChange={(e) => setSearchText(e.target.value)}
+          className="reusable-modal-search"
         />
       </Col>
 
@@ -55,8 +57,8 @@ useEffect(() => {
             value={status}
             onChange={setStatus}
             options={[
-              { label: "Active", value: "Active" },
-              { label: "Inactive", value: "Inactive" }
+              { label: "Active", value: "active" },
+              { label: "Inactive", value: "inactive" }
             ]}
           />
         </Col>

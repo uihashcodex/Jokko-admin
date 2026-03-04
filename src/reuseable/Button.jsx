@@ -16,7 +16,10 @@ const ReButton = ({
       type={type}
       onClick={onClick}
       className={className}
-      style={{ backgroundColor: theme.button.backgroundColor }}
+      style={{ backgroundColor: theme.button.backgroundColor,
+        background:theme.sidebarSettings.activeBgColor,
+        color:"#000"
+       }}
       htmlType={htmlType}
       loading={loading}
       disabled={disabled}

@@ -66,6 +66,7 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
 
         .custom-sidebar-menu .ant-menu-item:hover {
           background-color: ${theme.sidebarSettings.hoverBgColor} !important;
+          color: ${theme.sidebarSettings.hoverTextColor} !important;
         }
       `}
         </style>
@@ -101,7 +102,11 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
           placement="left"
           open={mobileOpen}
           onClose={() => setMobileOpen(false)}
-          styles={{ body: { padding: 0 } }}
+          styles={{ body: { padding: 0 } ,background: theme.sidebarSettings.backgroundColor  }}
+          className="mobile-drawer"
+          headerStyle={{ display: "none" }}
+
+
         >
           {/* Drawer Logo */}
           <div
@@ -109,28 +114,47 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
               height: 60,
               display: "flex",
               alignItems: "center",
-              justifyContent: "center",
+              justifyContent: "space-between",
               borderBottom: "1px solid #f0f0f0",
               cursor: "pointer",
+              padding: "0 16px",
+              background: theme.sidebarSettings.backgroundColor,
             }}
             onClick={() => {
-              navigate("/");
-              setMobileOpen(false);
+              
+              // setMobileOpen(false);
             }}
           >
+            <div>
             <img
               src={theme.logo.image}
               alt="logo"
               style={{ height: theme.logo.height }}
             />
+            </div>
+          <div>
+              <Anticon name="PicRightOutlined" style={{ color: "#fff" }}
+                onClick={() => {
+                  setMobileOpen(false)}}
+              />
+          </div>
           </div>
 
           <Menu
             mode="inline"
-            selectedKeys={[location.pathname]}
+            className="custom-sidebar-menu-mobile"
+            // selectedKeys={[location.pathname]}
             onClick={({ key }) => {
-              navigate(key);
+              navigate(`/${constant.adminRoute}/${key}`);
               setMobileOpen(false);
+            }}
+            selectedKeys={[
+              location.pathname.replace(`/${constant.adminRoute}/`, "")
+            ]}
+                        style={{
+              background: theme.sidebarSettings.backgroundColor,
+              color: theme.sidebarSettings.textColor,
+              borderRight: "none"
             }}
             items={menuItems}
           />
@@ -178,9 +202,16 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
           color: ${theme.sidebarSettings.activeTextColor} !important;
         }
 
-        .custom-sidebar-menu .ant-menu-item:hover {
-          background-color: ${theme.sidebarSettings.hoverBgColor} !important;
-        }
+        // .custom-sidebar-menu .ant-menu-item:hover {
+        //   background-color: ${theme.sidebarSettings.hoverBgColor} !important;
+        //   color: ${theme.sidebarSettings.hoverTextColor} !important;
+        // }
+          .custom-sidebar-menu  .ant-menu-item-active:hover{
+          background-color: ${theme.sidebarSettings.activeBgColor} !important;
+          color: ${theme.sidebarSettings.activeTextColor} !important;
+
+
+          }
       `}
       </style>
       <Sider
@@ -209,7 +240,9 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
           onClick={() => navigate("/")}
         >
           <img
-            src={theme.logo.image}
+            // src={theme.logo.image}
+            src={collapsed ? theme.logo.collapsedImage : theme.logo.image}
+
             alt="logo"
             style={{
               height: theme.logo.height,

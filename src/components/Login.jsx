@@ -5,46 +5,226 @@ import { useNavigate } from "react-router-dom";
 import { constant } from "../const";
 import axios from "axios";
 import { message } from "antd";
-
+import { useState } from "react";
+import { Flex, Input, Typography } from 'antd';
+const { Title } = Typography;
 const Login = () => {
     const navigate = useNavigate();
-const onFinish = async (values) => {
-    try {
-        const response = await axios.post(
-            `${constant.backend_url}/admin-login`,
-            {
-                email: values.email,
-                password: values.password,
-            }
-        );
+    const [showTwofa, setShowTwofa] = useState(false);
+    const [loginData, setLoginData] = useState(null);
+    const [twoFactorCode, setTwoFactorCode] = useState("");
+// const onFinish = async (values) => {
+//     try {
+//         const response = await axios.post(
+//             `${constant.backend_url}/admin/admin-login`,
+//             {
+//                 email: values.email,
+//                 password: values.password,
+//                 twoFactorCode: twoFactorCode || "",
+//             }
+//         );
 
-        console.log("API Response:", response.data);
+//         console.log("API Response:", response.data);
 
-        if (response.data?.success) {
+     
 
-            // ✅ Save token correctly
-            localStorage.setItem(
-                "token",
-                response.data.result.token
+
+//         if (response.data?.success) {
+
+//             // ✅ Save token correctly
+//             localStorage.setItem(
+//                 "adminToken",
+//                 response.data.result.token
+//             );
+
+//             message.success(response.data.message);
+
+//             // ✅ Redirect
+//             navigate(`/${constant?.adminRoute}/dashboard`);
+
+//         }  // ✅ Case 2: 2FA Required
+//         if (response.data.require2FA) {
+//             setShowTwofa(true);
+//             message.info("Enter 2FA Code");
+//             return;
+//         }
+
+//     } catch (error) {
+//         message.error(
+//             error.response?.data?.message || "Login failed"
+//         );
+//     }
+// };
+
+    // const onFinish = async (values) => {
+    //     try {
+    //         const response = await axios.post(
+    //             `${constant.backend_url}/admin/admin-login`,
+    //             {
+    //                 email: values.email,
+    //                 password: values.password,
+    //                     twoFactorCode: twoFactorCode || "",
+    //             }
+    //         );
+
+    //         // ✅ Login success
+    //         // if (response.data.success) {
+    //         //     localStorage.setItem(
+    //         //         "adminToken",
+    //         //         response.data.result.token
+    //         //     );
+
+    //         //     message.success("Login successful");
+    //         //     navigate(`/${constant?.adminRoute}/dashboard`);
+    //         //     return;
+    //         // }
+        
+
+    //         if (response.data.success) {
+    //             localStorage.setItem("adminToken", response.data.result.token);
+
+    //             // Save 2FA status
+    //             localStorage.setItem(
+    //                 "twoFactorEnabled",
+    //                 response.data.result.twoFactorEnabled
+    //             );
+
+    //             navigate(`/${constant?.adminRoute}/dashboard`);
+    //         }
+
+    //     } 
+    //     catch (error) {
+    //         const data = error.response?.data;
+    //         const msg = data?.message || "";
+
+    //         console.log("Login Error Response:", data);
+
+    //         if (
+    //             msg.toLowerCase().includes("2fa") ||
+    //             msg.toLowerCase().includes("two factor") ||
+    //             msg.toLowerCase().includes("otp")
+    //         ) {
+    //             setLoginData(values);
+    //             setShowTwofa(true);
+    //             message.info("Enter 2FA Code");
+    //             return;
+    //         }
+
+    //         message.error(msg || "Login failed");
+    //     }
+    // };
+
+    // const onFinish = async (values) => {
+    //     try {
+    //         const response = await axios.post(
+    //             `${constant.backend_url}/admin/admin-login`,
+    //             {
+    //                 email: values.email,
+    //                 password: values.password,
+    //             }
+    //         );
+
+    //         // ✅ If login success (2FA disabled)
+    //         if (response.data.success) {
+    //             localStorage.setItem("adminToken", response.data.result.token);
+    //             navigate(`/${constant?.adminRoute}/dashboard`);
+    //             return;
+    //         }
+
+    //     } catch (error) {
+    //         const data = error.response?.data;
+
+    //         // ✅ If backend says 2FA required
+    //         if (data?.twoFactorRequired) {
+    //             setLoginData(values);
+    //             setShowTwofa(true);
+    //             message.info("Enter OTP");
+    //             return;
+    //         }
+
+    //         message.error(data?.message || "Login failed");
+    //     }
+    // };
+
+    const onFinish = async (values) => {
+        try {
+            const response = await axios.post(
+                `${constant.backend_url}/admin/admin-login`,
+                {
+                    email: values.email,
+                    password: values.password,
+                }
             );
 
-            message.success(response.data.message);
+            const data = response.data;
 
-            // ✅ Redirect
-            navigate(`/${constant?.adminRoute}/dashboard`);
+            // ✅ Case 1: 2FA Required
+            if (data?.twoFactorRequired) {
+                setLoginData(values);
+                setShowTwofa(true);
+                message.info("Enter OTP");
+                return;
+            }
 
-        } else {
-            message.error(response.data?.message || "Login failed");
+            // ✅ Case 2: Normal Login
+            if (data?.success) {
+                localStorage.setItem("adminToken", data.result.token);
+                navigate(`/${constant?.adminRoute}/dashboard`);
+                return;
+            }
+
+            message.error(data?.message || "Login failed");
+
+        } catch (error) {
+            message.error(
+                error.response?.data?.message || "Login failed"
+            );
+        }
+    };
+    
+    const onChange = text => {
+        console.log('onChange:', text);
+    };
+    const onInput = value => {
+        console.log('onInput:', value);
+    };
+    const sharedProps = {
+        onChange,
+        onInput,
+    };
+
+    const handleOtpSubmit = async () => {
+        if (twoFactorCode.length !== 6) {
+            message.error("Enter 6 digit OTP");
+            return;
         }
 
-    } catch (error) {
-        console.error("Login Error:", error);
+        try {
+            const response = await axios.post(
+                `${constant.backend_url}/admin/admin-login`,
+                {
+                    email: loginData.email,
+                    password: loginData.password,
+                    twoFactorCode: twoFactorCode,
+                }
+            );
 
-        message.error(
-            error.response?.data?.message || "Something went wrong!"
-        );
-    }
-};
+            if (response.data.success) {
+                localStorage.setItem(
+                    "adminToken",
+                    response.data.result.token
+                );
+
+                message.success("Login successful");
+                navigate(`/${constant?.adminRoute}/dashboard`);
+            }
+
+        } catch (error) {
+            message.error(
+                error.response?.data?.message || "Invalid OTP"
+            );
+        }
+    };
 
     return (
         <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-[#001f3f] via-[#002147] to-[#003366]">
@@ -63,10 +243,11 @@ const onFinish = async (values) => {
                   transition duration-500 blur-xl -z-10" />
                 {/* Title */}
                 <h2 className="text-3xl font-bold text-white text-center mb-8 tracking-wide">
-                    Welcome Back
+                    Welcome 
                 </h2>
+                {!showTwofa ? (
 
-                <Form
+                      <Form
                     name="login"
                     layout="vertical"
                     initialValues={{ remember: true }}
@@ -117,6 +298,28 @@ const onFinish = async (values) => {
                         </Button>
                     </Form.Item>
                 </Form>
+                   
+                ):(
+                        <div className="flex flex-col items-center gap-4">
+                            <h2 className="text-2xl font-semibold text-white">
+                                Two-factor authentication
+                            </h2>
+                            <p className="text-white">
+                                Enter the code sent to your email.
+                            </p>
+                            <Input.OTP
+                                length={6}
+                                onChange={(value) => setTwoFactorCode(value)}
+                            />       
+                            <button
+                                className="bg-blue-500 text-white px-4 py-2 rounded-md"
+                                onClick={handleOtpSubmit}
+                            >
+                                Verify & Login
+                            </button>
+                        </div>
+              
+                )}
             </div>
         </div>
     );
