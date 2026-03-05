@@ -6,14 +6,17 @@ import ReusableTable from "../reuseable/ReusableTable";
 import axios from "axios";
 import { constant } from "../const";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const Dashboard = () => {
-  const [dashboardData, setDashboardData] = useState({
+  const navigate = useNavigate();
 
-  });
+  const [dashboardData, setDashboardData] = useState({});
 
   const [userTableData, setUserTableData] = useState([]);
-  const [tranHistrory, settranHistrory] = useState([]);
+
+
+  const [tranHistory, setTranHistory] = useState([]);
 
 
   const originalData = [
@@ -53,7 +56,6 @@ const Dashboard = () => {
     try {
       const res = await axios.get(
         `${constant.backend_url}/admin/dashboard`,
-        {},
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
@@ -73,14 +75,51 @@ const Dashboard = () => {
   }, []);
 
 
-  const columns = [
-    { title: "Pair", dataIndex: "pair" },
-    { title: "Order ID", dataIndex: "orderId" },
-    { title: "Buyer", dataIndex: "buyer" },
-    { title: "Trade Type", dataIndex: "tradeType" },
-    { title: "Price", dataIndex: "price" },
-    { title: "Volume", dataIndex: "volume" },
-    { title: "Exchange", dataIndex: "exchange" },
+  // transaction table configuration
+  const transactionColumns = [
+    {
+      title: "Hash",
+      dataIndex: "transactionHash",
+      render: (hash) => {
+        if (!hash) return "-";
+        const start = hash.slice(0, 6);
+        const end = hash.slice(-4);
+        return `${start}...${end}`;
+      },
+    },
+    {
+      title: "From",
+      dataIndex: "from",
+      render: (addr) => {
+        if (!addr) return "-";
+        const start = addr.slice(0, 6);
+        const end = addr.slice(-4);
+        return `${start}...${end}`;
+      },
+    },
+    {
+      title: "To",
+      dataIndex: "to",
+      render: (addr) => {
+        if (!addr) return "-";
+        const start = addr.slice(0, 6);
+        const end = addr.slice(-4);
+        return `${start}...${end}`;
+      },
+    },
+    { title: "Amount", dataIndex: "amount" },
+    { title: "Token", dataIndex: "tokenSymbol" },
+    { title: "Status", dataIndex: "status" },
+    {
+      title: "Date",
+      dataIndex: "DateTime",
+      render: (dt) => {
+        if (!dt) return "-";
+        const d = new Date(dt);
+        if (isNaN(d)) return dt;
+        return d.toISOString().split("T")[0];
+      },
+    },
   ];
   // const userData = [
   //   {
@@ -104,7 +143,6 @@ const Dashboard = () => {
   //     type: "professional",
   //   },
   // ];
-  const [userData, setUserData] = useState(userTableData);
 
   const userColumns = [
     { title: "First Name", dataIndex: "firstname" },
@@ -155,21 +193,22 @@ const Dashboard = () => {
  
  
  
-  const getuserstabledata = async () => {
-    try {
-      const res = await axios.get(
-        `${constant.backend_url}/admin/get-all-users`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
-          },
-        }
-      );
+const getuserstabledata = async () => {
+  try {
+    const res = await axios.get(
+      `${constant.backend_url}/admin/get-all-users`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+        },
+      }
+    );
 
-      if (res.data?.success) {
-        const data = res.data.result.slice(0, 3).map((item, index) => ({
+    if (res.data?.success) {
+      const data = res.data.result
+        .slice(0, 3)
+        .map((item, index) => ({
           id: item?._id,
-          key: index + 1,
           firstname: item?.firstname || "-",
           lastname: item?.lastname || "-",
           email: item?.email || "-",
@@ -179,14 +218,12 @@ const Dashboard = () => {
           verifyStatus: item?.verifyStatus ? "Yes" : "No",
         }));
 
-        setUserTableData(data);
-        console.log(data, "user data");
-      }
-    } catch (error) {
-      console.error(error);
+      setUserTableData(data);
     }
-  };
-
+  } catch (error) {
+    console.error(error);
+  }
+};
   useEffect(() => {
     getuserstabledata();
   }, []);
@@ -197,28 +234,30 @@ const Dashboard = () => {
       const res = await axios.get(
         `${constant.backend_url}/admin/get-all-transactions`,
         {
+       
           headers: {
             Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
           },
         }
       );
 
-      if (res.data?.success) {
-        const data = res.data.result.slice(0, 3).map((item, index) => ({
-          id: item?._id,
-          key: index + 1,
-          firstname: item?.firstname || "-",
-          lastname: item?.lastname || "-",
-          email: item?.email || "-",
-          phone: item?.phone || "-",
-          role: item?.role || "-",
-          type: item?.type || "-",
-          verifyStatus: item?.verifyStatus ? "Yes" : "No",
-        }));
+    if (res.data?.success) {
+  const data = res.data.result
+    .slice(0, 3)
+    .map((item, index) => ({
+      id: item?._id,
+      key: index + 1,
+      transactionHash: item?.transactionHash || "-",
+      from: item?.from || "-",
+      to: item?.to || "-",
+      amount: item?.amount || "-",
+      tokenSymbol: item?.tokenSymbol || "-",
+      status: item?.status || "-",
+      DateTime: item?.DateTime || item?.createdAt || "-",
+    }));
 
-        setUserTableData(data);
-        console.log(data, "user data");
-      }
+  setTranHistory(data);
+}
     } catch (error) {
       console.error(error);
     }
@@ -270,12 +309,23 @@ const Dashboard = () => {
             <div>
               <div className="dashboard-bg">
                 <div className="d-block heading-2 mb-10">Recent Users</div>
-                <ReusableTable
-                  columns={userColumns}
-                  data={userTableData}
-                  rowKey="_id"
-
-                />
+             <ReusableTable
+  columns={userColumns}
+  actionType={[]}
+  data={userTableData}
+  rowKey="id"
+  pagination={false}
+/>
+                <div className="text-right mt-2">
+                  <button
+                    className="px-4 py-2 bg-blue-600 text-white rounded"
+                    onClick={() =>
+                      navigate(`/${constant.adminRoute}/viewdetails`)
+                    }
+                  >
+                    View More
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -285,12 +335,23 @@ const Dashboard = () => {
 
             <div className="d-block heading-2 mb-10">Transation History</div>
 
-            <ReusableTable
-              columns={columns}
-              data={originalData}
-              rowKey="key"
-              pageSize={3}
-            />
+ <ReusableTable
+  columns={transactionColumns}
+  actionType={[]}
+  data={tranHistory}
+  rowKey="id"
+  pagination={false}
+/>
+            <div className="text-right mt-2">
+              <button
+                className="px-4 py-2 bg-blue-600 text-white rounded"
+                onClick={() =>
+                  navigate(`/${constant.adminRoute}/transaction`)
+                }
+              >
+                View More
+              </button>
+            </div>
           </div>
         </div>
 

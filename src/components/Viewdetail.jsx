@@ -5,6 +5,7 @@ import { useState } from "react";
 import axios from "axios";
 import { constant } from "../const";
 import { useEffect } from "react";
+import { message } from "antd"; 
 
 // const originalData = [
 //   // {
@@ -97,10 +98,10 @@ const Viewdetail = () => {
           name: ` ${user?.firstname} ${user?.lastname}` || "-",
           email: user?.email || "-",
           phone: user?.phone || "-",
-          status: user?.verifyStatus == true ? "active" : "inactive" || "-",
+          status: user?.blockStatus ? "blocked" : "active",
           type: user?.type || "-",
           country: user?.country || "-",
-          uniqueid: user?.uniqueId || "-",
+          uniqueid: user?.unique_id || "-",
           // exchange: "Wallet"
         }));
 
@@ -127,7 +128,30 @@ const Viewdetail = () => {
     fetUsers();
   }, [page]);
 
+const blockUser = async (record) => {
+  try {
+    const res = await axios.post(
+      `${constant.backend_url}/admin/block-user`,
+      {
+        id: record.key,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+        },
+      }
+    );
 
+    if (res.data?.success) {
+      message.success(res.data.message);
+
+      // reload users list
+      fetUsers();
+    }
+  } catch (error) {
+    console.error("Error:", error);
+  }
+};
 
 
   return (
@@ -141,25 +165,24 @@ const Viewdetail = () => {
         showCreateButton={false}
         showPrivateFilter={true}
       />
-      <ReusableTable
-        columns={columns}
-        data={filteredData}
-        pageSize={7}
-        rowKey="key"
-        actionType={["view", "block"]}
-        onView={(record, section) => {
-          if (section === "wallet") {
-            navigate(`/wallet/${record.key}`, { state: record });
-            // navigate(`/wallet/${record.key}`);
-          }
+    <ReusableTable
+  columns={columns}
+  data={filteredData}
+  pageSize={7}
+  rowKey="key"
+  actionType={["view", "block"]}
+  onView={(record, section) => {
+    if (section === "wallet") {
+      navigate(`/wallet/${record.key}`, { state: record });
+    }
 
-          if (section === "transaction") {
-            navigate(`/transaction/${record.key}`, { state: record });
-          }
-        }}
-        onBlock={(record) => console.log("Blocked", record)}
-        onUnblock={(record) => console.log("Unblocked", record)}
-      />
+    if (section === "transaction") {
+      navigate(`/transaction/${record.key}`, { state: record });
+    }
+  }}
+  onBlock={(record) => blockUser(record)}
+  onUnblock={(record) => blockUser(record)}
+/>
     </div>
   );
 };
