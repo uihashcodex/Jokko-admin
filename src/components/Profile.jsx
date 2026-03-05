@@ -21,7 +21,7 @@ import ReButton from "../reuseable/Button";
 import ReusableModal from "../reuseable/ReusableModal";
 import QRCode from "react-qr-code";
 import axios from "axios";
-import { message } from "antd";
+import { message } from "antd"; 
 import { constant } from "../const";
 
 
