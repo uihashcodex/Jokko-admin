@@ -88,10 +88,13 @@ const Assets = () => {
     //     }
 
     // ];
+    const statusOptions = [
+        { label: "Active", value: "active" },
+        { label: "Inactive", value: "inactive" },
+    ];
 
 
-
-    const getFields = () => [
+    const fields =[
         {
             label: "Token Name",
             name: "tokenName",
@@ -130,6 +133,14 @@ const Assets = () => {
             options: networkOptions,   // 🔥 dynamic
             rules: [{ required: true, message: "Network is required" }],
         }
+        ,
+        {
+            label: "Status",
+            name: "status",
+            type: "select",
+            options: statusOptions
+        }
+        
     ];
     const [filteredData, setFilteredData] = useState(originalData);
     const [open, setOpen] = useState(false);
@@ -137,6 +148,11 @@ const Assets = () => {
     const [page, setPage] = useState(1);
     const [messageApi, contextHolder] = message.useMessage();
     // const [select, setSelect] = useState(networkOptions);
+
+
+    const modalFields = selectedAsset
+        ? fields
+        : fields.filter(f => f.name !== "status");
 
     const handleCreate = () => {
         setSelectedAsset(null);
@@ -147,40 +163,6 @@ const Assets = () => {
         setSelectedAsset(record);
         setOpen(true);
     };
-
-    // const handleSubmit = (values) => {
-
-    //     if (selectedAsset) {
-    //         // UPDATE
-    //         const updatedData = originalData.map(item =>
-    //             item.id === selectedAsset.id
-    //                 ? { ...item, ...values }
-    //                 : item
-    //         );
-
-    //         setOriginalData(updatedData);
-    //         // setFilteredData(updatedData);
-
-    //     } else {
-    //         // CREATE
-    //         const newItem = {
-    //             id: originalData.length + 1,
-    //             sno: originalData.length + 1,
-    //             ...values
-    //         };
-
-    //         const updatedData = [...originalData, newItem];
-
-    //         setOriginalData(updatedData);
-    //         // setFilteredData(updatedData);
-    //     }
-
-    //     setOpen(false);
-    // };
-
-
-
-
 
     const getToken = async () => {
         try {
@@ -255,12 +237,14 @@ const Assets = () => {
                     `${constant.backend_url}/assets/update-token`,
                     {
                         token_id: selectedAsset.id,
-                        tokenName: values.tokenName,
-                        tokenSymbol: values.tokenSymbol,
-                        decimals: values.tokenDecimals,
-                        contractAddress: values.contractAddress,
-                        network_id: values.network_id
+                        tokenName: values?.tokenName,
+                        tokenSymbol: values?.tokenSymbol,
+                        decimals: Number(values?.tokenDecimals),                        contractAddress: values?.contractAddress,
+                        network_id: values?.network_id,
+                        verifyStatus: values?.status === "active"   // ⭐ ADD THIS
+
                     },
+                    
                     {
                         headers: {
                             "Content-Type": "application/json",
@@ -268,7 +252,9 @@ const Assets = () => {
                         },
                         validateStatus: () => true
                     }
+                    
                 );
+                console.log(values,"asdfsafdf");
 
                 if (res.data?.success) {
                     messageApi.success(res.data.message);
@@ -394,7 +380,7 @@ const Assets = () => {
                 onCancel={() => setOpen(false)}
                 onSubmit={handleSubmit}
                 title={selectedAsset ? "Update Asset" : "Create Asset"}
-                fields={getFields()}
+                fields={modalFields}
                 initialValues={selectedAsset}
                 maskClosable={false}
             />

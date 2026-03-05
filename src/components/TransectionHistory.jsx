@@ -6,6 +6,8 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { constant } from "../const";
+import TableHeader from "../reuseable/TableHeader";
+
 
 const TransectionHistory = () => {
   const { id } = useParams();
@@ -13,7 +15,8 @@ const TransectionHistory = () => {
   const navigate = useNavigate();
   const [originalData, setOriginalData] = useState([]);
   const [transactionData, setTransactionData] = useState([]);
-  const [alltrandata, setAlltrandata] = useState(originalData);
+  const [alltrandata, setAlltrandata] = useState([]);
+  const [filteredTableData, setFilteredTableData] = useState([]);
 
   // const originalData = [
   //   {
@@ -51,25 +54,31 @@ const TransectionHistory = () => {
   const getTransation = async () => {
     try {
       const res = await axios.post(
-        `${constant.backend_url}/admin/userswalletdetails`,
-        { userId: id }
+        `${constant.backend_url}/admin/getAllUsersWalletTransactions`,
+        { user_id: id },
+         {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+          },
+        }
       );
 
-      if (res.data?.success) {
+       if (res.data?.success) {
 
-        const trans = res.data.result.wallets.map((item) => ({
-          key: item._id,
-          walletname: item.walletName,
-          btcaddress: item.btcAddress,
-          evmaddress: item.evmAddress,
-          solanaaddress: item.solAddress,
-          xrpaddress: item.xrpAddress,
-          status: item.checkStatus ? "Active" : "Inactive",
-          // phrase: item.randomCheck?.join(", ")
-        }));
+      const trans = res.data.data.docs.map((item) => ({
+        key: item?._id,
+        transactionHash: item?.transactionHash,
+        networkId: item?.network_id?.networkName,
+        amount: item?.amount,
+        from: item?.from,
+        to: item?.to,
+        tokenSymbol: item?.tokenSymbol,
+        status: item?.status,
+      }));
 
-        setTransactionData(trans);
-      }
+      setTransactionData(trans);
+    }
 
     } catch (error) {
       console.error(error);
@@ -106,12 +115,14 @@ const TransectionHistory = () => {
           from: item?.from,
           to: item?.to,
           tokenSymbol: item?.tokenSymbol,
-          status: item?.status ? "Active" : "Inactive",
+          status: item?.status == true ? "active" : "inactive",
           // phrase: item.randomCheck?.join(", ")
         }))
         console.log(transres,"dsggffgf");
 
         setAlltrandata(transres);
+        setFilteredTableData(transres);
+
       }
     } catch (error) {
       console.error(error);
@@ -121,6 +132,15 @@ const TransectionHistory = () => {
   useEffect(() => {
     getAllTransaction();
   }, []);
+
+
+  // useEffect(() => {
+  //   if (id) {
+  //     getTransation();     // user transaction
+  //   } else {
+  //     getAllTransaction(); // all transactions
+  //   }
+  // }, [id]);
 
   // const filteredData = id
   //   ? originalData.filter((item) => item.key === id)
@@ -153,13 +173,24 @@ const TransectionHistory = () => {
         )}
         <h2 className="text-2xl font-semibold  white">Transection History</h2>
       </div>
+
+      {!id && (
+        <TableHeader
+          data={alltrandata}
+          onFilter={(data) => setFilteredTableData(data)}
+          showCreateButton={false}
+          showPrivateFilter={false}
+        />
+      )}
+      
       <ReusableTable
         columns={columns}
-        data={filteredData}
+          data={id ? transactionData : filteredTableData}
         rowKey="key"
         actionType={["", ""]}
 
       />
+     
     </>
   );
 };
