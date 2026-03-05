@@ -1,58 +1,58 @@
 import { useNavigate } from "react-router-dom";
 import ReusableTable from "../reuseable/ReusableTable";
 import TableHeader from "../reuseable/TableHeader";
-import {useState} from "react";
+import { useState } from "react";
 import axios from "axios";
 import { constant } from "../const";
-import  { useEffect } from "react";
+import { useEffect } from "react";
 
-const originalData = [
-  // {
-  //   key: "1",
-  //   sno: 1,
-  //   pair: "BTC/USDT",
-  //   orderId: "ORD123456",
-  //   time: "19-02-2026 10:45 AM",
-  //   buyer: "Arun",
-  //   orderType: "Limit",
-  //   tradeType: "Buy",
-  //   price: "45000",
-  //   volume: "0.25",
-  //   total: "11250",
-  //   fee: "12",
-  //   exchange: "Binance",
-  // },
-  // {
-  //   key: "2",
-  //   sno: 1,
-  //   pair: "USDT",
-  //   orderId: "WD123",
-  //   time: "19-02-2026 11:00 AM",
-  //   buyer: "Vijay",
-  //   orderType: "-",
-  //   tradeType: "Withdraw",
-  //   price: "-",
-  //   volume: "500",
-  //   total: "500",
-  //   fee: "2",
-  //   exchange: "Wallet",
-  // },
-  // {
-  //   key: "3",
-  //   sno: 1,
-  //   pair: "BTC",
-  //   orderId: "DP456",
-  //   time: "19-02-2026 12:00 PM",
-  //   buyer: "System",
-  //   orderType: "-",
-  //   tradeType: "Deposit",
-  //   price: "-",
-  //   volume: "0.5",
-  //   total: "-",
-  //   fee: "0",
-  //   exchange: "Wallet",
-  // },
-];
+// const originalData = [
+//   // {
+//   //   key: "1",
+//   //   sno: 1,
+//   //   pair: "BTC/USDT",
+//   //   orderId: "ORD123456",
+//   //   time: "19-02-2026 10:45 AM",
+//   //   buyer: "Arun",
+//   //   orderType: "Limit",
+//   //   tradeType: "Buy",
+//   //   price: "45000",
+//   //   volume: "0.25",
+//   //   total: "11250",
+//   //   fee: "12",
+//   //   exchange: "Binance",
+//   // },
+//   // {
+//   //   key: "2",
+//   //   sno: 1,
+//   //   pair: "USDT",
+//   //   orderId: "WD123",
+//   //   time: "19-02-2026 11:00 AM",
+//   //   buyer: "Vijay",
+//   //   orderType: "-",
+//   //   tradeType: "Withdraw",
+//   //   price: "-",
+//   //   volume: "500",
+//   //   total: "500",
+//   //   fee: "2",
+//   //   exchange: "Wallet",
+//   // },
+//   // {
+//   //   key: "3",
+//   //   sno: 1,
+//   //   pair: "BTC",
+//   //   orderId: "DP456",
+//   //   time: "19-02-2026 12:00 PM",
+//   //   buyer: "System",
+//   //   orderType: "-",
+//   //   tradeType: "Deposit",
+//   //   price: "-",
+//   //   volume: "0.5",
+//   //   total: "-",
+//   //   fee: "0",
+//   //   exchange: "Wallet",
+//   // },
+// ];
 
 const columns = [
   { title: "Name", dataIndex: "name", key: "name" },
@@ -62,20 +62,22 @@ const columns = [
   { title: "Type", dataIndex: "type", key: "type" },
   { title: "Country", dataIndex: "country", key: "contry" },
   { title: "Unique ID", dataIndex: "uniqueid", key: "uniqueid" },
-  { title: "Exchange", dataIndex: "exchange", key: "exchange" },
+  // { title: "Exchange", dataIndex: "exchange", key: "exchange" },
 ];
 
 
 const Viewdetail = () => {
   const navigate = useNavigate();
-      const [filteredData, setFilteredData] = useState(originalData);
-    const [open, setOpen] = useState(false);
-    const [selectedRecord, setSelectedRecord] = useState(null);
+  const [page, setPage] = useState(1);
+
+  const [originalData, setOriginalData] = useState([]);
+  const [filteredData, setFilteredData] = useState(originalData);
+  const [open, setOpen] = useState(false);
+  const [selectedRecord, setSelectedRecord] = useState(null);
   const handleCreate = () => {
     setOpen(true);
     setSelectedRecord(null);
   };
-
 
   const fetUsers = async () => {
     try {
@@ -83,60 +85,72 @@ const Viewdetail = () => {
         axios.get(`${constant.backend_url}/admin/get-all-individual`),
         axios.get(`${constant.backend_url}/admin/get-all-professional`)
       ]);
+      if (individualRes, professionalRes.data?.success) {
+        const individualUsers = individualRes.data.result || [];
+        const professionalUsers = professionalRes.data.result || [];
 
-      const individualUsers = individualRes.data.result || [];
-      const professionalUsers = professionalRes.data.result || [];
+        const allUsers = [...individualUsers, ...professionalUsers];
 
-      const allUsers = [...individualUsers, ...professionalUsers];
+        const tableData = allUsers.map((user, index) => ({
+          key: user?._id,
+          sno: index + 1,
+          name: ` ${user?.firstname} ${user?.lastname}` || "-",
+          email: user?.email || "-",
+          phone: user?.phone || "-",
+          status: user?.verifyStatus == true ? "active" : "inactive" || "-",
+          type: user?.type || "-",
+          country: user?.country || "-",
+          uniqueid: user?.uniqueId || "-",
+          // exchange: "Wallet"
+        }));
 
-      const tableData = allUsers.map((user, index) => ({
-        key: user?._id,
-        sno: index + 1,
-        name: ` ${user?.firstname} ${user?.lastname}` || "-",
-        email: user?.email  || "-",
-        phone: user?.phone || "-",
-        status: user?.verifyStatus == true ? "active" : "inactive" || "-", 
-        type: user?.type || "-",
-        country: user?.country || "-",
-        uniqueid:user?.uniqueId || "-",
-        exchange: "Wallet"
-      }));
+        console.log(tableData, "tableData");
+        setOriginalData(tableData);
+        setFilteredData(tableData);
 
-      console.log(tableData, "tableData");
+      }
 
-      setFilteredData(tableData);
+      else {
+        setOriginalData([]);
+        setFilteredData([]);
+      }
 
-    } catch (error) {
+    }
+    catch (error) {
       console.error("Error fetching users:", error);
+      setOriginalData([]);
+      setFilteredData([]);
     }
   };
 
   useEffect(() => {
     fetUsers();
-  }, []);
-  
+  }, [page]);
 
 
-  
+
+
   return (
     <div>
       <h2 className="text-2xl font-semibold mb-4 white">View Detail</h2>
       <TableHeader
-        data={filteredData}
+        data={originalData}
         onFilter={setFilteredData}
         onCreate={handleCreate}
         showStatusFilter={true}
         showCreateButton={false}
+        showPrivateFilter={true}
       />
       <ReusableTable
         columns={columns}
         data={filteredData}
         pageSize={7}
         rowKey="key"
-        actionType={["view","block"]}
+        actionType={["view", "block"]}
         onView={(record, section) => {
           if (section === "wallet") {
             navigate(`/wallet/${record.key}`, { state: record });
+            // navigate(`/wallet/${record.key}`);
           }
 
           if (section === "transaction") {

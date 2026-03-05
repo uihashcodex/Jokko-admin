@@ -283,8 +283,6 @@ const Network = () => {
 
                         },
                         validateStatus: () => true,
-
-
                     }
 
                 );
