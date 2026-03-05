@@ -38,9 +38,10 @@ const Walletlist = () => {
 
   // ];
   const [originalData,setOriginalData] = useState();
-  const [allwalletData, setAllWalletData] = useState([originalData]);
+  const [allwalletData, setAllWalletData] = useState([]);
   const [walletData, setWalletData] = useState([]);
   const [filteredTableData, setFilteredTableData] = useState([]);
+  const tableData = id ? walletData : filteredTableData;
   const getWallets = async () => {
     try {
       const res = await axios.post(
@@ -60,6 +61,7 @@ const Walletlist = () => {
           status: item.checkStatus ? "Active" : "Inactive",
           // phrase: item.randomCheck?.join(", ")
         }));
+        console.log(wallets, "wallets");
 
         setWalletData(wallets);
       }
@@ -147,27 +149,20 @@ const Walletlist = () => {
         
         <h2 className="text-2xl font-semibold white">{state ? "Wallet History" : "Wallet Details"} </h2>
       </div>   
-      
+      {!id && (
+        <TableHeader
+          data={allwalletData}
+          onFilter={(data) => setFilteredTableData(data)}
+          showCreateButton={false}
+          showPrivateFilter={false}
+        />
+      )}
 
-       {/* <ReusableTable
+       <ReusableTable
       columns={columns}
-      data={filteredData}
+        data={tableData}
       rowKey="key"
-    /> */}
-
-      <TableHeader
-        data={filteredData}
-        onFilter={(data) => setFilteredTableData(data)}
-        showCreateButton={false}
-      />
-
-      <ReusableTable
-        columns={columns}
-        data={filteredTableData}
-        rowKey="key"
-        pageSize={6}
-        actionType={[]}
-      />
+    />
     </>
   );
 };

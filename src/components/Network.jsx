@@ -59,7 +59,7 @@ const Network = () => {
     const fields = [
         {
             label: "Network Name",
-            name: "networkname",
+            name: "networkName",
             span: 12,
             rules: [
                 { required: true, message: "Network Name is required" },
@@ -69,7 +69,7 @@ const Network = () => {
         },
         {
             label: "Network Symbol",
-            name: "networksymbol",
+            name: "networkSymbol",
             span: 12,
             rules: [
                 { required: true, message: "Network Symbol is required" },
@@ -302,9 +302,22 @@ const Network = () => {
 
 
             } else {
-                const data = await axios.post(
+                // const payload = {
+                //     networkName: values.networkname,
+                //     networkSymbol: values.networksymbol,
+                //     rpcUrl: values.rpcUrl,
+                //     blockExplorerUrl: values.blockExplorerUrl,
+                //     type: values.type
+                // };
+                const res = await axios.post(
                     `${constant.backend_url}/assets/add-network`,
-                    values,
+                    {
+                        networkName: values.networkName,
+                        networkSymbol: values.networkSymbol,
+                        rpcUrl: values.rpcUrl,
+                        blockExplorerUrl: values.blockExplorerUrl,
+                        type: values.type
+                    },
                     {
                         headers: {
                             "Content-Type": "application/json",
@@ -313,15 +326,13 @@ const Network = () => {
                     }
                 );
 
-                if (data.success) {
+                if (res.data?.success) {
                     messageApi.success("Network added successfully");
                     getNetworks();
                     setOpen(false);
                 } else {
-                    if (!data.success) {
-                        messageApi.warning(data.message || "Something went wrong");
-                        return;
-                    }
+                    messageApi.warning(res.data?.message || "Something went wrong");
+
                 }
             }
 
@@ -331,7 +342,15 @@ const Network = () => {
         }
     };
     const handleUpdate = (record) => {
-        setSelectedRecord(record);
+        setSelectedRecord({
+            id: record.id,
+            networkName: record.networkname,
+            networkSymbol: record.networksymbol,
+            rpcUrl: record.rpcUrl,
+            blockExplorerUrl: record.blockExplorerUrl,
+            type: record.type,
+            status: record.status
+        });
         setOpen(true);
     };
 
