@@ -10,12 +10,14 @@ const TableHeader = ({
   data = [],
   onFilter,
   showStatusFilter = true,
+  showPrivateFilter = false,
   showCreateButton = true,
   onCreate,
 }) => {
 
   const [searchText, setSearchText] = useState("");
   const [status, setStatus] = useState(undefined);
+  const [privateType, setPrivateType] = useState(undefined);
 useEffect(() => {
   let temp = [...data];
 
@@ -31,10 +33,14 @@ useEffect(() => {
   if (status) {
     temp = temp.filter(item => item.status === status);
   }
+  if (privateType) {
+    temp = temp.filter(item => item.type === privateType);
+  }
+
 
   onFilter && onFilter(temp);
 
-}, [searchText, status]);
+}, [searchText, status, privateType, data]);
 
   console.log(data, onFilter,"data1");
 
@@ -63,6 +69,21 @@ useEffect(() => {
           />
         </Col>
       )}
+
+      {showPrivateFilter && (
+        <Col xs={24} sm={12} md={6} lg={4}>
+          <SelectField
+            placeholder="Select Type"
+            value={privateType}
+            onChange={setPrivateType}
+            options={[
+              { label: "Individual", value: "individual" },
+              { label: "Professional", value: "professional" }
+            ]}
+          />
+        </Col>
+      )}
+
 
       {showCreateButton && (
         <Col xs={24} sm={12} md={6} lg={4}>

@@ -25,7 +25,7 @@ export default function DashboardCharts({ dashboardData }) {
   ];
 
   const pieData = [
-    { name: "Individual", value: dashboardData?.individualCount || 0 },
+    { name: "Platform fee", value: dashboardData?.individualCount || 0 },
     { name: "gas fee", value: dashboardData?.professionalCount || 0 },
   ];
 

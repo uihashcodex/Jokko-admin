@@ -1,4 +1,4 @@
-import { use, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import ReusableTable from "../reuseable/ReusableTable";
 import ReusableModal from "../reuseable/ReusableModal";
 import TableHeader from "../reuseable/TableHeader";
@@ -249,15 +249,18 @@ const Assets = () => {
                     verifyStatus: values.status === "active"
                 };
 
-                // const updatedData = originalData.map(item =>
-                //     item.id === selectedAsset.id
-                //         ? { ...item, ...values }
-                //         : item
-                // );
-
-                // setOriginalData(updatedData);
                 const res = await axios.post(
-                    `${constant.backend_url}/assets/update-token/${selectedAsset.id}`, payload,
+                    // `${constant.backend_url}/assets/update-token/${selectedAsset.id}`, payload,
+
+                    `${constant.backend_url}/assets/update-token`,
+                    {
+                        token_id: selectedAsset.id,
+                        tokenName: values.tokenName,
+                        tokenSymbol: values.tokenSymbol,
+                        decimals: values.tokenDecimals,
+                        contractAddress: values.contractAddress,
+                        network_id: values.network_id
+                    },
                     {
                         headers: {
                             "Content-Type": "application/json",
@@ -382,6 +385,7 @@ const Assets = () => {
                 columns={columns}
                 data={filteredData}
                 onUpdate={handleUpdate}
+               
             />
 
             <ReusableModal

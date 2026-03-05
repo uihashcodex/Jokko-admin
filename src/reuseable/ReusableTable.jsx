@@ -197,6 +197,29 @@ if (actionType === "action") {
   });
 }
 
+  // if (actionType?.includes("update")) {
+  //   updatedColumns.push({
+  //     title: "Update",
+  //     key: "update",
+  //     render: (_, record) => (
+  //       <Button type="primary" onClick={() => onUpdate?.(record)}>
+  //         {actionLabel || "Update"}
+  //       </Button>
+  //     ),
+  //   });
+  // }
+
+  if (actionType === "update") {
+    updatedColumns.push({
+      title: "Update",
+      key: "update",
+      render: (_, record) => (
+        <Button type="primary" onClick={() => onUpdate?.(record)}>
+          {actionLabel || "Update"}
+        </Button>
+      ),
+    });
+  }
   return (
     <>
       {(title) && (

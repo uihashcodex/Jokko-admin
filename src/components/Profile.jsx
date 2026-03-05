@@ -36,6 +36,8 @@ const Profile = () => {
   const [isScretEnabled, setIsScretFAEnabled] = useState(false);
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [form] = Form.useForm();  
+
 
 
 
@@ -83,9 +85,6 @@ const Profile = () => {
       }
     }
   };
-
-
-
   const handleTwoFASubmit = async () => {
     if (otp.length !== 6) {
       message.error("Enter valid 6 digit OTP");
@@ -165,14 +164,21 @@ const Profile = () => {
         setProfileData(res.data.data);  
         setLoading(false); // 🔥 store full data
         setIsTwoFAEnabled(res.data.data.twoFactorEnabled === true);
+
+        form.setFieldsValue(
+        //   {
+        //   name: res.data.data.name,
+        //   username: res.data.data.unique_id,
+        //   mobile: res.data.data.mobile,
+        // }
+      );
       }
+    
 
     } catch (err) {
       message.error("Failed to fetch profile");
     }
   };
-
-
   useEffect(() => {
 
 
@@ -180,8 +186,67 @@ const Profile = () => {
   }, []);
 
 
+  const handleChangePassword = async (values) => {
+    console.log("PASSWORD PAYLOAD:", values);   // ✅ ADD HERE
+
+    try {
+
+      if (values.newPassword !== values.confirmPassword) {
+        message.error("New password and confirm password must match");
+        return;
+      }
+
+      const res = await axios.post(
+        `${constant.backend_url}/admin/change-password`,
+        values,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+            
+          },
+          
+        }
+        
+      );
+      console.log(localStorage.getItem("adminToken"));
+      if (res.data.success) {
+        message.success(res.data.message || "Password changed successfully");
+        form.resetFields();
+      }
+
+    } catch (err) {
+      message.error(err.response?.data?.message || "Failed to change password");
+    }
+  };
 
 
+  const handleUpdateProfile = async (values) => {
+    try {
+      const payload = {
+        name: values.name,
+        mobile: values.mobile,
+        email: values.email,
+      };
+      console.log("PROFILE PAYLOAD:", payload);
+
+      const res = await axios.post(
+        `${constant.backend_url}/admin/update/admin/details`,
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+          },
+        }
+      );
+
+      if (res.data.success) {
+        message.success(res.data.message || "Profile updated successfully");
+        fetchProfile(); 
+      }
+    } catch (err) {
+      message.error(err.response?.data?.message || "Update failed");
+    }
+  };
 
 
   return (
@@ -198,7 +263,7 @@ const Profile = () => {
             <div className="text-center mb-5">
               <Avatar
                 size={110}
-                src={profileData?.profileImage || profileImage}
+                src={profileData?.profile_picture || profileImage}
                 icon={!profileImage && <UserOutlined />}
                 className="shadow-md"
               />
@@ -250,26 +315,29 @@ const Profile = () => {
             style={{flex:1}}
             className="flex-1"
           >
-            <Form layout="vertical" className="profile-form ar3">
-              <Form.Item label="Old Password">
+            <Form form={form}  layout="vertical" className="profile-form ar3" onFinish={handleChangePassword}>
+
+              <Form.Item label="Old Password" name="oldPassword" rules={[{ required: true }]}>
                 <InputField size="large" type="password" />
               </Form.Item>
 
-              <Form.Item label="New Password">
+              <Form.Item label="New Password" name="newPassword" rules={[{ required: true }]}>
                 <InputField size="large" type="password" />
               </Form.Item>
 
-              <Form.Item label="Confirm Password">
+              <Form.Item label="Confirm Password" name="confirmPassword" rules={[{ required: true }]}>
                 <InputField size="large" type="password" />
               </Form.Item>
 
               <ReButton
+                htmlType="submit"
                 type="primary"
                 name="save"
-                icon={<SaveOutlined style={{ color: "#000" }}/>}
+                icon={<SaveOutlined style={{ color: "#000" }} />}
                 size="large"
                 className="rounded-lg save-btn"
               />
+
             </Form>
           </ReusableCard>
         </Col>
@@ -281,10 +349,11 @@ const Profile = () => {
         icon={<UserOutlined />}
         className="mt-6"
       >
-        <Form layout="vertical" className="profile-form">
+        <Form layout="vertical" className="profile-form" onFinish={handleUpdateProfile}
+>
           <Row gutter={[16, 16]}>
             <Col xs={24} md={12}>
-              <Form.Item label={
+              <Form.Item name="name" label={
                 <span className="flex items-center gap-2">
                   <Anticon name="UserOutlined " />
                   Name
@@ -295,19 +364,20 @@ const Profile = () => {
             </Col>
 
             <Col xs={24} md={12}>
-              <Form.Item label="User Name">
+              <Form.Item name="username" label="User Name">
                 <InputField size="large" />
               </Form.Item>
             </Col>
 
             <Col xs={24} md={12}>
-              <Form.Item label="Mobile">
+              <Form.Item name="mobile" label="Mobile">
                 <InputField size="large" />
               </Form.Item>
             </Col>
           </Row>
 
           <ReButton
+            htmlType="submit"
             type="primary"
             name="save"
             icon={<SaveOutlined />}

@@ -9,17 +9,11 @@ import { useEffect, useState } from "react";
 
 const Dashboard = () => {
   const [dashboardData, setDashboardData] = useState({
-    totalUsers: 1200,
-    individualCount: 800,
-    professionalCount: 400,
-    totalTransactions: 5600,
-    revenue: 125000,
-    totalNetworks: 15,
-    evenetworks: 10,
-    nonevmnetworks: 5,
+
   });
 
   const [userTableData, setUserTableData] = useState([]);
+  const [tranHistrory, settranHistrory] = useState([]);
 
 
   const originalData = [
@@ -68,7 +62,7 @@ const Dashboard = () => {
       );
 
       if (res.data.success) {
-        setDashboardData(res.data.data);
+        setDashboardData(res.data);
       }
     } catch (error) {
       console.error(error);
@@ -127,11 +121,44 @@ const Dashboard = () => {
   ];
 
 
+  // const getuserstabledata = async () => {
+  //   try {
+  //     const res = await axios.get(
+  //       `${constant.backend_url}/admin/get-all-users`,
+  //       {},
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+  //         },
+  //       }
+  //     );
+
+  //     if (res.data?.success) {
+  //       const data = res.data.result.map((item, index) => ({
+  //         id: item?._id,
+  //         key: index + 1,
+  //         firstname: item?.firstname || "-",
+  //         lastname: item?.lastname || "-",
+  //         email: item?.email || "-",
+  //         phone: item?.phone || "-",
+  //         role: item?.role || "-",
+  //         type: item?.type || "-",
+  //         verifyStatus: item?.verifyStatus || "-",
+  //       }))
+  //       setUserTableData(data);
+  //       console.log(data, "usrerdada");
+  //     }
+  //   } catch (error) {
+  //     console.error(error);
+  //   }
+  // };
+ 
+ 
+ 
   const getuserstabledata = async () => {
     try {
       const res = await axios.get(
         `${constant.backend_url}/admin/get-all-users`,
-        {},
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
@@ -140,7 +167,7 @@ const Dashboard = () => {
       );
 
       if (res.data?.success) {
-        const data = res.data.data.docs.map((item, index) => ({
+        const data = res.data.result.slice(0, 3).map((item, index) => ({
           id: item?._id,
           key: index + 1,
           firstname: item?.firstname || "-",
@@ -149,18 +176,58 @@ const Dashboard = () => {
           phone: item?.phone || "-",
           role: item?.role || "-",
           type: item?.type || "-",
-          verifyStatus: item?.verifyStatus || "-",
-        }))
+          verifyStatus: item?.verifyStatus ? "Yes" : "No",
+        }));
+
         setUserTableData(data);
-        console.log(data, "usrerdada");
+        console.log(data, "user data");
       }
     } catch (error) {
       console.error(error);
     }
   };
+
   useEffect(() => {
     getuserstabledata();
   }, []);
+
+
+  const getTransationHistory = async () => {
+    try {
+      const res = await axios.get(
+        `${constant.backend_url}/admin/get-all-transactions`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+          },
+        }
+      );
+
+      if (res.data?.success) {
+        const data = res.data.result.slice(0, 3).map((item, index) => ({
+          id: item?._id,
+          key: index + 1,
+          firstname: item?.firstname || "-",
+          lastname: item?.lastname || "-",
+          email: item?.email || "-",
+          phone: item?.phone || "-",
+          role: item?.role || "-",
+          type: item?.type || "-",
+          verifyStatus: item?.verifyStatus ? "Yes" : "No",
+        }));
+
+        setUserTableData(data);
+        console.log(data, "user data");
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    getTransationHistory();
+  }, []);
+
 
 
 
@@ -184,7 +251,7 @@ const Dashboard = () => {
       </div>
       {/* Cards Section */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <StatCard title="Total Users" value={dashboardData?.totalUsers || 0} />
+        <StatCard title="Total Users" value={dashboardData?.totalusers || 0} />
         <StatCard title="Individual Users" value={dashboardData?.individualCount || 0} />
         <StatCard title="Professional Users" value={dashboardData?.professionalCount || 0} />
         <StatCard title="Total Transactions" value={dashboardData?.totalTransactions || 0} />
@@ -205,9 +272,8 @@ const Dashboard = () => {
                 <div className="d-block heading-2 mb-10">Recent Users</div>
                 <ReusableTable
                   columns={userColumns}
-                  data={userData}
+                  data={userTableData}
                   rowKey="_id"
-                  pageSize={2}
 
                 />
               </div>
@@ -223,7 +289,7 @@ const Dashboard = () => {
               columns={columns}
               data={originalData}
               rowKey="key"
-              pageSize={2}
+              pageSize={3}
             />
           </div>
         </div>
