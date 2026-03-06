@@ -191,6 +191,7 @@ const Assets = () => {
                     contractAddress: item?.contractAddress || "***",
                     tokenDecimals: item?.decimals,
                     status: item?.verifyStatus == true ? "active" : "inactive",
+                    
                     networkName: item?.network_id?.networkName,
                 }));
                 console.log(formattedData, "formattedData");
