@@ -22,29 +22,29 @@ const TableHeader = ({
   const [status, setStatus] = useState(undefined);
   const [privateType, setPrivateType] = useState(undefined);
 
-// useEffect(() => {
-//   let temp = [...data];
+useEffect(() => {
+  let temp = [...data];
 
-//   if (searchText) {
-//     temp = temp.filter(item =>
-//       Object.values(item)
-//         .join(" ")
-//         .toLowerCase()
-//         .includes(searchText.toLowerCase())
-//     );
-//   }
+  if (searchText) {
+    temp = temp.filter(item =>
+      Object.values(item)
+        .join(" ")
+        .toLowerCase()
+        .includes(searchText.toLowerCase())
+    );
+  }
 
-//   if (status) {
-//     temp = temp.filter(item => item.status === status);
-//   }
-//   if (privateType) {
-//     temp = temp.filter(item => item.type === privateType);
-//   }
+  if (status) {
+    temp = temp.filter(item => item.status === status);
+  }
+  if (privateType) {
+    temp = temp.filter(item => item.type === privateType);
+  }
 
 
-//   onFilter && onFilter(temp);
+  onFilter && onFilter(temp);
 
-// }, [searchText, status, privateType, data]);
+}, [searchText, status, privateType, data]);
 
   console.log(data, onFilter,"data1");
 
