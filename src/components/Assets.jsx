@@ -44,7 +44,7 @@ const Assets = () => {
         { title: "Token Symbol", dataIndex: "tokenSymbol", key: "tokenSymbol" },
         { title: "Token Decimals", dataIndex: "tokenDecimals", key: "tokenDecimals" },
         { title: "Contract Address", dataIndex: "contractAddress", key: "contractAddress" },
-        { title: "Network Id", dataIndex: "network_id", key: "network_id" },
+        { title: "Network Name", dataIndex: "networkName", key: "networkName" },
         { title: "Status", dataIndex: "status", key: "status" },
     ];
 
@@ -191,7 +191,7 @@ const Assets = () => {
                     contractAddress: item?.contractAddress || "***",
                     tokenDecimals: item?.decimals,
                     status: item?.verifyStatus == true ? "active" : "inactive",
-                    network_id: item?.network_id._id,
+                    networkName: item?.network_id?.networkName,
                 }));
                 console.log(formattedData, "formattedData");
                 setOriginalData(formattedData);
