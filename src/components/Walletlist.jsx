@@ -162,6 +162,7 @@ const Walletlist = () => {
       columns={columns}
         data={tableData}
       rowKey="key"
+      actionType={[]}
     />
     </>
   );
