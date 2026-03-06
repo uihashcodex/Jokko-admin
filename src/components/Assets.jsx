@@ -94,7 +94,7 @@ const Assets = () => {
     ];
 
 
-    const fields =[
+    const fields = [
         {
             label: "Token Name",
             name: "tokenName",
@@ -140,7 +140,7 @@ const Assets = () => {
             type: "select",
             options: statusOptions
         }
-        
+
     ];
     const [filteredData, setFilteredData] = useState(originalData);
     const [open, setOpen] = useState(false);
@@ -182,7 +182,7 @@ const Assets = () => {
 
             if (response.data?.success) {
 
-                const formattedData = response.data.result.docs.map((item, index) => ({
+                const formattedData = response.data.result.map((item, index) => ({
 
                     id: item?._id,
                     sno: index + 1,
@@ -240,12 +240,13 @@ const Assets = () => {
                         token_id: selectedAsset.id,
                         tokenName: values?.tokenName,
                         tokenSymbol: values?.tokenSymbol,
-                        decimals: Number(values?.tokenDecimals),                        contractAddress: values?.contractAddress,
+                        decimals: Number(values?.tokenDecimals), 
+                        contractAddress: values?.contractAddress,
                         network_id: values?.network_id,
                         verifyStatus: values?.status === "active"   // ⭐ ADD THIS
 
                     },
-                    
+
                     {
                         headers: {
                             "Content-Type": "application/json",
@@ -253,9 +254,9 @@ const Assets = () => {
                         },
                         validateStatus: () => true
                     }
-                    
+
                 );
-                console.log(values,"asdfsafdf");
+                console.log(values, "asdfsafdf");
 
                 if (res.data?.success) {
                     messageApi.success(res.data.message);
@@ -348,20 +349,20 @@ const Assets = () => {
     }, [networkOptions]);
     return (
         <>
-               
-                <div
-                    className="mb-5 w-full rounded-lg bg-cover bg-center flex items-center"
-                    style={{
-                        backgroundImage: `url(${theme.dashboardheaderimg.image})`,
-                        height: theme.dashboardheaderimg.height
-                    }}
-                >
-                    <div className="display-3 w-full">
+
+            <div
+                className="mb-5 w-full rounded-lg bg-cover bg-center flex items-center"
+                style={{
+                    backgroundImage: `url(${theme.dashboardheaderimg.image})`,
+                    height: theme.dashboardheaderimg.height
+                }}
+            >
+                <div className="display-3 w-full">
                     <h1 className="text-white p-7 font-bold text-2xl">
                         Asset                </h1>
-                    </div>
                 </div>
-            
+            </div>
+
             <TableHeader
                 data={originalData}
                 onFilter={setFilteredData}
@@ -372,7 +373,7 @@ const Assets = () => {
                 columns={columns}
                 data={filteredData}
                 onUpdate={handleUpdate}
-               
+                pageSize={10}
             />
 
             <ReusableModal

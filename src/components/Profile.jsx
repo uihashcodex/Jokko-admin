@@ -37,7 +37,8 @@ const Profile = () => {
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [form] = Form.useForm();  
-
+  const [passwordForm] = Form.useForm();
+  const [profileForm] = Form.useForm();
 
 
 
@@ -165,23 +166,23 @@ const Profile = () => {
         setLoading(false); // 🔥 store full data
         setIsTwoFAEnabled(res.data.data.twoFactorEnabled === true);
 
-        form.setFieldsValue(
-        //   {
-        //   name: res.data.data.name,
-        //   username: res.data.data.unique_id,
-        //   mobile: res.data.data.mobile,
-        // }
+        profileForm.setFieldsValue(
+          {
+          name: res.data.data.name,
+            email: res.data.data.email,
+            phone: res.data.data.phone,
+        }
       );
       }
-    
+    console.log("PROFILE DATA:", profileData);
 
     } catch (err) {
-      message.error("Failed to fetch profile");
+      setLoading(false);
+      console.log(err.response);
+      message.error(err.response?.data?.message || "Failed to fetch profile");
     }
   };
   useEffect(() => {
-
-
     fetchProfile();
   }, []);
 
@@ -224,8 +225,9 @@ const Profile = () => {
     try {
       const payload = {
         name: values.name,
-        mobile: values.mobile,
         email: values.email,
+        phone: values.phone,
+
       };
       console.log("PROFILE PAYLOAD:", payload);
 
@@ -247,6 +249,8 @@ const Profile = () => {
       message.error(err.response?.data?.message || "Update failed");
     }
   };
+
+
 
 
   return (
@@ -273,7 +277,7 @@ const Profile = () => {
               <p><strong>Name :</strong> {profileData?.name || "-"}</p>
               <p><strong>User Name :</strong> {profileData?.unique_id || "-"}</p>
               <p><strong>Email :</strong>{profileData?.email || "-"}</p>
-              <p><strong>Mobile :</strong> {profileData?.mobile || "-"}</p>
+              <p><strong>Mobile :</strong> {profileData?.phone || "-"}</p>
             </div>
 
             <div className="mt-4 flex items-center gap-2">
@@ -315,7 +319,7 @@ const Profile = () => {
             style={{flex:1}}
             className="flex-1"
           >
-            <Form form={form}  layout="vertical" className="profile-form ar3" onFinish={handleChangePassword}>
+            <Form form={passwordForm}  layout="vertical" className="profile-form ar3" onFinish={handleChangePassword}>
 
               <Form.Item label="Old Password" name="oldPassword" rules={[{ required: true }]}>
                 <InputField size="large" type="password" />
@@ -349,7 +353,7 @@ const Profile = () => {
         icon={<UserOutlined />}
         className="mt-6"
       >
-        <Form layout="vertical" className="profile-form" onFinish={handleUpdateProfile}
+        <Form form={profileForm} layout="vertical" className="profile-form" onFinish={handleUpdateProfile}
 >
           <Row gutter={[16, 16]}>
             <Col xs={24} md={12}>
@@ -364,13 +368,13 @@ const Profile = () => {
             </Col>
 
             <Col xs={24} md={12}>
-              <Form.Item name="username" label="User Name">
-                <InputField size="large" />
+              <Form.Item name="email" label="Email">
+                <InputField size="large" disabled />
               </Form.Item>
             </Col>
 
             <Col xs={24} md={12}>
-              <Form.Item name="mobile" label="Mobile">
+              <Form.Item name="phone" label="Mobile">
                 <InputField size="large" />
               </Form.Item>
             </Col>

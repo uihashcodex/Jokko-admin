@@ -1,6 +1,9 @@
 import { Table, Dropdown, Button } from "antd";
 import { DownOutlined } from "@ant-design/icons";
+import SelectField from "./SelectField";
 import { Empty } from "antd";
+import { Select } from "antd";
+
 
 const ReusableTable = ({
   columns = [],
@@ -8,6 +11,9 @@ const ReusableTable = ({
   loading = false,
   rowKey = "id",
   pageSize = 5,
+  total = 0,
+  currentPage = 1,
+  onPageChange,
   onUpdate,
   onView,
   onEdit,
@@ -107,7 +113,7 @@ console.log(data,"data");
 //   });
 // }
 
-if (actionType?.includes("view")) {
+  if (actionType?.includes ("view")) {
   updatedColumns.push({
     title: "Action",
     key: "action",
@@ -135,38 +141,67 @@ if (actionType?.includes("view")) {
   });
 }
 
-if (actionType?.includes("block")) {
-  updatedColumns.push({
-    title: "Block Users",
-    key: "block",
-    render: (_, record) => {
+// if (actionType?.includes("block")) {
+//   updatedColumns.push({
+//     title: "Block Users",
+//     key: "block",
+//     render: (_, record) => {
 
-      const items = [
-        { key: "block", label: "Block" },
-        { key: "unblock", label: "UnBlock" },
-      ];
+//       const items = [
+//         { key: "block", label: "Block" },
+//         { key: "unblock", label: "UnBlock" },
+//       ];
 
-      return (
-        <Dropdown
-          menu={{
-            items,
-            onClick: ({ key }) => {
-              if (key === "block") onBlock?.(record);
-              if (key === "unblock") onUnblock?.(record);
-            },
-          }}
-          trigger={["click"]}
-        >
-          <Button>
-            Block <DownOutlined />
-          </Button>
-        </Dropdown>
-      );
-    },
-  });
-}
+//       return (
+//         <Dropdown
+//           menu={{
+//             items,
+//             onClick: ({ key }) => {
+//               if (key === "block") onBlock?.(record);
+//               if (key === "unblock") onUnblock?.(record);
+//             },
+//           }}
+//           trigger={["click"]}
+//         >
+//           <Button>
+//             Block <DownOutlined />
+//           </Button>
+//         </Dropdown>
+//       );
+//     },
+//   });
+// }
 
-if (actionType === "action") {
+  if (actionType?.includes("block")) {
+    updatedColumns.push({
+      title: "Block Users",
+      key: "block",
+      render: (_, record) => {
+
+        const handleChange = (value) => {
+          if (value === "block") onBlock?.(record);
+          if (value === "unblock") onUnblock?.(record);
+        };
+
+        return (
+          <Select
+            value={record.status === "blocked" ? "block" : "unblock"}
+            style={{ width: 120 }}
+            onChange={(value) => {
+              if (value === "block") onBlock?.(record);
+              if (value === "unblock") onUnblock?.(record);
+            }}
+            options={[
+              { value: "block", label: "Block" },
+              { value: "unblock", label: "Unblock" },
+            ]}
+          />
+        );
+      },
+    });
+  }
+
+  if (actionType?.includes ("action")) {
   updatedColumns.push({
     title: "Manage",
     key: "manage",
@@ -197,25 +232,29 @@ if (actionType === "action") {
   });
 }
 
-  // if (actionType?.includes("update")) {
-  //   updatedColumns.push({
-  //     title: "Update",
-  //     key: "update",
-  //     render: (_, record) => (
-  //       <Button type="primary" onClick={() => onUpdate?.(record)}>
-  //         {actionLabel || "Update"}
-  //       </Button>
-  //     ),
-  //   });
-  // }
 
-  if (actionType === "update") {
+  if (actionType?.includes ("update")) {
     updatedColumns.push({
       title: "Update",
       key: "update",
       render: (_, record) => (
         <Button type="primary" onClick={() => onUpdate?.(record)}>
           {actionLabel || "Update"}
+        </Button>
+      ),
+    });
+  }
+
+  if (actionType?.includes ("viewMore")) {
+    updatedColumns.push({
+      title: "View",
+      key: "view",
+      render: (_, record) => (
+        <Button
+          type="primary"
+          onClick={() => onView?.(record)}
+        >
+          View Details
         </Button>
       ),
     });
@@ -244,7 +283,11 @@ if (actionType === "action") {
         dataSource={data}
         loading={loading}
         rowKey={rowKey}
-        pagination={{ pageSize }}
+        pagination={{
+          current: currentPage,
+          pageSize: pageSize,
+          total: total,
+          onChange: (page) => onPageChange?.(page), hideOnSinglePage: true, }}
         scroll={{ x: "max-content" }}
         className="custom-ant-table"
         locale={{

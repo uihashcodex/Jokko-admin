@@ -5,55 +5,7 @@ import { useState } from "react";
 import axios from "axios";
 import { constant } from "../const";
 import { useEffect } from "react";
-import { message } from "antd"; 
-
-// const originalData = [
-//   // {
-//   //   key: "1",
-//   //   sno: 1,
-//   //   pair: "BTC/USDT",
-//   //   orderId: "ORD123456",
-//   //   time: "19-02-2026 10:45 AM",
-//   //   buyer: "Arun",
-//   //   orderType: "Limit",
-//   //   tradeType: "Buy",
-//   //   price: "45000",
-//   //   volume: "0.25",
-//   //   total: "11250",
-//   //   fee: "12",
-//   //   exchange: "Binance",
-//   // },
-//   // {
-//   //   key: "2",
-//   //   sno: 1,
-//   //   pair: "USDT",
-//   //   orderId: "WD123",
-//   //   time: "19-02-2026 11:00 AM",
-//   //   buyer: "Vijay",
-//   //   orderType: "-",
-//   //   tradeType: "Withdraw",
-//   //   price: "-",
-//   //   volume: "500",
-//   //   total: "500",
-//   //   fee: "2",
-//   //   exchange: "Wallet",
-//   // },
-//   // {
-//   //   key: "3",
-//   //   sno: 1,
-//   //   pair: "BTC",
-//   //   orderId: "DP456",
-//   //   time: "19-02-2026 12:00 PM",
-//   //   buyer: "System",
-//   //   orderType: "-",
-//   //   tradeType: "Deposit",
-//   //   price: "-",
-//   //   volume: "0.5",
-//   //   total: "-",
-//   //   fee: "0",
-//   //   exchange: "Wallet",
-//   // },
-// ];
+import { message } from "antd";
 
 const columns = [
   { title: "Name", dataIndex: "name", key: "name" },
@@ -75,83 +27,198 @@ const Viewdetail = () => {
   const [filteredData, setFilteredData] = useState(originalData);
   const [open, setOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
+  const [totalUsers, setTotalUsers] = useState(0);
   const handleCreate = () => {
     setOpen(true);
     setSelectedRecord(null);
   };
 
-  const fetUsers = async () => {
+  // const fetUsers = async () => {
+  //   try {
+  //     const [individualRes, professionalRes] = await Promise.all([
+  //       axios.get(`${constant.backend_url}/admin/get-all-individual`),
+  //       axios.get(`${constant.backend_url}/admin/get-all-professional`)
+  //     ]);
+  //     if (individualRes, professionalRes.data?.success) 
+        
+  //       {
+  //       const individualUsers = individualRes.data.result || [];
+  //       const professionalUsers = professionalRes.data.result || [];
+
+  //       const allUsers = [...individualUsers, ...professionalUsers];
+
+  //       const tableData = allUsers.map((user, index) => ({
+  //         key: user?._id,
+  //         sno: index + 1,
+  //         name: ` ${user?.firstname} ${user?.lastname}` || "-",
+  //         email: user?.email || "-",
+  //         phone: user?.phone || "-",
+  //         status: user?.blockstatus ? "blocked" : "active",
+  //         type: user?.type || "-",
+  //         country: user?.country || "-",
+  //         uniqueid: user?.unique_id || "-",
+  //         // exchange: "Wallet"
+  //       }));
+
+  //       console.log(tableData, "tableData");
+  //       setOriginalData(tableData);
+  //       setFilteredData(tableData);
+
+  //     }
+
+  //     else {
+  //       setOriginalData([]);
+  //       setFilteredData([]);
+  //     }
+
+  //   }
+  //   catch (error) {
+  //     console.error("Error fetching users:", error);
+  //     setOriginalData([]);
+  //     setFilteredData([]);
+  //   }
+  // };
+
+ 
+  // const fetUsers = async () => {
+  //   try {
+  //     const res = await axios.get(`${constant.backend_url}/admin/get-all-users`);
+
+  //     if (res.data?.success) {
+
+  //       const users = res.data.result || [];
+
+  //       const tableData = users.map((user, index) => ({
+  //         key: user?._id,
+  //         sno: index + 1,
+  //         name: `${user?.firstname || ""} ${user?.lastname || ""}`.trim() || "-",
+  //         email: user?.email || "-",
+  //         phone: user?.phone || "-",
+  //         status: user?.blockstatus ? "blocked" : "active",
+  //         type: user?.type || "-",
+  //         country: user?.country || "-",
+  //         uniqueid: user?.unique_id || "-"
+  //       }));
+
+  //       console.log(tableData, "tableData");
+
+  //       setOriginalData(tableData);
+  //       setFilteredData(tableData);
+
+  //     } else {
+  //       setOriginalData([]);
+  //       setFilteredData([]);
+  //     }
+
+  //   } catch (error) {
+  //     console.error("Error fetching users:", error);
+  //     setOriginalData([]);
+  //     setFilteredData([]);
+  //   }
+  // };
+
+  const [filters, setFilters] = useState({
+    search: "",
+    type: "",
+    verifyStatus: ""
+  });
+
+  const fetUsers = async (filters = {}) => {
     try {
-      const [individualRes, professionalRes] = await Promise.all([
-        axios.get(`${constant.backend_url}/admin/get-all-individual`),
-        axios.get(`${constant.backend_url}/admin/get-all-professional`)
-      ]);
-      if (individualRes, professionalRes.data?.success) {
-        const individualUsers = individualRes.data.result || [];
-        const professionalUsers = professionalRes.data.result || [];
+           
+      const cleanFilters = Object.fromEntries(
+        Object.entries(filters).filter(([_, v]) => v !== "" && v !== undefined)
+      );
 
-        const allUsers = [...individualUsers, ...professionalUsers];
+      const res = await axios.get(`${constant.backend_url}/admin/get-all-users`,
+        {
+          params: {
+            ...cleanFilters,
+            page: page,
+            limit: 10
+          }
+        }
+      );
 
-        const tableData = allUsers.map((user, index) => ({
+      if (res.data?.success) {
+
+        const users = res.data.result || [];
+        setTotalUsers(res.data.total);
+        const tableData = users.map((user, index) => ({
           key: user?._id,
           sno: index + 1,
-          name: ` ${user?.firstname} ${user?.lastname}` || "-",
+          name: `${user?.firstname || ""} ${user?.lastname || ""}`.trim() || "-",
           email: user?.email || "-",
           phone: user?.phone || "-",
-          status: user?.blockStatus ? "blocked" : "active",
+          status: user?.blockstatus ? "blocked" : "active",
           type: user?.type || "-",
           country: user?.country || "-",
-          uniqueid: user?.unique_id || "-",
-          // exchange: "Wallet"
+          uniqueid: user?.unique_id || "-"
         }));
 
         console.log(tableData, "tableData");
+
         setOriginalData(tableData);
         setFilteredData(tableData);
 
-      }
-
-      else {
+      } else {
         setOriginalData([]);
         setFilteredData([]);
       }
 
-    }
-    catch (error) {
+    } catch (error) {
       console.error("Error fetching users:", error);
       setOriginalData([]);
       setFilteredData([]);
     }
   };
-
+ 
   useEffect(() => {
-    fetUsers();
-  }, [page]);
+    fetUsers(filters);
+  }, [page, filters]);
+  // const updateFilter = (key, value) => {
+  //   const updatedFilters = { ...filters, [key]: value };
 
-const blockUser = async (record) => {
-  try {
-    const res = await axios.post(
-      `${constant.backend_url}/admin/block-user`,
-      {
-        id: record.key,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
-        },
-      }
-    );
+  //   setFilters(updatedFilters);
+  //   fetUsers(updatedFilters);
+  // };
 
-    if (res.data?.success) {
-      message.success(res.data.message);
+  const updateFilter = (key, value) => {
 
-      // reload users list
-      fetUsers();
+    if (key === "verifyStatus") {
+      value = value === "active" ? true : value === "inactive" ? false : "";
     }
-  } catch (error) {
-    console.error("Error:", error);
-  }
-};
+
+    const updatedFilters = { ...filters, [key]: value };
+
+    setFilters(updatedFilters);
+    fetUsers(updatedFilters);
+  };
+
+  const blockUser = async (record) => {
+    try {
+      const res = await axios.post(
+        `${constant.backend_url}/admin/block-user`,
+        {
+          id: record.key,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+          },
+        }
+      );
+
+      if (res.data?.success) {
+        message.success(res.data.message);
+
+        // reload users list
+        fetUsers();
+      }
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
 
 
   return (
@@ -164,25 +231,33 @@ const blockUser = async (record) => {
         showStatusFilter={true}
         showCreateButton={false}
         showPrivateFilter={true}
-      />
-    <ReusableTable
-  columns={columns}
-  data={filteredData}
-  pageSize={7}
-  rowKey="key"
-  actionType={["view", "block"]}
-  onView={(record, section) => {
-    if (section === "wallet") {
-      navigate(`/wallet/${record.key}`, { state: record });
-    }
+        onSearch={(value) => updateFilter("search", value)}
+        onTypeChange={(value) => updateFilter("type", value)}
+        onVerifyChange={(value) => updateFilter("verifyStatus", value)}
+        pageSize={10}
 
-    if (section === "transaction") {
-      navigate(`/transaction/${record.key}`, { state: record });
-    }
-  }}
-  onBlock={(record) => blockUser(record)}
-  onUnblock={(record) => blockUser(record)}
-/>
+      />
+      <ReusableTable
+        columns={columns}
+        data={filteredData}
+        pageSize={10}
+        total={totalUsers}
+        currentPage={page}
+        onPageChange={(p) => setPage(p)}    
+            rowKey="key"
+        actionType={["view", "block"]}
+        onView={(record, section) => {
+          if (section === "wallet") {
+            navigate(`/wallet/${record.key}`, { state: record });
+          }
+
+          if (section === "transaction") {
+            navigate(`/transaction/${record.key}`, { state: record });
+          }
+        }}
+        onBlock={(record) => blockUser(record)}
+        onUnblock={(record) => blockUser(record)}
+      />
     </div>
   );
 };

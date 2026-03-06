@@ -38,9 +38,10 @@ const Network = () => {
     const [messageApi, contextHolder] = message.useMessage();
 
 
-    const [filteredData, setFilteredData] = useState(originalData);
+    // const [filteredData, setFilteredData] = useState(originalData);
     const [open, setOpen] = useState(false);
     const [selectedRecord, setSelectedRecord] = useState(null);
+    const [totalUsers, setTotalUsers] = useState(0);
 
     const columns = [
         { title: "S.no", dataIndex: "sno", key: "sno" },
@@ -159,59 +160,154 @@ const Network = () => {
         : fields.filter(f => f.name !== "status");
 
 
+    const [filters, setFilters] = useState({
+        search: "",
+        type: "",
+        verifyStatus: ""
+    });
+
+
+    // const getNetworks = async () => {
+    //     try {
+    //         const cleanFilters = Object.fromEntries(
+    //             Object.entries(filters).filter(([_, v]) => v !== "" && v !== undefined)
+    //         );
+
+    //         // const response = await axios.post(
+    //         //     `${constant.backend_url}/assets/get-all-networks`,
+    //         //     {},
+    //         //     {
+    //         //         params: {
+    //         //         ...cleanFilters,
+    //         //             page: page,
+    //         //             limit: 10
+    //         //         }
+    //         //     },
+    //         //     {
+    //         //         headers: {
+    //         //             "Content-Type": "application/json",
+    //         //             Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+    //         //         },
+    //         //     }
+    //         // );
+    //         const response = await axios.post(
+    //             `${constant.backend_url}/assets/get-all-networks`,
+    //             {},
+    //             {
+    //                 params: {
+    //                     ...cleanFilters,
+    //                     page: page,
+    //                     limit: 10
+    //                 },
+    //                 headers: {
+    //                     "Content-Type": "application/json",
+    //                     Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+    //                 }
+    //             }
+    //         );
+    //         if (response.data?.success) {
+    //             const docs = response.data.result.docs || [];
+
+    //             setTotalUsers(response.data.result.totalDocs);
+
+    //             console.log(response.data.result.docs[0]?.verifyStatus, "dfghjkl");
+    //             const formattedData = docs.map((item, index) => ({
+
+
+    //                 id: item?._id,
+    //                 sno: (page - 1) * 10 + index + 1,
+    //                  networkname: item?.networkName,
+    //                 networksymbol: item?.networkSymbol,
+    //                 rpcUrl: item?.rpcUrl,
+    //                 blockExplorerUrl: item?.blockExplorerUrl,
+    //                 status: item?.verifyStatus == true ? "active" : "inactive",
+    //                 // status: item?.verifyStatus ? "active" : "inactive",
+    //                 // status: item?.verifyStatus,
+    //                 type: item?.type
+    //             }));
+    //             console.log(formattedData, "formattedData");
+    //             setOriginalData(formattedData);
+    //             // setFilteredData(formattedData);
+
+    //         } else {
+    //             setOriginalData([]);
+    //             // setFilteredData([]);
+    //         }
+
+    //     } catch (error) {
+    //         console.log(error);
+    //         setOriginalData([]);
+    //         // setFilteredData([]);
+    //     }
+    // };
+
+ 
+
     const getNetworks = async () => {
         try {
-            const response = await axios.post(
-                `${constant.backend_url}/assets/get-all-networks?page=1&limit=10`,
+            const cleanFilters = Object.fromEntries(
+                Object.entries(filters).filter(([_, v]) => v !== "" && v !== undefined)
+            );
 
+            const response = await axios.post(
+                `${constant.backend_url}/assets/get-all-networks`,
                 {
 
+                    ...cleanFilters,
+                    page: page,
+                    limit: 10
                 },
                 {
+                  
                     headers: {
-                        "Content-Type": "application/json",
                         Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
-                    },
+                    }
                 }
             );
 
             if (response.data?.success) {
-                console.log(response.data.result.docs[0]?.verifyStatus, "dfghjkl");
-                const formattedData = response.data.result.docs.map((item, index) => ({
 
+                const docs = response.data.result.docs || [];
 
-                    id: item?._id,
-                    sno: index + 1,
-                    networkname: item?.networkName,
-                    networksymbol: item?.networkSymbol,
-                    rpcUrl: item?.rpcUrl,
-                    blockExplorerUrl: item?.blockExplorerUrl,
-                    status: item?.verifyStatus == true ? "active" : "inactive",
-                    // status: item?.verifyStatus ? "active" : "inactive",
-                    // status: item?.verifyStatus,
-                    type: item?.type
+                setTotalUsers(response.data.result.totalDocs);
+
+                const formattedData = docs.map((item, index) => ({
+                    id: item._id,
+                    sno: (page - 1) * 10 + index + 1,
+                    networkname: item.networkName,
+                    networksymbol: item.networkSymbol,
+                    rpcUrl: item.rpcUrl,
+                    blockExplorerUrl: item.blockExplorerUrl,
+                    status: item.verifyStatus == true ? "active" : "inactive",
+                    type: item.type
                 }));
-                console.log(formattedData, "formattedData");
+
                 setOriginalData(formattedData);
-                setFilteredData(formattedData);
 
             } else {
                 setOriginalData([]);
-                setFilteredData([]);
             }
 
         } catch (error) {
             console.log(error);
             setOriginalData([]);
-            setFilteredData([]);
         }
     };
-
-
-
     useEffect(() => {
         getNetworks();
-    }, [page]);
+    }, [page, filters]);
+
+    const updateFilter = (key, value) => {
+
+        if (key === "verifyStatus") {
+            value = value === "active" ? "true" : value === "inactive" ? "false" : "";
+        }
+
+        setFilters(prev => ({
+            ...prev,
+            [key]: value
+        }));
+    };
 
 
 
@@ -399,66 +495,23 @@ const Network = () => {
 
                 <TableHeader
                     data={originalData}
-                    onFilter={setFilteredData}
+                    // onFilter={setFilteredData}
                     onCreate={handleCreate}
                     showStatusFilter={true}
+                    onSearch={(value) => updateFilter("search", value)}
+                    onTypeChange={(value) => updateFilter("type", value)}
+                    onVerifyChange={(value) => updateFilter("verifyStatus", value)}
                 />
                 <ReusableTable
                     columns={columns}
-                    data={filteredData}
+                    data={originalData}
                     onUpdate={handleUpdate}
-                />
+                    pageSize={10}
+                    total={totalUsers}
+                    currentPage={page}
+                    onPageChange={(p) => setPage(p)} 
+                    />
 
-                {/* <Modal
-                title="Update Network"
-                open={open}
-                onCancel={() => setOpen(false)}
-                footer={null}
-                centered
-                width={600}
-            >
-                <Form
-                    form={form}
-                    layout="vertical"
-                    onFinish={handleSubmit}
-                >
-                    <Form.Item label="Network Name" name="name">
-                        <Input />
-                    </Form.Item>
-
-                    <Form.Item label="Network Symbol" name="symbol">
-                        <Input />
-                    </Form.Item>
-
-                    <Form.Item label="Site URL" name="siteUrl">
-                        <Input />
-                    </Form.Item>
-
-                    <Form.Item
-                        label="Deposit Enable"
-                        name="deposit"
-                        valuePropName="checked"
-                    >
-                        <Switch />
-                    </Form.Item>
-
-                    <Form.Item
-                        label="Withdraw Enable"
-                        name="withdraw"
-                        valuePropName="checked"
-                    >
-                        <Switch />
-                    </Form.Item>
-
-                    <Row justify="start">
-                        <Col>
-                            <Button type="primary" htmlType="submit">
-                                Submit
-                            </Button>
-                        </Col>
-                    </Row>
-                </Form>
-            </Modal> */}
                 <ReusableModal
                     open={open}
                     onCancel={() => setOpen(false)}
