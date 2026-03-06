@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { constant } from "../const";
 import TableHeader from "../reuseable/TableHeader";
+import ReusableModal from "../reuseable/ReusableModal";
 
 
 const TransectionHistory = () => {
@@ -17,40 +18,25 @@ const TransectionHistory = () => {
   const [transactionData, setTransactionData] = useState([]);
   const [alltrandata, setAlltrandata] = useState([]);
   const [filteredTableData, setFilteredTableData] = useState([]);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedTrans, setSelectedTrans] = useState(null);
+  const TransactionFields = [
+    {
+      name: "transactionHash", label: "Transaction", type: "copy",
+    },
+    {
+      name: "networkId", label: "Network ID", type: "copy",
 
-  // const originalData = [
-  //   {
-  //     key: "1",
-  //     pair: "BTC/USDT",
-  //     orderId: "ORD123456",
-  //     buyer: "Arun",
-  //     tradeType: "Buy",
-  //     price: "45000",
-  //     volume: "0.25",
-  //     exchange: "Binance",
-  //   },
-  //   {
-  //     key: "2",
-  //     pair: "ETH/USDT",
-  //     orderId: "ORD789456",
-  //     buyer: "Vijay",
-  //     tradeType: "Sell",
-  //     price: "2500",
-  //     volume: "1",
-  //     exchange: "Binance",
-  //   },
-  //   {
-  //     key: "3",
-  //     pair: "BTC",
-  //     orderId: "ORD456123",
-  //     buyer: "System",
-  //     tradeType: "Deposit",
-  //     price: "-",
-  //     volume: "0.5",
-  //     exchange: "Wallet",
-  //   },
-  // ];
+    },
+    {
+      name: "from", label: "From", type: "copy",
+    },
+    {
+      name: "to", label: "To", type: "copy",
 
+    },
+  ];
+  
   const getTransation = async () => {
     try {
       const res = await axios.post(
@@ -94,6 +80,10 @@ const TransectionHistory = () => {
   }, [id]);
 
 
+  useEffect(() => {
+    getAllTransaction();
+  }, []);
+
   const getAllTransaction = async () => {
     try {
       const res = await axios.get(`${constant.backend_url}/admin/get-all-transactions`,
@@ -129,9 +119,7 @@ const TransectionHistory = () => {
     }
   };
 
-  useEffect(() => {
-    getAllTransaction();
-  }, []);
+
 
 
   // useEffect(() => {
@@ -152,11 +140,26 @@ const TransectionHistory = () => {
 
 
   const columns = [
-    { title: "Transaction", dataIndex: "transactionHash" },
+    { title: "Transaction", dataIndex: "transactionHash" ,
+      render: (trans) => {
+        if (!trans) return "-";
+        return `${trans.slice(0, 8)}...`;
+      }
+    },
     { title: "Network ID", dataIndex: "networkId" },
     { title: "Amount", dataIndex: "amount" },
-    { title: "From", dataIndex: "from" },
-    { title: "To", dataIndex: "to" },
+    { title: "From", dataIndex: "from",
+      render: (frm) => {
+        if (!frm) return "-";
+        return `${frm.slice(0, 8)}...`;
+      }
+     },
+    { title: "To", dataIndex: "to",
+      render: (to) => {
+        if (!to) return "-";
+        return `${to.slice(0, 8)}...`;
+      }
+     },
     { title: "Token Symbol", dataIndex: "tokenSymbol" },
     { title: "Status", dataIndex: "status" },
   ];
@@ -187,8 +190,21 @@ const TransectionHistory = () => {
         columns={columns}
           data={id ? transactionData : filteredTableData}
         rowKey="key"
-        actionType={["", ""]}
+        actionType={["viewMore"]}
+        onView={(record) => {
+          setSelectedTrans(record);
+          setModalOpen(true);
+        }}
+      />
 
+      <ReusableModal
+        open={modalOpen}
+        onCancel={() => setModalOpen(false)}
+        title="Wallet Details"
+        description=" "
+        fields={TransactionFields}
+        initialValues={selectedTrans}
+        showFooter={false}
       />
      
     </>

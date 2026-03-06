@@ -77,6 +77,16 @@ const Dashboard = () => {
 
   // transaction table configuration
   const transactionColumns = [
+
+    {
+      title: "Network Name",
+      dataIndex: "networkName",
+    },
+    {
+      title: "Token Symbol",
+      dataIndex: "tokenSymbol",
+    },
+
     {
       title: "Hash",
       dataIndex: "transactionHash",
@@ -108,7 +118,7 @@ const Dashboard = () => {
       },
     },
     { title: "Amount", dataIndex: "amount" },
-    { title: "Token", dataIndex: "tokenSymbol" },
+    // { title: "Symbol", dataIndex: "tokenSymbol" },
     { title: "Status", dataIndex: "status" },
     {
       title: "Date",
@@ -190,40 +200,40 @@ const Dashboard = () => {
   //     console.error(error);
   //   }
   // };
- 
- 
- 
-const getuserstabledata = async () => {
-  try {
-    const res = await axios.get(
-      `${constant.backend_url}/admin/get-all-users`,
-      {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
-        },
+
+
+
+  const getuserstabledata = async () => {
+    try {
+      const res = await axios.get(
+        `${constant.backend_url}/admin/get-all-users`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+          },
+        }
+      );
+
+      if (res.data?.success) {
+        const data = res.data.result
+          .slice(0, 3)
+          .map((item, index) => ({
+            id: item?._id,
+            firstname: item?.firstname || "-",
+            lastname: item?.lastname || "-",
+            email: item?.email || "-",
+            phone: item?.phone || "-",
+            role: item?.role || "-",
+            type: item?.type || "-",
+            verifyStatus: item?.verifyStatus ? "Yes" : "No",
+          }));
+
+        setUserTableData(data);
       }
-    );
-
-    if (res.data?.success) {
-      const data = res.data.result
-        .slice(0, 3)
-        .map((item, index) => ({
-          id: item?._id,
-          firstname: item?.firstname || "-",
-          lastname: item?.lastname || "-",
-          email: item?.email || "-",
-          phone: item?.phone || "-",
-          role: item?.role || "-",
-          type: item?.type || "-",
-          verifyStatus: item?.verifyStatus ? "Yes" : "No",
-        }));
-
-      setUserTableData(data);
+    } catch (error) {
+      console.error(error);
     }
-  } catch (error) {
-    console.error(error);
-  }
-};
+  };
   useEffect(() => {
     getuserstabledata();
   }, []);
@@ -234,30 +244,31 @@ const getuserstabledata = async () => {
       const res = await axios.get(
         `${constant.backend_url}/admin/get-all-transactions`,
         {
-       
+
           headers: {
             Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
           },
         }
       );
 
-    if (res.data?.success) {
-  const data = res.data.result
-    .slice(0, 3)
-    .map((item, index) => ({
-      id: item?._id,
-      key: index + 1,
-      transactionHash: item?.transactionHash || "-",
-      from: item?.from || "-",
-      to: item?.to || "-",
-      amount: item?.amount || "-",
-      tokenSymbol: item?.tokenSymbol || "-",
-      status: item?.status || "-",
-      DateTime: item?.DateTime || item?.createdAt || "-",
-    }));
+      if (res.data?.success) {
+        const data = res.data.result
+          .slice(0, 3)
+          .map((item, index) => ({
+            id: item?._id,
+            key: index + 1,
+            networkName: item?.network.networkName || "-",
+            tokenSymbol: item?.tokenSymbol || "-",
+            transactionHash: item?.transactionHash || "-",
+            from: item?.from || "-",
+            to: item?.to || "-",
+            amount: item?.amount || "-",
+            status: item?.status || "-",
+            DateTime: item?.DateTime || item?.createdAt || "-",
+          }));
 
-  setTranHistory(data);
-}
+        setTranHistory(data);
+      }
     } catch (error) {
       console.error(error);
     }
@@ -283,9 +294,9 @@ const getuserstabledata = async () => {
         }}
       >
         <div className="display-3 w-full">
-        <h1 className="text-white p-7 font-bold text-2xl">
-          DashBoard
-        </h1>
+          <h1 className="text-white p-7 font-bold text-2xl">
+            DashBoard
+          </h1>
         </div>
       </div>
       {/* Cards Section */}
@@ -309,13 +320,13 @@ const getuserstabledata = async () => {
             <div>
               <div className="dashboard-bg">
                 <div className="d-block heading-2 mb-10">Recent Users</div>
-             <ReusableTable
-  columns={userColumns}
-  actionType={[]}
-  data={userTableData}
-  rowKey="id"
-  pagination={false}
-/>
+                <ReusableTable
+                  columns={userColumns}
+                  actionType={[]}
+                  data={userTableData}
+                  rowKey="id"
+                  pagination={false}
+                />
                 <div className="text-right mt-2">
                   <button
                     className="px-4 py-2 bg-blue-600 text-white rounded"
@@ -335,13 +346,13 @@ const getuserstabledata = async () => {
 
             <div className="d-block heading-2 mb-10">Transation History</div>
 
- <ReusableTable
-  columns={transactionColumns}
-  actionType={[]}
-  data={tranHistory}
-  rowKey="id"
-  pagination={false}
-/>
+            <ReusableTable
+              columns={transactionColumns}
+              actionType={[]}
+              data={tranHistory}
+              rowKey="id"
+              pagination={false}
+            />
             <div className="text-right mt-2">
               <button
                 className="px-4 py-2 bg-blue-600 text-white rounded"

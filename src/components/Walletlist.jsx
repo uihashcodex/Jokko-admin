@@ -7,6 +7,9 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { constant } from "../const";
 import TableHeader from "../reuseable/TableHeader";
+import ReusableModal from "../reuseable/ReusableModal";
+import { CopyOutlined } from "@ant-design/icons";
+import { message } from "antd";
 
 const Walletlist = () => {
   const { state } = useLocation();
@@ -37,11 +40,13 @@ const Walletlist = () => {
   //   },
 
   // ];
-  const [originalData,setOriginalData] = useState();
+  const [originalData, setOriginalData] = useState();
   const [allwalletData, setAllWalletData] = useState([]);
   const [walletData, setWalletData] = useState([]);
   const [filteredTableData, setFilteredTableData] = useState([]);
   const tableData = id ? walletData : filteredTableData;
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedWallet, setSelectedWallet] = useState(null);
   const getWallets = async () => {
     try {
       const res = await axios.post(
@@ -50,20 +55,24 @@ const Walletlist = () => {
       );
 
       if (res.data?.success) {
+        const { firstname, lastname, wallets } = res.data.result;
 
-        const wallets = res.data.result.wallets.map((item) => ({
-          key: item._id,
-          walletname: item.walletName,
-          btcaddress: item.btcAddress,
-          evmaddress: item.evmAddress,
-          solanaaddress: item.solAddress,
-          xrpaddress: item.xrpAddress,
-          status: item.checkStatus ? "Active" : "Inactive",
-          // phrase: item.randomCheck?.join(", ")
+
+        const walletsList = wallets.map((item) => ({
+          key: item?._id,
+          // walletname: item?.walletName,
+          walletname: `${firstname} ${lastname}`, // 👈 added
+
+          btcaddress: item?.btcAddress,
+          evmaddress: item?.evmAddress,
+          solanaaddress: item?.solAddress,
+          xrpaddress: item?.xrpAddress,
+          status: item?.checkStatus ? "Active" : "Inactive",
+          // phrase: item?.randomCheck?.join(", ")
         }));
         console.log(wallets, "wallets");
 
-        setWalletData(wallets);
+        setWalletData(walletsList);
       }
 
     } catch (error) {
@@ -82,22 +91,22 @@ const Walletlist = () => {
   const getAllWallets = async () => {
     try {
       const res = await axios.get(`${constant.backend_url}/users/get-all-wallets`,
-   {
-    headers: {
-      Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
-    },
-   }
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+          },
+        }
 
       );
       if (res.data?.success) {
         const walletres = res.data.result.map((item) => ({
-          key: item._id,
-          walletname: item.walletName,
-          btcaddress: item.btcAddress,
-          evmaddress: item.evmAddress,
-          solanaaddress: item.solAddress,
-          xrpaddress: item.xrpAddress,
-          status: item.checkStatus == true ? "active" : "inactive",
+          key: item?._id,
+          walletname: item?.firstname || item?.walletName,
+          btcaddress: item?.btcAddress,
+          evmaddress: item?.evmAddress,
+          solanaaddress: item?.solAddress,
+          xrpaddress: item?.xrpAddress,
+          status: item?.checkStatus == true ? "active" : "inactive",
           // phrase: item.randomCheck?.join(", ")
         }))
 
@@ -116,7 +125,14 @@ const Walletlist = () => {
     getAllWallets();
   }, []);
 
-
+  const walletFields = [
+    // { name: "walletname", label: "Wallet Name", type: "text", disabled: true },
+    { name: "btcaddress", label: "BTC Address", type: "copy", disabled: false, },
+    { name: "evmaddress", label: "EVM Address", type: "copy",  },
+    { name: "solanaaddress", label: "Solana Address", type: "copy",  },
+    { name: "xrpaddress", label: "XRP Address", type: "copy", },
+    // { name: "status", label: "Status", type: "text", disabled: true },
+  ];
 
   // 👇 Filter logic
   // const filteredData = id
@@ -124,11 +140,45 @@ const Walletlist = () => {
   //   : originalData;
 
   const columns = [
-    { title: "Wallet Name", dataIndex: "walletname",key: "walletname" },
-    { title: "BTC Address", dataIndex: "btcaddress", key: "btcaddress" },
-    { title: "EVM Address", dataIndex: "evmaddress", key: "evmaddress" },
-    { title: "Solana Address", dataIndex: "solanaaddress", key: "solanaaddress", },
-    { title: "XRP Address", dataIndex: "xrpaddress", key: "xrpaddress" },
+    { title: "Wallet Name", dataIndex: "walletname", key: "walletname" },
+    {
+      title: "BTC Address", dataIndex: "btcaddress", key: "btcaddress",
+      render: (addr) => {
+        if (!addr) return "-";
+        const start = addr.slice(0, 6);
+        const end = addr.slice(-8);
+        return `${start}...${end}`;
+      },
+    },
+    {
+      title: "EVM Address", dataIndex: "evmaddress", key: "evmaddress",
+      render: (evm) => {
+        if (!evm) return "-";
+        const start = evm.slice(0, 6);
+        const end = evm.slice(-8);
+        return `${start}...${end}`;
+      },
+    },
+    {
+      title: "Solana Address", dataIndex: "solanaaddress", key: "solanaaddress",
+
+      render: (sol) => {
+        if (!sol) return "-";
+        const start = sol.slice(0, 6);
+        const end = sol.slice(-8);
+        return `${start}...${end}`;
+      },
+
+    },
+    {
+      title: "XRP Address", dataIndex: "xrpaddress", key: "xrpaddress",
+      render: (xrp) => {
+        if (!xrp) return "-";
+        const start = xrp.slice(0, 6);
+        const end = xrp.slice(-8);
+        return `${start}...${end}`;
+      },
+    },
     { title: "Status", dataIndex: "status", key: "status" },
     // { title: "Phrase", dataIndex: "phrase", key: "phrase" },
   ];
@@ -136,19 +186,20 @@ const Walletlist = () => {
   // const filteredData = walletData.length ? walletData : originalData;
   const filteredData = id ? walletData : allwalletData;
 
+
   return (
     <>
       <div className="flex items-center gap-3 mb-4">
         {state && (
           <LeftCircleOutlined
-          onClick={() => navigate(-1)}
+            onClick={() => navigate(-1)}
             style={{ fontSize: "20px", cursor: "pointer", color: "white" }} History
-          className="back-icon"
-        />
+            className="back-icon"
+          />
         )}
-        
+
         <h2 className="text-2xl font-semibold white">{state ? "Wallet History" : "Wallet Details"} </h2>
-      </div>   
+      </div>
       {!id && (
         <TableHeader
           data={allwalletData}
@@ -158,12 +209,28 @@ const Walletlist = () => {
         />
       )}
 
-       <ReusableTable
-      columns={columns}
+      <ReusableTable
+        columns={columns}
         data={tableData}
-      rowKey="key"
-      actionType={[]}
-    />
+        rowKey="key"
+       pageSize={10}
+        actionType={["viewMore"]}
+
+        onView={(record) => {
+          setSelectedWallet(record);
+          setModalOpen(true);
+        }}
+      />
+
+      <ReusableModal
+        open={modalOpen}
+        onCancel={() => setModalOpen(false)}
+        title="Wallet Details"
+        description=" "
+        fields={walletFields}
+        initialValues={selectedWallet}
+        showFooter={false} 
+      />
     </>
   );
 };

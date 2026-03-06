@@ -9,6 +9,9 @@ const { Search } = Input;
 const TableHeader = ({
   data = [],
   onFilter,
+  onSearch, 
+  onTypeChange,
+  onVerifyChange,
   showStatusFilter = true,
   showPrivateFilter = false,
   showCreateButton = true,
@@ -18,29 +21,30 @@ const TableHeader = ({
   const [searchText, setSearchText] = useState("");
   const [status, setStatus] = useState(undefined);
   const [privateType, setPrivateType] = useState(undefined);
-useEffect(() => {
-  let temp = [...data];
 
-  if (searchText) {
-    temp = temp.filter(item =>
-      Object.values(item)
-        .join(" ")
-        .toLowerCase()
-        .includes(searchText.toLowerCase())
-    );
-  }
+// useEffect(() => {
+//   let temp = [...data];
 
-  if (status) {
-    temp = temp.filter(item => item.status === status);
-  }
-  if (privateType) {
-    temp = temp.filter(item => item.type === privateType);
-  }
+//   if (searchText) {
+//     temp = temp.filter(item =>
+//       Object.values(item)
+//         .join(" ")
+//         .toLowerCase()
+//         .includes(searchText.toLowerCase())
+//     );
+//   }
+
+//   if (status) {
+//     temp = temp.filter(item => item.status === status);
+//   }
+//   if (privateType) {
+//     temp = temp.filter(item => item.type === privateType);
+//   }
 
 
-  onFilter && onFilter(temp);
+//   onFilter && onFilter(temp);
 
-}, [searchText, status, privateType, data]);
+// }, [searchText, status, privateType, data]);
 
   console.log(data, onFilter,"data1");
 
@@ -51,7 +55,13 @@ useEffect(() => {
         <Search
           placeholder="Search..."
           allowClear
-          onChange={(e) => setSearchText(e.target.value)}
+          // onChange={(e) => setSearchText(e.target.value)}
+          // onChange={(e) => {
+          //   const value = e.target.value;
+          //   setSearchText(value);
+          //   onSearch && onSearch(value); // 👈 send value to parent
+          // }}
+          onChange={(e) => onSearch?.(e.target.value)}
           className="reusable-modal-search"
         />
       </Col>
@@ -61,7 +71,20 @@ useEffect(() => {
           <SelectField
             placeholder="Select Status"
             value={status}
-            onChange={setStatus}
+            // onChange={setStatus}
+            // onChange={(value) => onVerifyChange?.(value)}
+            // onChange={(value) => {
+            //   setStatus(value);
+
+            //   const verifyValue = value === "active" ? true : false;
+            //   onVerifyChange?.(verifyValue);
+            // }}
+
+            onChange={(value) => {
+              setStatus(value);
+              onVerifyChange?.(value);
+            }}
+
             options={[
               { label: "Active", value: "active" },
               { label: "Inactive", value: "inactive" }
@@ -75,7 +98,9 @@ useEffect(() => {
           <SelectField
             placeholder="Select Type"
             value={privateType}
-            onChange={setPrivateType}
+            // onChange={setPrivateType}
+            onChange={(value) => onTypeChange?.(value)}
+
             options={[
               { label: "Individual", value: "individual" },
               { label: "Professional", value: "professional" }

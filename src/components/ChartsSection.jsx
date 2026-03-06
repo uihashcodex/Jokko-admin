@@ -10,7 +10,10 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
-
+import axios from "axios";
+import { useEffect, useState } from "react";
+import { constant } from "../const";
+import { CartesianGrid } from "recharts";
 
 
 const COLORS = ["#6366f1", "#22c55e", "#f59e0b"];
@@ -18,11 +21,96 @@ const COLORS = ["#6366f1", "#22c55e", "#f59e0b"];
 export default function DashboardCharts({ dashboardData }) {
 
 
-  const growthData = [
-    { name: "Users", value: dashboardData?.totalUsers || 0 },
-    { name: "Transactions", value: dashboardData?.totalTransactions || 0 },
-    { name: "Networks", value: dashboardData?.totalNetworks || 0 },
+
+
+
+  const [weeklyUsers, setWeeklyUsers] = useState([]);
+
+  const [weeklyTrans, setWeeklyTrans] = useState([]);
+
+  useEffect(() => {
+    getWeeklyUsers();
+  }, []);
+
+  const getWeeklyUsers = async () => {
+    try {
+      const res = await axios.get(`${constant.backend_url}/admin/weekly-users`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+          },
+        }
+      );
+
+      const formatted = res.data.result.map((item) => ({
+        date: item[0],   
+        count: item[1]   
+      }));
+
+      setWeeklyUsers(formatted);
+
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const getWeeklyTransactions = async () => {
+    try {
+      const res = await axios.get(`${constant.backend_url}/admin/weekly-transactions`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+          },
+        }
+      );
+
+      const trasnchart = res.data.result.map((item) => ({
+        date: item[0],
+        count: item[1]
+      }));
+
+      setWeeklyTrans(trasnchart);
+
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    getWeeklyTransactions();
+  }, []);
+
+  // const UserData = [
+  //   ["Mon", 20],
+  //   ["Tue", 35],
+  //   ["Wed", 40],
+  //   ["Thu", 28],
+  //   ["Fri", 50],
+  //   ["Sat", 45],
+  //   ["Sun", 60]
+    
+  // ];
+
+  // const userWeekData = UserData.map(item => ({
+  //   date: item[0],
+  //   count: item[1]
+  // }));
+
+  const transactionData = [
+    ["Mon", 20],
+    ["Tue", 35],
+    ["Wed", 40],
+    ["Thu", 28],
+    ["Fri", 50],
+    ["Sat", 45],
+    ["Sun", 60]
   ];
+
+  const transactionWeekData = transactionData.map(item => ({
+    date: item[0],
+    count: item[1]
+  }));
+
 
   const pieData = [
     { name: "Platform fee", value: dashboardData?.individualCount || 0 },
@@ -33,15 +121,18 @@ export default function DashboardCharts({ dashboardData }) {
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-7">
       
       <div className="dashboard-bg">
-        <h2 className="text-lg font-semibold mb-4 text-white">Growth Overview</h2>
+        <h2 className="text-lg font-semibold mb-4 text-white">User Details</h2>
+
         <ResponsiveContainer width="100%" height="85%">
-          <LineChart data={growthData}>
-            <XAxis dataKey="name" />
+          <LineChart data={weeklyUsers}>
+            <CartesianGrid strokeDasharray="3 3" />
+
+            <XAxis dataKey="date" />
             <YAxis />
             <Tooltip />
             <Line
               type="monotone"
-              dataKey="value"
+              dataKey="count"
               stroke="#6366f1"
               strokeWidth={3}
             />
@@ -50,6 +141,24 @@ export default function DashboardCharts({ dashboardData }) {
       </div>
 
       <div className="dashboard-bg">
+        <h2 className="text-lg font-semibold mb-4 text-white">Transactions Details</h2>
+        <ResponsiveContainer width="100%" height="85%">
+          <LineChart data={weeklyTrans}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="date" />
+            <YAxis />
+            <Tooltip />
+            <Line
+              type="monotone"
+              dataKey="count"
+              stroke="#6366f1"
+              strokeWidth={3}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* <div className="dashboard-bg">
         <h2 className="text-lg font-semibold text-white mb-4">Revenue Distribution</h2>
         <ResponsiveContainer width="100%" height="89%">
           <PieChart>
@@ -68,7 +177,7 @@ export default function DashboardCharts({ dashboardData }) {
             <Legend />
           </PieChart>
         </ResponsiveContainer>
-      </div>
+      </div> */}
 
     </div>
   );

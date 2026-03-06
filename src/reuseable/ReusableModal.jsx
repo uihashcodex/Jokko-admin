@@ -101,6 +101,10 @@ import Select from "./SelectField";
 import { useEffect } from "react";
 import theme from "../config/theme";
 import { ConfigProvider } from "antd";
+import { CopyOutlined } from "@ant-design/icons";
+import { message } from "antd";
+import { Tooltip } from "antd";
+
 const ReusableModal = ({
   open,
   onCancel,
@@ -109,9 +113,16 @@ const ReusableModal = ({
   fields,
   initialValues,
   extraContent,
-  maskClosable = false
+  maskClosable = false,
+  description,
+  showFooter = true
 }) => {
   const [form] = Form.useForm();
+
+  const handleCopy = (text) => {
+    navigator.clipboard.writeText(text);
+    message.success("Address copied!");
+  };
 
   // ✅ Set Initial Values Properly
   useEffect(() => {
@@ -190,6 +201,41 @@ const ReusableModal = ({
             </div>
           </Upload>
         );
+      // case "copy":
+      //   return (
+      //     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+      //       <InputField
+      //         size="large"
+      //         disabled
+      //         value={form.getFieldValue(field.name)}
+      //       />
+      //       <CopyOutlined
+      //         style={{ cursor: "pointer", fontSize: 18,color:"#fff" }}
+      //         onClick={() =>
+      //           handleCopy(form.getFieldValue(field.name))
+      //         }
+      //       />
+      //     </div>
+      //   );
+      case "copy":
+        return (
+          <InputField
+            size="large"
+            disabled
+            value={form.getFieldValue(field.name)}
+            suffix={
+              <Tooltip title="Copy address">
+              <CopyOutlined
+                style={{ cursor: "pointer", color: "#fff" }}
+                onClick={() =>
+                  handleCopy(form.getFieldValue(field.name))
+                }
+              />
+              </Tooltip>
+
+            }
+          />
+        );
 
       default:
         return (
@@ -253,8 +299,7 @@ const ReusableModal = ({
           {title}
         </h2>
         <p className="text-sm text-gray-500 mt-1">
-          Please fill the details below carefully.
-        </p>
+            {description || "Please fill the details below carefully."}        </p>
       </div>
 
       {extraContent}
@@ -300,6 +345,7 @@ const ReusableModal = ({
         </Row>
 
         {/* FOOTER */}
+            {showFooter && (
         <div className="flex justify-end gap-3 mt-6 pt-4 border-t"
         
             style={{
@@ -320,6 +366,7 @@ const ReusableModal = ({
             Submit
           </Button>
         </div>
+            )}
       </Form>
       )}
     </Modal>
