@@ -278,17 +278,16 @@ const Login = () => {
                     </Form.Item>
 
 
-                    <Form.Item name="remember" valuePropName="checked">
+                    {/* <Form.Item name="remember" valuePropName="checked">
                         <Checkbox className="text-white">Remember me</Checkbox>
-                    </Form.Item>
+                    </Form.Item> */}
 
                     <Form.Item>
                         <Button
                             type="primary"
                             htmlType="submit"
                             size="large"
-                            className="w-full rounded-lg font-semibold 
-           bg-gradient-to-r from-blue-500 to-indigo-600 
+                            className="w-full rounded-lg font-semibold   bg-gradient-to-r from-blue-500 to-indigo-600 
            border-none 
            hover:from-indigo-600 hover:to-blue-500 
            transition-all duration-300"

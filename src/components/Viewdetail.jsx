@@ -25,16 +25,14 @@ const columns = [
       return `${frm.slice(0, 8)}`;
     }
   },
-  // { title: "Exchange", dataIndex: "exchange", key: "exchange" },
 ];
 
 
 const Viewdetail = () => {
   const navigate = useNavigate();
   const [page, setPage] = useState(1);
-
+  const [loading, setLoading] = useState(false);
   const [originalData, setOriginalData] = useState([]);
-  // const [filteredData, setFilteredData] = useState(originalData);
   const [open, setOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [totalUsers, setTotalUsers] = useState(0);
@@ -53,11 +51,11 @@ const Viewdetail = () => {
 
   const fetUsers = async (filters = {}) => {
     try {
-
+      setLoading(true);
       const cleanFilters = Object.fromEntries(
         Object.entries(filters).filter(([_, v]) => v !== "" && v !== undefined)
       );
-
+      const startTime = Date.now();
       const res = await axios.get(`${constant.backend_url}/admin/get-all-users`,
         {
           params: {
@@ -89,10 +87,14 @@ const Viewdetail = () => {
         setOriginalData(tableData);
         // setFilteredData(tableData);
 
-      } else {
-        setOriginalData([]);
-        // setFilteredData([]);
-      }
+      } 
+      
+      const elapsed = Date.now() - startTime;
+      const remaining = 500 - elapsed;
+
+      setTimeout(() => {
+        setLoading(false);
+      }, remaining > 0 ? remaining : 0);
 
     } catch (error) {
       console.error("Error fetching users:", error);
@@ -106,16 +108,6 @@ const Viewdetail = () => {
   }, [page, filters]);
 
 
-  // const updateFilter = (key, value) => {
-
-  //   if (key === "verifyStatus") {
-  //     value = value === "active" ? true : value === "inactive" ? false : "";
-  //   }
-
-  //   const updatedFilters = { ...filters, [key]: value };
-
-  //   setFilters(updatedFilters);
-  // };
 
 
   const updateFilter = (key, value) => {
@@ -157,6 +149,9 @@ const Viewdetail = () => {
   };
 
 
+
+
+
   const debouncedSearch = useMemo(
     () =>
       debounce((value) => {
@@ -184,7 +179,6 @@ const Viewdetail = () => {
       
           <TableHeader
         data={originalData}
-        // onFilter={setFilteredData}
         onCreate={handleCreate}
         showStatusFilter={true}
         showCreateButton={false}
@@ -192,6 +186,7 @@ const Viewdetail = () => {
         onSearch={(value) => debouncedSearch(value)}
         onTypeChange={(value) => updateFilter("type", value)}
         onVerifyChange={(value) => updateFilter("blockstatus", value)}
+        searchTooltip="Search by Name, Email, Phone"
 
       />
       <ReusableTable
@@ -201,6 +196,7 @@ const Viewdetail = () => {
         total={totalUsers}
         currentPage={page}
         onPageChange={(p) => setPage(p)}
+        loading={loading} 
         rowKey="key"
         actionType={["view", "block"]}
         onView={(record, section) => {

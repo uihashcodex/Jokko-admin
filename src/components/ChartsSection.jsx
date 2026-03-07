@@ -50,7 +50,7 @@ export default function DashboardCharts({ dashboardData }) {
       );
 
       const apiData = res.data.result.map((item) => ({
-        day: getDayName(item[0]),
+        date: formatDateMonth(item[0]),
         count: item[1]
       }));
 
@@ -62,7 +62,7 @@ export default function DashboardCharts({ dashboardData }) {
         };
       });
 
-      setWeeklyUsers(formatted);
+      setWeeklyUsers(apiData);
       // const formatted = res.data.result.map((item) => ({
       //   date: getDayName(item[0]),   
       //   count: item[1]   
@@ -86,19 +86,13 @@ export default function DashboardCharts({ dashboardData }) {
       );
 
       const apiData = res.data.result.map((item) => ({
-        day: getDayName(item[0]),
+        date: formatDateMonth(item[0]),
         count: item[1]
       }));
 
-      const formatted = weekDays.map((day) => {
-        const found = apiData.find((d) => d.day === day);
-        return {
-          date: day,
-          count: found ? found.count : 0
-        };
-      });
 
-      setWeeklyTrans(formatted);
+
+      setWeeklyTrans(apiData);
 
     } catch (err) {
       console.error(err);
@@ -110,6 +104,12 @@ export default function DashboardCharts({ dashboardData }) {
   }, []);
 
 
+  const formatDateMonth = (dateStr) => {
+    const d = new Date(dateStr);
+    const day = d.getDate();
+    const month = d.toLocaleString("default", { month: "short" });
+    return `${day} ${month}`; // 7 Mar
+  };
 
   const transactionData = [
     ["Mon", 20],
@@ -143,7 +143,7 @@ export default function DashboardCharts({ dashboardData }) {
             {/* <CartesianGrid strokeDasharray="3 3" /> */}
 
             <XAxis dataKey="date" />
-            <YAxis />
+            <YAxis allowDecimals={false} domain={[0, "auto"]} />
             <Tooltip />
             <Line
               type="monotone"
@@ -161,7 +161,7 @@ export default function DashboardCharts({ dashboardData }) {
           <LineChart data={weeklyTrans}>
             {/* <CartesianGrid strokeDasharray="3 3" /> */}
             <XAxis dataKey="date" />
-            <YAxis />
+            <YAxis allowDecimals={false} domain={[0, "auto"]} />
             <Tooltip />
             <Line
               type="monotone"

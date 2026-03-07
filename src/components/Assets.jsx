@@ -15,6 +15,8 @@ const Assets = () => {
 
     const [originalData, setOriginalData] = useState([]);
     const [networkOptions, setNetworkOptions] = useState([]);
+    const [loading, setLoading] = useState(false);
+
     const [totalUsers, setTotalUsers] = useState(0);
     const columns = [
         { title: "S.no", dataIndex: "sno", key: "sno" },
@@ -69,7 +71,7 @@ const Assets = () => {
             label: "Network Id",
             name: "network_id",
             type: "select",
-            options: networkOptions,   // 🔥 dynamic
+            options: networkOptions,   
             rules: [{ required: true, message: "Network is required" }],
         }
         ,
@@ -112,9 +114,13 @@ const Assets = () => {
 
     const getToken = async () => {
         try {
+            setLoading(true);
+
             const cleanFilters = Object.fromEntries(
                 Object.entries(filters).filter(([_, v]) => v !== "")
             );
+            const startTime = Date.now();
+
             const response = await axios.post(
                 `${constant.backend_url}/assets/get-all-tokens`,
 
@@ -145,17 +151,22 @@ const Assets = () => {
                     contractAddress: item?.contractAddress || "-",
                     tokenDecimals: item?.decimals,
                     status: item?.verifyStatus == true ? "active" : "inactive",
-                    
+                    network_id: item?.network?._id,
+
                     networkName: item?.network.networkName,
                 }));
                 console.log(formattedData, "formattedData");
                 setOriginalData(formattedData);
                 setFilteredData(formattedData);
 
-            } else {
-                setOriginalData([]);
-                setFilteredData([]);
             }
+            
+            const elapsed = Date.now() - startTime;
+            const remaining = 500 - elapsed;
+
+            setTimeout(() => {
+                setLoading(false);
+            }, remaining > 0 ? remaining : 0);
 
         } catch (error) {
             console.log(error);
@@ -183,9 +194,9 @@ const Assets = () => {
     };
 
     const handleSubmit = async (values) => {
-
+        const startTime = Date.now(); 
         try {
-
+            setLoading(true);
             if (selectedAsset) {
 
                 // const payload = {
@@ -225,14 +236,12 @@ const Assets = () => {
                 console.log(values, "asdfsafdf");
 
                 if (res.data?.success) {
-                    messageApi.success(res.data.message);
+                    messageApi.success(res.data.message || "Token updated successfully" );
                     getToken();
                     setOpen(false);
                 } else {
-                    if (res.data?.message) {
-                        messageApi.error(res.data.message);
-                        return;
-                    }
+                    messageApi.error(res.data?.message || "Failed to update token");
+
                 }
 
 
@@ -249,14 +258,12 @@ const Assets = () => {
                 );
 
                 if (create.data?.success) {
-                    messageApi.success(create.data.message);
+                    messageApi.success(create.data.message || "Token created successfully");
                     getToken();
                     setOpen(false);
                 } else {
-                    if (create.data?.message) {
-                        messageApi.error(create.data.message);
-                        return;
-                    }
+                    messageApi.error(create.data?.message || "Failed to create token");
+
                 }
 
             }
@@ -265,6 +272,15 @@ const Assets = () => {
         } catch (error) {
             console.log(error);
             messageApi.error(error.message);
+        } finally {
+
+            const elapsed = Date.now() - startTime;
+            const minTime = 800; // loader minimum 800ms
+
+            setTimeout(() => {
+                setLoading(false);
+            }, Math.max(minTime - elapsed, 0));
+
         }
     };
 
@@ -344,7 +360,8 @@ const Assets = () => {
                 onSearch={(value) => debouncedSearch(value)}
                 onTypeChange={(value) => updateFilter("type", value)}
                 onVerifyChange={(value) => updateFilter("status", value)}
-                placeHolder={"name,symbol,address,network..."}
+                searchTooltip="Search by Token Name, Token Symbol, contract address,NetWork Name "
+
             />
 
             <ReusableTable
@@ -352,6 +369,7 @@ const Assets = () => {
                 data={filteredData}
                 onUpdate={handleUpdate}
                 pageSize={10}
+                loading={loading}
             />
 
             <ReusableModal

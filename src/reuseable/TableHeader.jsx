@@ -1,4 +1,4 @@
-import { Row, Col, Input } from "antd";
+import { Row, Col, Input, Tooltip } from "antd";
 import SelectField from "./SelectField";
 import ReButton from "./Button";
 import { PlusOutlined } from "@ant-design/icons";
@@ -15,6 +15,7 @@ const TableHeader = ({
   showStatusFilter = true,
   showPrivateFilter = false,
   showCreateButton = true,
+  searchTooltip,
   onCreate,
   placeHolder
 }) => {
@@ -53,6 +54,8 @@ const TableHeader = ({
     <Row gutter={[16, 16]} justify="end" style={{ marginBottom: 16 }}>
       
       <Col xs={24} sm={12} md={8} lg={6}>
+        <Tooltip title={searchTooltip} placement="top">
+
         <Search
           placeholder={placeHolder || "Search..."}
           allowClear
@@ -65,6 +68,7 @@ const TableHeader = ({
           onChange={(e) => onSearch?.(e.target.value)}
           className="reusable-modal-search"
         />
+        </Tooltip>
       </Col>
 
       {showStatusFilter && (
