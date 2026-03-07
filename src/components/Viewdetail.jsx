@@ -8,6 +8,8 @@ import { useEffect } from "react";
 import { message } from "antd";
 import debounce from "lodash.debounce";
 import { useMemo } from "react";
+import theme from '../config/theme';
+
 
 const columns = [
   { title: "Name", dataIndex: "name", key: "name" },
@@ -16,7 +18,8 @@ const columns = [
   { title: "Status", dataIndex: "status", key: "status" },
   { title: "Type", dataIndex: "type", key: "type" },
   { title: "Country", dataIndex: "country", key: "contry" },
-  { title: "Unique ID", dataIndex: "uniqueid", key: "uniqueid" ,
+  {
+    title: "Unique ID", dataIndex: "uniqueid", key: "uniqueid",
     render: (frm) => {
       if (!frm) return "-";
       return `${frm.slice(0, 8)}`;
@@ -50,7 +53,7 @@ const Viewdetail = () => {
 
   const fetUsers = async (filters = {}) => {
     try {
-           
+
       const cleanFilters = Object.fromEntries(
         Object.entries(filters).filter(([_, v]) => v !== "" && v !== undefined)
       );
@@ -97,7 +100,7 @@ const Viewdetail = () => {
       // setFilteredData([]);
     }
   };
- 
+
   useEffect(() => {
     fetUsers(filters);
   }, [page, filters]);
@@ -166,8 +169,20 @@ const Viewdetail = () => {
   }, [debouncedSearch]);
   return (
     <div>
-      <h2 className="text-2xl font-semibold mb-4 white">View Detail</h2>
-      <TableHeader
+      <div
+        className="mb-5 w-full rounded-lg bg-cover bg-center flex items-center"
+        style={{
+          backgroundImage: `url(${theme.dashboardheaderimg.image})`,
+          height: theme.dashboardheaderimg.height
+        }}
+      >
+        <div className="display-3 w-full">
+          <h1 className="text-white p-7 font-bold text-2xl">
+            View Detail             </h1>
+        </div>
+      </div>  
+      
+          <TableHeader
         data={originalData}
         // onFilter={setFilteredData}
         onCreate={handleCreate}
@@ -185,8 +200,8 @@ const Viewdetail = () => {
         pageSize={10}
         total={totalUsers}
         currentPage={page}
-        onPageChange={(p) => setPage(p)}    
-            rowKey="key"
+        onPageChange={(p) => setPage(p)}
+        rowKey="key"
         actionType={["view", "block"]}
         onView={(record, section) => {
           if (section === "wallet") {
