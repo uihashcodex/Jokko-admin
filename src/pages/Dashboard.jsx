@@ -90,8 +90,8 @@ const Dashboard = () => {
     },
 
     {
-      title: "Network Symbol",
-      dataIndex: "networkSymbol",
+      title: "Network Name",
+      dataIndex: "networkName",
     },
     {
       title: "Token Symbol",
@@ -237,8 +237,8 @@ const Dashboard = () => {
           .map((item, index) => ({
             id: item?._id,
             key: index + 1,
-            networkSymbol: item?.networkSymbol || "-",
             tokenSymbol: item?.tokenSymbol || "-",
+            networkName: item?.networkName || "-",
             transactionHash: item?.transactionHash || "-",
             from: item?.from || "-",
             to: item?.to || "-",

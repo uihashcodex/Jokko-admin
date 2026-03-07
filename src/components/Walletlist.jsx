@@ -6,7 +6,8 @@ import axios from "axios";
 import { constant } from "../const";
 import TableHeader from "../reuseable/TableHeader";
 import ReusableModal from "../reuseable/ReusableModal";
-
+import { message, Tooltip } from "antd";
+import { CopyOutlined } from "@ant-design/icons";
 const Walletlist = () => {
 
   const { state } = useLocation();
@@ -17,11 +18,14 @@ const Walletlist = () => {
   const [filteredTableData, setFilteredTableData] = useState([]);
 
   const [modalOpen, setModalOpen] = useState(false);
-  const [selectedWallet, setSelectedWallet] = useState(null);
+  // const [selectedWallet, setSelectedWallet] = useState(null);
 
   const [totalUsers, setTotalUsers] = useState(0);
 
-
+  const [selectedWallet, setSelectedWallet] = useState({
+    label: "",
+    value: ""
+  });
   // ✅ pagination states
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
@@ -52,7 +56,7 @@ const Walletlist = () => {
           evmaddress: item?.evmAddress,
           solanaaddress: item?.solAddress,
           xrpaddress: item?.xrpAddress,
-          status: item?.checkStatus ? "Active" : "Inactive",
+          status: item?.walletStatus ? "Inactive" : "Active",
         }));
 
         setWalletData(walletsList);
@@ -110,7 +114,8 @@ const Walletlist = () => {
           evmaddress: item?.evmAddress,
           solanaaddress: item?.solAddress,
           xrpaddress: item?.xrpAddress,
-          status: item?.checkStatus ? "Active" : "Inactive",
+          status: item?.walletStatus ? "Inactive" : "Active",
+
         }));
 
         setFilteredTableData(walletres);
@@ -134,16 +139,25 @@ const Walletlist = () => {
 
   }, [page, filters]);
 
-  const updateFilter = (key, value) => {
+  // const updateFilter = (key, value) => {
 
+  //   if (key === "status") {
+  //     value = value === "active" ? true : value === "inactive" ? false : "";
+  //   }
+
+  //   const updatedFilters = { ...filters, [key]: value };
+
+  //   setFilters(updatedFilters);
+  //   getAllWallets(updatedFilters);
+  // };
+
+  const updateFilter = (key, value) => {
     if (key === "status") {
       value = value === "active" ? true : value === "inactive" ? false : "";
     }
 
-    const updatedFilters = { ...filters, [key]: value };
-
-    setFilters(updatedFilters);
-    getAllWallets(updatedFilters);
+    setFilters({ ...filters, [key]: value });
+    setPage(1); // reset page when filter changes
   };
   // -----------------------------
   // MODAL FIELDS
@@ -162,38 +176,145 @@ const Walletlist = () => {
     { title: "Wallet Name", dataIndex: "walletname" },
     { title: "User Name", dataIndex: "firstname" },
 
+    // {
+    //   title: "BTC Address",
+    //   dataIndex: "btcaddress",
+    //   render: (addr) =>
+    //     addr ? `${addr.slice(0, 6)}...${addr.slice(-8)}` : "-"
+    // },
     {
       title: "BTC Address",
       dataIndex: "btcaddress",
-      render: (addr) =>
-        addr ? `${addr.slice(0, 6)}...${addr.slice(-8)}` : "-"
+      render: (addr, record) =>
+        addr ? (
+          <span
+            style={{ cursor: "pointer", color: "#c9f07b" }}
+            onClick={() => {
+              setSelectedWallet({
+                label: "BTC Address",
+                value: addr
+              });
+              setModalOpen(true);
+            }}
+          >
+            {addr.slice(0, 6)}...{addr.slice(-8)}
+          </span>
+        ) : "-"
     },
 
     {
       title: "EVM Address",
       dataIndex: "evmaddress",
-      render: (evm) =>
-        evm ? `${evm.slice(0, 6)}...${evm.slice(-8)}` : "-"
+      render: (evm, record) =>
+        evm ? (
+          <span
+            style={{ cursor: "pointer", color: "#c9f07b" }}
+            onClick={() => {
+              setSelectedWallet({
+                label: "EVM Address",
+                value: evm
+              });
+              setModalOpen(true);
+            }}
+          >
+            {evm.slice(0, 6)}...{evm.slice(-8)}
+          </span>
+        ) : "-"
     },
 
     {
       title: "Solana Address",
       dataIndex: "solanaaddress",
-      render: (sol) =>
-        sol ? `${sol.slice(0, 6)}...${sol.slice(-8)}` : "-"
+      render: (sol, record) =>
+        sol ? (
+          <span
+            style={{ cursor: "pointer", color: "#c9f07b" }}
+            onClick={() => {
+              setSelectedWallet({
+                label: "Solana Address",
+                value: sol
+              });
+              setModalOpen(true);
+            }}
+          >
+            {sol.slice(0, 6)}...{sol.slice(-8)}
+          </span>
+        ) : "-"
     },
 
     {
       title: "XRP Address",
       dataIndex: "xrpaddress",
-      render: (xrp) =>
-        xrp ? `${xrp.slice(0, 6)}...${xrp.slice(-8)}` : "-"
+      render: (xrp, record) =>
+        xrp ? (
+          <span
+            style={{ cursor: "pointer", color: "#c9f07b" }}
+            onClick={() => {
+              setSelectedWallet({
+                label: "XRP Address",
+                value: xrp
+              });
+              setModalOpen(true);
+            }}
+          >
+            {xrp.slice(0, 6)}...{xrp.slice(-8)}
+          </span>
+        ) : "-"
     },
 
     { title: "Status", dataIndex: "status" },
   ];
 
   const tableData = id ? walletData : filteredTableData;
+
+    const handleBlockWallet = async (record) => {
+    try {
+
+      const isCurrentlyActive = record.status === "Active";
+
+      const res = await axios.post(
+        `${constant.backend_url}/admin/userswallet-control`,
+        {
+          walletId: record.key,
+          walletStatus: !isCurrentlyActive
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+          },
+        }
+      );
+
+      if (res.data?.success) {
+
+        message.success(res.data.message);
+
+        const updatedStatus = isCurrentlyActive ? "Inactive" : "Active";
+
+        if (id) {
+          setWalletData(prev =>
+            prev.map(item =>
+              item.key === record.key
+                ? { ...item, status: updatedStatus }
+                : item
+            )
+          );
+        } else {
+          setFilteredTableData(prev =>
+            prev.map(item =>
+              item.key === record.key
+                ? { ...item, status: updatedStatus }
+                : item
+            )
+          );
+        }
+
+      }
+
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   return (
     <>
@@ -251,28 +372,52 @@ const Walletlist = () => {
         // }}
 
         pageSize={10}
-        total={totalUsers}
+        total={total}
         currentPage={page}
         onPageChange={(p) => setPage(p)}  
 
-        actionType={["viewMore"]}
+        actionType={["block"]}
 
-        onView={(record) => {
-          setSelectedWallet(record);
-          setModalOpen(true);
-        }}
+        // onView={(record) => {
+        //   setSelectedWallet(record);
+        //   setModalOpen(true);
+        // }}
+        onBlock={(record) => handleBlockWallet(record)}   
+
       />
 
       {/* MODAL */}
-
       <ReusableModal
         open={modalOpen}
         onCancel={() => setModalOpen(false)}
-        title="Wallet Details"
-        description=""
-        fields={walletFields}
-        initialValues={selectedWallet}
+        title={"Address"}
         showFooter={false}
+        fields={[]}   
+        description={" "}
+        extraContent={
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 10
+            }}
+          >
+            <div className="modal-sub-head">{selectedWallet?.label}:</div>
+
+            <div className="modal-sub-para">{selectedWallet?.value}</div>
+
+            <Tooltip title="Copy address">
+              <CopyOutlined
+                style={{ cursor: "pointer", fontSize: 18 }}
+                onClick={() => {
+                  navigator.clipboard.writeText(selectedWallet?.value);
+                  message.success("Address copied!");
+                }}
+              />
+            </Tooltip>
+          </div>
+        }
       />
     </>
   );

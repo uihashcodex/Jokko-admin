@@ -172,24 +172,109 @@ console.log(data,"data");
 //   });
 // }
 
+  // if (actionType?.includes("block")) {
+  //   updatedColumns.push({
+  //     title: "Block Users",
+  //     key: "block",
+  //     render: (_, record) => {
+
+  //       const handleChange = (value) => {
+  //         if (value === "block") onBlock?.(record);
+  //         if (value === "unblock") onUnblock?.(record);
+  //       };
+
+  //       return (
+  //         <Select
+  //           // value={record.status === "blocked" ? "block" : "unblock"}
+  //           value={record.status === "Inactive" ? "block" : "unblock"}
+  //           style={{ width: 120 }}
+  //           onChange={(value) => {
+  //             if (value === "block") onBlock?.(record);
+  //             if (value === "unblock") onUnblock?.(record);
+  //           }}
+  //           options={[
+  //             { value: "block", label: "Block" },
+  //             { value: "unblock", label: "Unblock" },
+  //           ]}
+  //         />
+  //       );
+  //     },
+  //   });
+  // }
+
+  // if (actionType?.includes("block")) {
+  //   updatedColumns.push({
+  //     title: "Block Users",
+  //     key: "block",
+  //     render: (_, record) => {
+
+  //       const isBlocked =
+  //         record.status === "Inactive" ||
+  //         record.status === "blocked";
+
+  //       return (
+  //         <Select
+  //           value={isBlocked ? "block" : "unblock"}
+  //           style={{ width: 120 }}
+  //           onChange={(value) => {
+  //             if (value === "block") onBlock?.(record);
+  //             if (value === "unblock") onUnblock?.(record);
+  //           }}
+  //           options={[
+  //             { value: "block", label: "Block" },
+  //             { value: "unblock", label: "Unblock" },
+  //           ]}
+  //         />
+  //       );
+  //     },
+  //   });
+  // }
+
+  // if (actionType?.includes("block")) {
+  //   updatedColumns.push({
+  //     title: "Block Users",
+  //     key: "block",
+  //     render: (_, record) => {
+
+  //       const isBlocked =
+  //         record.status === "Inactive" ||
+  //         record.status === "blocked";
+
+  //       return (
+  //         <Select
+  //           value={isBlocked ? "block" : "unblock"}
+  //           style={{ width: 120 }}
+  //           onChange={() => onBlock?.(record)}   // ✅ single function
+  //           options={[
+  //             { value: "block", label: "Block" },
+  //             { value: "unblock", label: "Unblock" },
+  //           ]}
+  //         />
+  //       );
+  //     },
+  //   });
+  // }
+
   if (actionType?.includes("block")) {
     updatedColumns.push({
       title: "Block Users",
       key: "block",
       render: (_, record) => {
 
-        const handleChange = (value) => {
-          if (value === "block") onBlock?.(record);
-          if (value === "unblock") onUnblock?.(record);
-        };
+        const isBlocked = record.status === "Inactive";
 
         return (
           <Select
-            value={record.status === "blocked" ? "block" : "unblock"}
+            value={isBlocked ? "block" : "unblock"}
             style={{ width: 120 }}
             onChange={(value) => {
-              if (value === "block") onBlock?.(record);
-              if (value === "unblock") onUnblock?.(record);
+              if (value === "block" && !isBlocked) {
+                onBlock?.(record);
+              }
+
+              if (value === "unblock" && isBlocked) {
+                onBlock?.(record);
+              }
             }}
             options={[
               { value: "block", label: "Block" },
@@ -253,8 +338,9 @@ console.log(data,"data");
         <Button
           type="primary"
           onClick={() => onView?.(record)}
+          style={{ background:"#c9f07b",color:"#000" }}
         >
-          View Details
+          View
         </Button>
       ),
     });

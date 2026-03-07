@@ -1,7 +1,7 @@
 import { useParams } from "react-router-dom";
 import ReusableTable from "../reuseable/ReusableTable";
 import { useLocation } from "react-router-dom";
-import { LeftCircleOutlined } from "@ant-design/icons";
+import { CopyOutlined, LeftCircleOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import axios from "axios";
@@ -30,7 +30,7 @@ const TransectionHistory = () => {
       name: "transactionHash", label: "Transaction", type: "copy",
     },
     {
-      name: "networkSymbol", label: "Network Symbol", type: "copy",
+      name: "networkName", label: "Network Name", type: "copy",
 
     },
     {
@@ -68,13 +68,13 @@ const TransectionHistory = () => {
 
          const trans = trandata.map((item) => ({
         key: item?._id,
-        transactionHash: item?.transactionHash,
-        networkSymbol: item?.network_id?.networkSymbol,
-        amount: item?.amount,
-        from: item?.from,
-        to: item?.to,
-        tokenSymbol: item?.tokenSymbol,
-        status: item?.status,
+        transactionHash: item?.transactionHash || "-",
+           networkName: item?.networkName || "-",
+           amount: item?.amount || "-",
+           from: item?.from || "-",
+           to: item?.to || "-",
+           tokenSymbol: item?.tokenSymbol || "-",
+           status: item?.status || "-",
       }));
 
         
@@ -134,12 +134,12 @@ const TransectionHistory = () => {
         // const transres = res.data.result.map((item) => ({
         const transres = users.map((item) => ({
           key: item?._id,
-          transactionHash: item?.transactionHash,
-          networkSymbol: item?.networkSymbol,
-          amount: item?.amount,
-          from: item?.from,
-          to: item?.to,
-          tokenSymbol: item?.tokenSymbol,
+          transactionHash: item?.transactionHash || "-",
+          networkName: item?.networkName || "-",
+          amount: item?.amount || "-",
+          from: item?.from || "-",
+          to: item?.to || "-",
+          tokenSymbol: item?.tokenSymbol || "-",
           // status: item?.status          
         }))
         console.log(transres,"dsggffgf");
@@ -180,7 +180,7 @@ const TransectionHistory = () => {
         return `${trans.slice(0, 8)}...`;
       }
     },
-    { title: "Network Symbol", dataIndex: "networkSymbol" },
+    { title: "Network Name", dataIndex: "networkName" },
     { title: "Amount", dataIndex: "amount" },
     { title: "From", dataIndex: "from",
       render: (frm) => {
@@ -246,7 +246,7 @@ const TransectionHistory = () => {
         }}
       />
 
-      <ReusableModal
+      {/* <ReusableModal
         open={modalOpen}
         onCancel={() => setModalOpen(false)}
         title="Wallet Details"
@@ -254,6 +254,89 @@ const TransectionHistory = () => {
         fields={TransactionFields}
         initialValues={selectedTrans}
         showFooter={false}
+      /> */}
+
+      <ReusableModal
+        open={modalOpen}
+        onCancel={() => setModalOpen(false)}
+        title="Transaction Details"
+        showFooter={false}
+        description={" "}
+        fields={[]}   
+        extraContent={
+          <div className="flex flex-col gap-5">
+
+            {/* Transaction Hash */}
+            <div className="flex items-center justify-between bg-[#1f252a] p-3 rounded">
+              <span className="text-gray-400">Transaction Hash</span>
+
+              <div className="flex items-center gap-2">
+                <span className="text-white">
+                  {selectedTrans?.transactionHash}
+                </span>
+
+                <CopyOutlined
+                  style={{ cursor: "pointer" }}
+                  onClick={() => {
+                    navigator.clipboard.writeText(selectedTrans?.transactionHash);
+                    message.success("Copied");
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Network */}
+            <div className="flex items-center justify-between bg-[#1f252a] p-3 rounded">
+              <span className="text-gray-400">Network Name</span>
+              <span className="text-white">{selectedTrans?.networkName}</span>
+            </div>
+
+            <div className="flex items-center justify-between bg-[#1f252a] p-3 rounded">
+              <span className="text-gray-400">Amount</span>
+              <span className="text-white">{selectedTrans?.amount}</span>
+            </div>
+
+            {/* From */}
+            <div className="flex items-center justify-between bg-[#1f252a] p-3 rounded">
+              <span className="text-gray-400">From</span>
+
+              <div className="flex items-center gap-2">
+                <span className="text-white">{selectedTrans?.from}</span>
+
+                <CopyOutlined
+                  style={{ cursor: "pointer" }}
+                  onClick={() => {
+                    navigator.clipboard.writeText(selectedTrans?.from);
+                    message.success("Copied");
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* To */}
+            <div className="flex items-center justify-between bg-[#1f252a] p-3 rounded">
+              <span className="text-gray-400">To</span>
+
+              <div className="flex items-center gap-2">
+                <span className="text-white">{selectedTrans?.to}</span>
+
+                <CopyOutlined
+                  style={{ cursor: "pointer" }}
+                  onClick={() => {
+                    navigator.clipboard.writeText(selectedTrans?.to);
+                    message.success("Copied");
+                  }}
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between bg-[#1f252a] p-3 rounded">
+              <span className="text-gray-400">Token Symbol</span>
+              <span className="text-white">{selectedTrans?.tokenSymbol}</span>
+            </div>
+
+          </div>
+        }
       />
      
     </>
