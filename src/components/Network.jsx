@@ -163,7 +163,7 @@ const Network = () => {
     const [filters, setFilters] = useState({
         search: "",
         type: "",
-        verifyStatus: ""
+        status: ""
     });
 
 
@@ -246,8 +246,13 @@ const Network = () => {
     const getNetworks = async () => {
         try {
             const cleanFilters = Object.fromEntries(
-                Object.entries(filters).filter(([_, v]) => v !== "" && v !== undefined)
+                Object.entries(filters).filter(([_, v]) => v !== "")
             );
+            console.log("NETWORK FILTER BODY:", {
+                ...cleanFilters,
+                page,
+                limit: 10
+            });
 
             const response = await axios.post(
                 `${constant.backend_url}/assets/get-all-networks`,
@@ -263,6 +268,7 @@ const Network = () => {
                         Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
                     }
                 }
+                
             );
 
             if (response.data?.success) {
@@ -292,6 +298,7 @@ const Network = () => {
             console.log(error);
             setOriginalData([]);
         }
+        
     };
     useEffect(() => {
         getNetworks();
@@ -299,7 +306,7 @@ const Network = () => {
 
     const updateFilter = (key, value) => {
 
-        if (key === "verifyStatus") {
+        if (key === "status") {
             value = value === "active" ? "true" : value === "inactive" ? "false" : "";
         }
 
@@ -500,7 +507,7 @@ const Network = () => {
                     showStatusFilter={true}
                     onSearch={(value) => updateFilter("search", value)}
                     onTypeChange={(value) => updateFilter("type", value)}
-                    onVerifyChange={(value) => updateFilter("verifyStatus", value)}
+                    onVerifyChange={(value) => updateFilter("status", value)}
                 />
                 <ReusableTable
                     columns={columns}

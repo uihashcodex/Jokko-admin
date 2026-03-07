@@ -6,6 +6,8 @@ import axios from "axios";
 import { constant } from "../const";
 import { useEffect } from "react";
 import { message } from "antd";
+import debounce from "lodash.debounce";
+import { useMemo } from "react";
 
 const columns = [
   { title: "Name", dataIndex: "name", key: "name" },
@@ -14,7 +16,12 @@ const columns = [
   { title: "Status", dataIndex: "status", key: "status" },
   { title: "Type", dataIndex: "type", key: "type" },
   { title: "Country", dataIndex: "country", key: "contry" },
-  { title: "Unique ID", dataIndex: "uniqueid", key: "uniqueid" },
+  { title: "Unique ID", dataIndex: "uniqueid", key: "uniqueid" ,
+    render: (frm) => {
+      if (!frm) return "-";
+      return `${frm.slice(0, 8)}...`;
+    }
+  },
   // { title: "Exchange", dataIndex: "exchange", key: "exchange" },
 ];
 
@@ -24,7 +31,7 @@ const Viewdetail = () => {
   const [page, setPage] = useState(1);
 
   const [originalData, setOriginalData] = useState([]);
-  const [filteredData, setFilteredData] = useState(originalData);
+  // const [filteredData, setFilteredData] = useState(originalData);
   const [open, setOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [totalUsers, setTotalUsers] = useState(0);
@@ -33,94 +40,12 @@ const Viewdetail = () => {
     setSelectedRecord(null);
   };
 
-  // const fetUsers = async () => {
-  //   try {
-  //     const [individualRes, professionalRes] = await Promise.all([
-  //       axios.get(`${constant.backend_url}/admin/get-all-individual`),
-  //       axios.get(`${constant.backend_url}/admin/get-all-professional`)
-  //     ]);
-  //     if (individualRes, professionalRes.data?.success) 
-        
-  //       {
-  //       const individualUsers = individualRes.data.result || [];
-  //       const professionalUsers = professionalRes.data.result || [];
 
-  //       const allUsers = [...individualUsers, ...professionalUsers];
-
-  //       const tableData = allUsers.map((user, index) => ({
-  //         key: user?._id,
-  //         sno: index + 1,
-  //         name: ` ${user?.firstname} ${user?.lastname}` || "-",
-  //         email: user?.email || "-",
-  //         phone: user?.phone || "-",
-  //         status: user?.blockstatus ? "blocked" : "active",
-  //         type: user?.type || "-",
-  //         country: user?.country || "-",
-  //         uniqueid: user?.unique_id || "-",
-  //         // exchange: "Wallet"
-  //       }));
-
-  //       console.log(tableData, "tableData");
-  //       setOriginalData(tableData);
-  //       setFilteredData(tableData);
-
-  //     }
-
-  //     else {
-  //       setOriginalData([]);
-  //       setFilteredData([]);
-  //     }
-
-  //   }
-  //   catch (error) {
-  //     console.error("Error fetching users:", error);
-  //     setOriginalData([]);
-  //     setFilteredData([]);
-  //   }
-  // };
-
- 
-  // const fetUsers = async () => {
-  //   try {
-  //     const res = await axios.get(`${constant.backend_url}/admin/get-all-users`);
-
-  //     if (res.data?.success) {
-
-  //       const users = res.data.result || [];
-
-  //       const tableData = users.map((user, index) => ({
-  //         key: user?._id,
-  //         sno: index + 1,
-  //         name: `${user?.firstname || ""} ${user?.lastname || ""}`.trim() || "-",
-  //         email: user?.email || "-",
-  //         phone: user?.phone || "-",
-  //         status: user?.blockstatus ? "blocked" : "active",
-  //         type: user?.type || "-",
-  //         country: user?.country || "-",
-  //         uniqueid: user?.unique_id || "-"
-  //       }));
-
-  //       console.log(tableData, "tableData");
-
-  //       setOriginalData(tableData);
-  //       setFilteredData(tableData);
-
-  //     } else {
-  //       setOriginalData([]);
-  //       setFilteredData([]);
-  //     }
-
-  //   } catch (error) {
-  //     console.error("Error fetching users:", error);
-  //     setOriginalData([]);
-  //     setFilteredData([]);
-  //   }
-  // };
 
   const [filters, setFilters] = useState({
     search: "",
     type: "",
-    verifyStatus: ""
+    blockstatus: ""
   });
 
   const fetUsers = async (filters = {}) => {
@@ -159,42 +84,50 @@ const Viewdetail = () => {
         console.log(tableData, "tableData");
 
         setOriginalData(tableData);
-        setFilteredData(tableData);
+        // setFilteredData(tableData);
 
       } else {
         setOriginalData([]);
-        setFilteredData([]);
+        // setFilteredData([]);
       }
 
     } catch (error) {
       console.error("Error fetching users:", error);
       setOriginalData([]);
-      setFilteredData([]);
+      // setFilteredData([]);
     }
   };
  
   useEffect(() => {
     fetUsers(filters);
   }, [page, filters]);
+
+
   // const updateFilter = (key, value) => {
+
+  //   if (key === "verifyStatus") {
+  //     value = value === "active" ? true : value === "inactive" ? false : "";
+  //   }
+
   //   const updatedFilters = { ...filters, [key]: value };
 
   //   setFilters(updatedFilters);
-  //   fetUsers(updatedFilters);
   // };
+
 
   const updateFilter = (key, value) => {
 
-    if (key === "verifyStatus") {
-      value = value === "active" ? true : value === "inactive" ? false : "";
+    if (key === "blockstatus") {
+      value = value === "active" ? false : value === "inactive" ? true : "";
     }
 
-    const updatedFilters = { ...filters, [key]: value };
+    setPage(1);
 
-    setFilters(updatedFilters);
-    fetUsers(updatedFilters);
+    setFilters(prev => ({
+      ...prev,
+      [key]: value
+    }));
   };
-
   const blockUser = async (record) => {
     try {
       const res = await axios.post(
@@ -221,25 +154,34 @@ const Viewdetail = () => {
   };
 
 
+  const debouncedSearch = useMemo(
+    () =>
+      debounce((value) => {
+        updateFilter("search", value);
+      }, 800),
+    []
+  );
+  useEffect(() => {
+    return () => debouncedSearch.cancel();
+  }, [debouncedSearch]);
   return (
     <div>
       <h2 className="text-2xl font-semibold mb-4 white">View Detail</h2>
       <TableHeader
         data={originalData}
-        onFilter={setFilteredData}
+        // onFilter={setFilteredData}
         onCreate={handleCreate}
         showStatusFilter={true}
         showCreateButton={false}
         showPrivateFilter={true}
-        onSearch={(value) => updateFilter("search", value)}
+        onSearch={(value) => debouncedSearch(value)}
         onTypeChange={(value) => updateFilter("type", value)}
-        onVerifyChange={(value) => updateFilter("verifyStatus", value)}
-        pageSize={10}
+        onVerifyChange={(value) => updateFilter("blockstatus", value)}ss        //
 
       />
       <ReusableTable
         columns={columns}
-        data={filteredData}
+        data={originalData}
         pageSize={10}
         total={totalUsers}
         currentPage={page}

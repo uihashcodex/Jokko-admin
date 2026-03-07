@@ -27,6 +27,13 @@ export default function DashboardCharts({ dashboardData }) {
   const [weeklyUsers, setWeeklyUsers] = useState([]);
 
   const [weeklyTrans, setWeeklyTrans] = useState([]);
+  const weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+  const getDayName = (dateStr) => {
+    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const d = new Date(dateStr);
+    return days[d.getDay()];
+  };
 
   useEffect(() => {
     getWeeklyUsers();
@@ -42,12 +49,26 @@ export default function DashboardCharts({ dashboardData }) {
         }
       );
 
-      const formatted = res.data.result.map((item) => ({
-        date: item[0],   
-        count: item[1]   
+      const apiData = res.data.result.map((item) => ({
+        day: getDayName(item[0]),
+        count: item[1]
       }));
 
+      const formatted = weekDays.map((day) => {
+        const found = apiData.find((d) => d.day === day);
+        return {
+          date: day,
+          count: found ? found.count : 0
+        };
+      });
+
       setWeeklyUsers(formatted);
+      // const formatted = res.data.result.map((item) => ({
+      //   date: getDayName(item[0]),   
+      //   count: item[1]   
+      // }));
+
+      // setWeeklyUsers(formatted);
 
     } catch (err) {
       console.error(err);
@@ -64,12 +85,20 @@ export default function DashboardCharts({ dashboardData }) {
         }
       );
 
-      const trasnchart = res.data.result.map((item) => ({
-        date: item[0],
+      const apiData = res.data.result.map((item) => ({
+        day: getDayName(item[0]),
         count: item[1]
       }));
 
-      setWeeklyTrans(trasnchart);
+      const formatted = weekDays.map((day) => {
+        const found = apiData.find((d) => d.day === day);
+        return {
+          date: day,
+          count: found ? found.count : 0
+        };
+      });
+
+      setWeeklyTrans(formatted);
 
     } catch (err) {
       console.error(err);
@@ -80,21 +109,7 @@ export default function DashboardCharts({ dashboardData }) {
     getWeeklyTransactions();
   }, []);
 
-  // const UserData = [
-  //   ["Mon", 20],
-  //   ["Tue", 35],
-  //   ["Wed", 40],
-  //   ["Thu", 28],
-  //   ["Fri", 50],
-  //   ["Sat", 45],
-  //   ["Sun", 60]
-    
-  // ];
 
-  // const userWeekData = UserData.map(item => ({
-  //   date: item[0],
-  //   count: item[1]
-  // }));
 
   const transactionData = [
     ["Mon", 20],
@@ -125,7 +140,7 @@ export default function DashboardCharts({ dashboardData }) {
 
         <ResponsiveContainer width="100%" height="85%">
           <LineChart data={weeklyUsers}>
-            <CartesianGrid strokeDasharray="3 3" />
+            {/* <CartesianGrid strokeDasharray="3 3" /> */}
 
             <XAxis dataKey="date" />
             <YAxis />
@@ -144,7 +159,7 @@ export default function DashboardCharts({ dashboardData }) {
         <h2 className="text-lg font-semibold mb-4 text-white">Transactions Details</h2>
         <ResponsiveContainer width="100%" height="85%">
           <LineChart data={weeklyTrans}>
-            <CartesianGrid strokeDasharray="3 3" />
+            {/* <CartesianGrid strokeDasharray="3 3" /> */}
             <XAxis dataKey="date" />
             <YAxis />
             <Tooltip />

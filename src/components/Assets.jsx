@@ -6,38 +6,16 @@ import axios from "axios";
 import { constant } from "../const";
 import { message } from 'antd';
 import theme from '../config/theme';
+import debounce from "lodash.debounce";
+import { useMemo } from "react";
 
 
 
 const Assets = () => {
 
-    const [originalData, setOriginalData] = useState([
-        // {
-        //     id: 1,
-        //     sno: 1,
-        //     tokenName: "USDC Coin Dev",
-        //     tokenSymbol: "USDC-DEV",
-        //     tokenDecimals: "9",
-        //     contractAddress: "trdgsaxghdcghvdcghfydshjvhjNByggKjr",
-        //     network_id: "69452d26e44c35cfed14774f"
-        // },
-        // {
-        //     id: 2,
-        //     sno: 2,
-        //     tokenName: "BTC Coin Dev",
-        //     tokenSymbol: "BTC-DEV",
-        //     tokenDecimals: "9",
-        //     contractAddress: "trdgsaxghdcghvdcghfydshjvhjNByggKjr",
-        //     network_id: "69452d26e44c35cfed19974f"
-        // }
-    ]);
+    const [originalData, setOriginalData] = useState([]);
     const [networkOptions, setNetworkOptions] = useState([]);
-
-    // const [networkOptions, setNetworkOptions] = [
-    //     // { label: "Ethereum", value: "eth" },
-    //     // { label: "BSC", value: "bsc" },
-    //     // { label: "Polygon", value: "polygon" }
-    // ];
+    const [totalUsers, setTotalUsers] = useState(0);
     const columns = [
         { title: "S.no", dataIndex: "sno", key: "sno" },
         { title: "Token Name", dataIndex: "tokenName", key: "tokenName" },
@@ -48,46 +26,7 @@ const Assets = () => {
         { title: "Status", dataIndex: "status", key: "status" },
     ];
 
-    // const fields = () => [
-    //     {
-    //         label: "Token Name", name: "tokenName", span: 12,
-    //         rules: [
-    //             { required: true, message: "Network Name is required" },
-    //             { min: 3, message: "Network Name must be at least 3 characters" },
-    //         ],
-    //     },
-    //     {
-    //         label: "Token Symbol", name: "tokenSymbol", span: 12,
-    //         rules: [
-    //             { required: true, message: "Network Name is required" },
-    //             { min: 3, message: "Network Name must be at least 3 characters" },
-    //         ],
-    //     },
-    //     {
-    //         label: "Token Decimals", name: "tokenDecimals", span: 12,
-    //         rules: [
-    //             // { required: true, message: "Network Name is required" },
-    //             // { min: 2, message: "Network Name must be at least 2 characters" },
-    //         ],
-    //     },
-    //     {
-    //         label: "Contract Address", name: "contractAddress", span: 12,
-    //         rules: [
-    //             { required: true, message: "Network Name is required" },
-    //             { min: 3, message: "Network Name must be at least 3 characters" },
-    //         ],
-    //     },
-    //     {
-    //         label: "Network Id",
-    //         name: "network_id",
-    //         type: "select",
-    //         // rules: [{ required: true, message: "Network is required" }],
-    //         options: networkOptions,
-
-
-    //     }
-
-    // ];
+   
     const statusOptions = [
         { label: "Active", value: "active" },
         { label: "Inactive", value: "inactive" },
@@ -164,13 +103,25 @@ const Assets = () => {
         setOpen(true);
     };
 
+    const [filters, setFilters] = useState({
+        search: "",
+        type: "",
+        status: ""
+    });
+
+
     const getToken = async () => {
         try {
+            const cleanFilters = Object.fromEntries(
+                Object.entries(filters).filter(([_, v]) => v !== "")
+            );
             const response = await axios.post(
                 `${constant.backend_url}/assets/get-all-tokens`,
 
                 {
-
+                    ...cleanFilters,
+                    page: page,
+                    limit: 10
                 },
                 {
                     headers: {
@@ -182,7 +133,10 @@ const Assets = () => {
 
             if (response.data?.success) {
 
-                const formattedData = response.data.result.map((item, index) => ({
+                const docs = response.data.result || [];
+                setTotalUsers(response.data.total);
+                const formattedData = docs.map((item, index) => ({
+                    // const formattedData = response.data.result.map((item, index) => ({
 
                     id: item?._id,
                     sno: index + 1,
@@ -213,8 +167,20 @@ const Assets = () => {
 
     useEffect(() => {
         getToken();
-    }, [page]);
+    }, [page, filters]);
 
+
+    const updateFilter = (key, value) => {
+
+        if (key === "status") {
+            value = value === "active" ? "true" : value === "inactive" ? "false" : "";
+        }
+
+        setFilters(prev => ({
+            ...prev,
+            [key]: value
+        }));
+    };
 
     const handleSubmit = async (values) => {
 
@@ -347,6 +313,14 @@ const Assets = () => {
     useEffect(() => {
         console.log("networkOptions updated:", networkOptions);
     }, [networkOptions]);
+
+      const debouncedSearch = useMemo(
+        () =>
+          debounce((value) => {
+            updateFilter("search", value);
+          }, 800),
+        []
+      );
     return (
         <>
 
@@ -367,6 +341,9 @@ const Assets = () => {
                 data={originalData}
                 onFilter={setFilteredData}
                 onCreate={handleCreate}
+                onSearch={(value) => debouncedSearch(value)}
+                onTypeChange={(value) => updateFilter("type", value)}
+                onVerifyChange={(value) => updateFilter("status", value)}
             />
 
             <ReusableTable
