@@ -78,17 +78,8 @@ const Dashboard = () => {
   // transaction table configuration
   const transactionColumns = [
 
-    {
-      title: "Network Name",
-      dataIndex: "networkName",
-    },
-    {
-      title: "Token Symbol",
-      dataIndex: "tokenSymbol",
-    },
-
-    {
-      title: "Hash",
+      {
+      title: "Transaction Hash",
       dataIndex: "transactionHash",
       render: (hash) => {
         if (!hash) return "-";
@@ -97,6 +88,17 @@ const Dashboard = () => {
         return `${start}...${end}`;
       },
     },
+
+    {
+      title: "Network Symbol",
+      dataIndex: "networkSymbol",
+    },
+    {
+      title: "Token Symbol",
+      dataIndex: "tokenSymbol",
+    },
+
+  
     {
       title: "From",
       dataIndex: "from",
@@ -119,7 +121,7 @@ const Dashboard = () => {
     },
     { title: "Amount", dataIndex: "amount" },
     // { title: "Symbol", dataIndex: "tokenSymbol" },
-    { title: "Status", dataIndex: "status" },
+    // { title: "Status", dataIndex: "status" },
     {
       title: "Date",
       dataIndex: "DateTime",
@@ -131,28 +133,6 @@ const Dashboard = () => {
       },
     },
   ];
-  // const userData = [
-  //   {
-  //     _id: "69a14689a5d7353af2b88a28",
-  //     firstname: "Hash",
-  //     lastname: "Codex",
-  //     verifyStatus: true,
-  //     email: "testhc@mail.com",
-  //     phone: "+919488394481",
-  //     role: "user",
-  //     type: "individual",
-  //   },
-  //   {
-  //     _id: "69a14689a5d7353af2b88a29",
-  //     firstname: "Arun",
-  //     lastname: "Kumar",
-  //     verifyStatus: false,
-  //     email: "arun@mail.com",
-  //     phone: "+919876543210",
-  //     role: "user",
-  //     type: "professional",
-  //   },
-  // ];
 
   const userColumns = [
     { title: "First Name", dataIndex: "firstname" },
@@ -257,13 +237,13 @@ const Dashboard = () => {
           .map((item, index) => ({
             id: item?._id,
             key: index + 1,
-            networkName: item?.network?.networkName || "-",
+            networkSymbol: item?.networkSymbol || "-",
             tokenSymbol: item?.tokenSymbol || "-",
             transactionHash: item?.transactionHash || "-",
             from: item?.from || "-",
             to: item?.to || "-",
             amount: item?.amount || "-",
-            status: item?.status || "-",
+            // status: item?.status || "-",
             DateTime: item?.createdAt || "-",
           }));
           console.log(data, "datasss");

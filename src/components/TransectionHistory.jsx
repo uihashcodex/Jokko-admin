@@ -30,7 +30,7 @@ const TransectionHistory = () => {
       name: "transactionHash", label: "Transaction", type: "copy",
     },
     {
-      name: "networkId", label: "Network ID", type: "copy",
+      name: "networkSymbol", label: "Network Symbol", type: "copy",
 
     },
     {
@@ -69,7 +69,7 @@ const TransectionHistory = () => {
          const trans = trandata.map((item) => ({
         key: item?._id,
         transactionHash: item?.transactionHash,
-        networkId: item?.network_id?.networkName,
+        networkSymbol: item?.network_id?.networkSymbol,
         amount: item?.amount,
         from: item?.from,
         to: item?.to,
@@ -135,7 +135,7 @@ const TransectionHistory = () => {
         const transres = users.map((item) => ({
           key: item?._id,
           transactionHash: item?.transactionHash,
-          networkId: item?.network_id,
+          networkSymbol: item?.networkSymbol,
           amount: item?.amount,
           from: item?.from,
           to: item?.to,
@@ -174,13 +174,13 @@ const TransectionHistory = () => {
 
 
   const columns = [
-    { title: "Transaction", dataIndex: "transactionHash" ,
+    { title: "Transaction Hash", dataIndex: "transactionHash" ,
       render: (trans) => {
         if (!trans) return "-";
         return `${trans.slice(0, 8)}...`;
       }
     },
-    { title: "Network ID", dataIndex: "networkId" },
+    { title: "Network Symbol", dataIndex: "networkSymbol" },
     { title: "Amount", dataIndex: "amount" },
     { title: "From", dataIndex: "from",
       render: (frm) => {
@@ -195,7 +195,7 @@ const TransectionHistory = () => {
       }
      },
     { title: "Token Symbol", dataIndex: "tokenSymbol" },
-    { title: "Status", dataIndex: "status" },
+    // { title: "Status", dataIndex: "status" },
   ];
 
   const debouncedSearch = useMemo(
@@ -216,7 +216,7 @@ const TransectionHistory = () => {
             className="back-icon"
           />
         )}
-        <h2 className="text-2xl font-semibold  white">Transection History</h2>
+        <h2 className="text-2xl font-semibold  white">Transaction History</h2>
       </div>
 
       {!id && (

@@ -19,7 +19,7 @@ const columns = [
   { title: "Unique ID", dataIndex: "uniqueid", key: "uniqueid" ,
     render: (frm) => {
       if (!frm) return "-";
-      return `${frm.slice(0, 8)}...`;
+      return `${frm.slice(0, 8)}`;
     }
   },
   // { title: "Exchange", dataIndex: "exchange", key: "exchange" },
@@ -176,7 +176,7 @@ const Viewdetail = () => {
         showPrivateFilter={true}
         onSearch={(value) => debouncedSearch(value)}
         onTypeChange={(value) => updateFilter("type", value)}
-        onVerifyChange={(value) => updateFilter("blockstatus", value)}ss        //
+        onVerifyChange={(value) => updateFilter("blockstatus", value)}
 
       />
       <ReusableTable

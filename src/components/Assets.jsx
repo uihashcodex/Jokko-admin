@@ -142,11 +142,11 @@ const Assets = () => {
                     sno: index + 1,
                     tokenName: item?.tokenName,
                     tokenSymbol: item?.tokenSymbol,
-                    contractAddress: item?.contractAddress || "***",
+                    contractAddress: item?.contractAddress || "-",
                     tokenDecimals: item?.decimals,
                     status: item?.verifyStatus == true ? "active" : "inactive",
                     
-                    networkName: item?.network_id?.networkName,
+                    networkName: item?.network.networkName,
                 }));
                 console.log(formattedData, "formattedData");
                 setOriginalData(formattedData);
