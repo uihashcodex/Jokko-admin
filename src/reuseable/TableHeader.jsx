@@ -16,6 +16,7 @@ const TableHeader = ({
   showPrivateFilter = false,
   showCreateButton = true,
   onCreate,
+  placeHolder
 }) => {
 
   const [searchText, setSearchText] = useState("");
@@ -53,7 +54,7 @@ const TableHeader = ({
       
       <Col xs={24} sm={12} md={8} lg={6}>
         <Search
-          placeholder="Search..."
+          placeholder={placeHolder || "Search..."}
           allowClear
           // onChange={(e) => setSearchText(e.target.value)}
           // onChange={(e) => {
