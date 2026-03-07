@@ -14,25 +14,7 @@ import theme from '../config/theme';
 
 const Network = () => {
     const [originalData, setOriginalData] = useState([
-        // {
-        //     id: 1,
-        //     sno: 1,
-        //     networkname: "Ripple",
-        //     networksymbol: "XRP",
-        //     rpcUrl: "https://s1.ripple.com:51234",
-        //     blockExplorerUrl: "https://xrpscan.com/",
-        //     type: "xrp"
-        // },
-        // {
-        //     id: 2,
-        //     sno: 2,
-        //     networkname: "Zipple",
-        //     networksymbol: "EVM",
-        //     rpcUrl: "https://s1.Zipple.com:51234",
-        //     blockExplorerUrl: "https://evmscan.com/",
-        //     type: "xrp"
-        // }
-
+      
     ]);
     const [page, setPage] = useState(1);
     const [messageApi, contextHolder] = message.useMessage();
@@ -47,6 +29,9 @@ const Network = () => {
         { title: "S.no", dataIndex: "sno", key: "sno" },
         { title: "Network Name", dataIndex: "networkname", key: "networkname" },
         { title: "Network Symbol", dataIndex: "networksymbol", key: "networksymbol" },
+            
+        { title: "Chain Id", dataIndex: "chainId", key: "chainId" },
+
         { title: "Rpc Url", dataIndex: "rpcUrl", key: "rpcUrl" },
         { title: "BlockExplorer Url", dataIndex: "blockExplorerUrl", key: "blockExplorerUrl" },
         { title: "Status", dataIndex: "status", key: "status" }
@@ -89,6 +74,18 @@ const Network = () => {
                 },
             ],
         },
+
+
+          {
+            label: "Chain ID",
+            name: "chainId",
+            span: 12,
+            rules: [
+                { required: true, message: "Chain ID is required" },
+                { min: 3, message: "Chain ID must be at least 3 characters" },
+            ],
+
+        },
         {
             label: "Block Explorer URL",
             name: "blockExplorerUrl",
@@ -126,35 +123,7 @@ const Network = () => {
     ;
 
 
-    //    const handleSubmit = (values) => {
-
-    //     if (selectedRecord) {
-    //         // UPDATE
-    //         const updatedData = originalData.map(item =>
-    //             item.id === selectedRecord.id
-    //                 ? { ...item, ...values }
-    //                 : item
-    //         );
-
-    //         setOriginalData(updatedData);
-    //         setFilteredData(updatedData);
-
-    //     } else {
-    //         // CREATE
-    //         const newItem = {
-    //             id: originalData.length + 1,
-    //             sno: originalData.length + 1,
-    //             ...values
-    //         };
-
-    //         const updatedData = [...originalData, newItem];
-
-    //         setOriginalData(updatedData);
-    //         setFilteredData(updatedData);
-    //     }
-
-    //     setOpen(false);
-    // };
+   
     const modalFields = selectedRecord
         ? fields
         : fields.filter(f => f.name !== "status");
@@ -166,80 +135,6 @@ const Network = () => {
         status: ""
     });
 
-
-    // const getNetworks = async () => {
-    //     try {
-    //         const cleanFilters = Object.fromEntries(
-    //             Object.entries(filters).filter(([_, v]) => v !== "" && v !== undefined)
-    //         );
-
-    //         // const response = await axios.post(
-    //         //     `${constant.backend_url}/assets/get-all-networks`,
-    //         //     {},
-    //         //     {
-    //         //         params: {
-    //         //         ...cleanFilters,
-    //         //             page: page,
-    //         //             limit: 10
-    //         //         }
-    //         //     },
-    //         //     {
-    //         //         headers: {
-    //         //             "Content-Type": "application/json",
-    //         //             Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
-    //         //         },
-    //         //     }
-    //         // );
-    //         const response = await axios.post(
-    //             `${constant.backend_url}/assets/get-all-networks`,
-    //             {},
-    //             {
-    //                 params: {
-    //                     ...cleanFilters,
-    //                     page: page,
-    //                     limit: 10
-    //                 },
-    //                 headers: {
-    //                     "Content-Type": "application/json",
-    //                     Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
-    //                 }
-    //             }
-    //         );
-    //         if (response.data?.success) {
-    //             const docs = response.data.result.docs || [];
-
-    //             setTotalUsers(response.data.result.totalDocs);
-
-    //             console.log(response.data.result.docs[0]?.verifyStatus, "dfghjkl");
-    //             const formattedData = docs.map((item, index) => ({
-
-
-    //                 id: item?._id,
-    //                 sno: (page - 1) * 10 + index + 1,
-    //                  networkname: item?.networkName,
-    //                 networksymbol: item?.networkSymbol,
-    //                 rpcUrl: item?.rpcUrl,
-    //                 blockExplorerUrl: item?.blockExplorerUrl,
-    //                 status: item?.verifyStatus == true ? "active" : "inactive",
-    //                 // status: item?.verifyStatus ? "active" : "inactive",
-    //                 // status: item?.verifyStatus,
-    //                 type: item?.type
-    //             }));
-    //             console.log(formattedData, "formattedData");
-    //             setOriginalData(formattedData);
-    //             // setFilteredData(formattedData);
-
-    //         } else {
-    //             setOriginalData([]);
-    //             // setFilteredData([]);
-    //         }
-
-    //     } catch (error) {
-    //         console.log(error);
-    //         setOriginalData([]);
-    //         // setFilteredData([]);
-    //     }
-    // };
 
  
 
@@ -282,6 +177,7 @@ const Network = () => {
                     sno: (page - 1) * 10 + index + 1,
                     networkname: item.networkName,
                     networksymbol: item.networkSymbol,
+                    chainId: item.chainId || "-",
                     rpcUrl: item.rpcUrl,
                     blockExplorerUrl: item.blockExplorerUrl,
                     status: item.verifyStatus == true ? "active" : "inactive",
@@ -365,6 +261,7 @@ const Network = () => {
                 const payload = {
                     network_id: selectedRecord.id,
                     networkName: values.networkname,
+                    chainId: values.chainId,
                     networkSymbol: values.networksymbol,
                     rpcUrl: values.rpcUrl,
                     blockExplorerUrl: values.blockExplorerUrl,
@@ -417,6 +314,7 @@ const Network = () => {
                     {
                         networkName: values.networkName,
                         networkSymbol: values.networkSymbol,
+                            chainId: values.chainId,
                         rpcUrl: values.rpcUrl,
                         blockExplorerUrl: values.blockExplorerUrl,
                         type: values.type
@@ -434,7 +332,7 @@ const Network = () => {
                     getNetworks();
                     setOpen(false);
                 } else {
-                    messageApi.warning(res.data?.message || "Something went wrong");
+                    messageApi.warning("Network Already Exists");
 
                 }
             }

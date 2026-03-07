@@ -344,6 +344,7 @@ const Assets = () => {
                 onSearch={(value) => debouncedSearch(value)}
                 onTypeChange={(value) => updateFilter("type", value)}
                 onVerifyChange={(value) => updateFilter("status", value)}
+                placeHolder={"name,symbol,address,network..."}
             />
 
             <ReusableTable

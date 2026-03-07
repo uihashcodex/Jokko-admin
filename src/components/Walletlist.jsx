@@ -56,7 +56,7 @@ const Walletlist = () => {
           evmaddress: item?.evmAddress,
           solanaaddress: item?.solAddress,
           xrpaddress: item?.xrpAddress,
-          status: item?.walletStatus ? "Inactive" : "Active",
+          status: item?.walletStatus ? "Active" : "Inactive",
         }));
 
         setWalletData(walletsList);
@@ -114,7 +114,7 @@ const Walletlist = () => {
           evmaddress: item?.evmAddress,
           solanaaddress: item?.solAddress,
           xrpaddress: item?.xrpAddress,
-          status: item?.walletStatus ? "Inactive" : "Active",
+          status: item?.walletStatus ? "Active" : "Inactive",
 
         }));
 
