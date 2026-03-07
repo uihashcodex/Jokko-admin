@@ -182,7 +182,6 @@ const Dashboard = () => {
   // };
 
 
-
 const getuserstabledata = async () => {
   try {
 
@@ -190,9 +189,9 @@ const getuserstabledata = async () => {
       `${constant.backend_url}/admin/get-all-users`,
       {
         params: {
-          type: "recent",  
+          type: "recent",   // ✅ only today's users
           page: 1,
-          limit: 3          
+          limit: 3          // ✅ only 3 users needed
         },
         headers: {
           Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
