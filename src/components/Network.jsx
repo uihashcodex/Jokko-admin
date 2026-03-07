@@ -42,6 +42,11 @@ const Network = () => {
         { label: "Inactive", value: "inactive" },
     ];
 
+const typeOptions = [
+        { label: "EVM", value: "evm" },
+        { label: "NON-EVM", value: "nonevm" },
+    ];
+    
     const fields = [
         {
             label: "Network Name",
@@ -98,15 +103,11 @@ const Network = () => {
                 },
             ]
         },
-        {
-            label: "Type",
-            name: "type",
-            span: 12,
-            rules: [
-                { required: true, message: "Type is required" },
-                { min: 3, message: "Type must be at least 3 characters" },
-            ],
-
+              {
+            label:"Type",
+            name:"type",
+            type:"select",
+            options: typeOptions
         },
         {
             label: "Status",

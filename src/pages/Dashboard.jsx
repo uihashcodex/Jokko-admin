@@ -183,37 +183,44 @@ const Dashboard = () => {
 
 
 
-  const getuserstabledata = async () => {
-    try {
-      const res = await axios.get(
-        `${constant.backend_url}/admin/get-all-users`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
-          },
-        }
-      );
+const getuserstabledata = async () => {
+  try {
 
-      if (res.data?.success) {
-        const data = res.data.result
-          .slice(0, 3)
-          .map((item, index) => ({
-            id: item?._id,
-            firstname: item?.firstname || "-",
-            lastname: item?.lastname || "-",
-            email: item?.email || "-",
-            phone: item?.phone || "-",
-            role: item?.role || "-",
-            type: item?.type || "-",
-            verifyStatus: item?.verifyStatus ? "Yes" : "No",
-          }));
-
-        setUserTableData(data);
+    const res = await axios.get(
+      `${constant.backend_url}/admin/get-all-users`,
+      {
+        params: {
+          type: "recent",  
+          page: 1,
+          limit: 3          
+        },
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+        },
       }
-    } catch (error) {
-      console.error(error);
+    );
+
+    if (res.data?.success) {
+
+      const data = res.data.result.map((item) => ({
+        id: item?._id,
+        firstname: item?.firstname || "-",
+        lastname: item?.lastname || "-",
+        email: item?.email || "-",
+        phone: item?.phone || "-",
+        role: item?.role || "-",
+        type: item?.type || "-",
+        verifyStatus: item?.verifyStatus ? "Yes" : "No",
+      }));
+
+      setUserTableData(data);
+
     }
-  };
+
+  } catch (error) {
+    console.error(error);
+  }
+};
   useEffect(() => {
     getuserstabledata();
   }, []);
@@ -223,6 +230,7 @@ const Dashboard = () => {
     try {
       const res = await axios.get(
         `${constant.backend_url}/admin/get-all-transactions`,
+        
         {
 
           headers: {
