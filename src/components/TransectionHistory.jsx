@@ -8,7 +8,9 @@ import axios from "axios";
 import { constant } from "../const";
 import TableHeader from "../reuseable/TableHeader";
 import ReusableModal from "../reuseable/ReusableModal";
-
+import debounce from "lodash.debounce";
+import { useMemo } from "react";
+import { message } from "antd";
 
 const TransectionHistory = () => {
   const { id } = useParams();
@@ -20,6 +22,9 @@ const TransectionHistory = () => {
   const [filteredTableData, setFilteredTableData] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedTrans, setSelectedTrans] = useState(null);
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [page, setPage] = useState(1);
+
   const TransactionFields = [
     {
       name: "transactionHash", label: "Transaction", type: "copy",
@@ -50,9 +55,18 @@ const TransectionHistory = () => {
         }
       );
 
-       if (res.data?.success) {
+      if (!res.data?.success) {
+        setTransactionData([]);
+        setTotalUsers(0);
+        message.warning(res.data?.message || "No transactions found");
+        return;
+      }
 
-      const trans = res.data.data.docs.map((item) => ({
+       if (res.data?.success) {
+         const trandata = res.data.data.docs || [];
+
+
+         const trans = trandata.map((item) => ({
         key: item?._id,
         transactionHash: item?.transactionHash,
         networkId: item?.network_id?.networkName,
@@ -63,7 +77,11 @@ const TransectionHistory = () => {
         status: item?.status,
       }));
 
+        
+
       setTransactionData(trans);
+         setTotalUsers(trandata.length);
+
     }
 
     } catch (error) {
@@ -79,16 +97,28 @@ const TransectionHistory = () => {
     }
   }, [id]);
 
+  
 
-  useEffect(() => {
-    getAllTransaction();
-  }, []);
+
+
+
+  const [filters, setFilters] = useState({
+    search: ""
+  });
+
 
   const getAllTransaction = async () => {
     try {
+
+      
       const res = await axios.get(`${constant.backend_url}/admin/get-all-transactions`,
 
         {
+          params: {
+            search: filters.search,
+            page: page,
+            limit: 10
+          },
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
@@ -97,7 +127,12 @@ const TransectionHistory = () => {
 
       );
       if (res.data?.success) {
-        const transres = res.data.result.map((item) => ({
+
+        const users = res.data.result || [];
+        setTotalUsers(res.data.total);
+
+        // const transres = res.data.result.map((item) => ({
+        const transres = users.map((item) => ({
           key: item?._id,
           transactionHash: item?.transactionHash,
           networkId: item?.network_id,
@@ -105,8 +140,7 @@ const TransectionHistory = () => {
           from: item?.from,
           to: item?.to,
           tokenSymbol: item?.tokenSymbol,
-          status: item?.status == true ? "active" : "inactive",
-          // phrase: item.randomCheck?.join(", ")
+          // status: item?.status          
         }))
         console.log(transres,"dsggffgf");
 
@@ -119,22 +153,22 @@ const TransectionHistory = () => {
     }
   };
 
-
-
-
   // useEffect(() => {
-  //   if (id) {
-  //     getTransation();     // user transaction
-  //   } else {
-  //     getAllTransaction(); // all transactions
-  //   }
-  // }, [id]);
+  //   getAllTransaction();
+  // }, [page, filters]);
 
-  // const filteredData = id
-  //   ? originalData.filter((item) => item.key === id)
-  //   : originalData;
+  useEffect(() => {
+    if (!id) {
+      getAllTransaction();
+    }
+  }, [page, filters, id]);
 
-  // const filteredData = state ? [state] : originalData;
+
+
+  const updateFilter = (value) => {
+    setFilters({ search: value });
+    setPage(1);
+  };
 
   const filteredData = id ? transactionData : alltrandata;
 
@@ -164,6 +198,14 @@ const TransectionHistory = () => {
     { title: "Status", dataIndex: "status" },
   ];
 
+  const debouncedSearch = useMemo(
+    () =>
+      debounce((value) => {
+        updateFilter(value);
+      }, 800),
+    []
+  );
+
   return (
     <>
       <div className="flex items-center gap-3 mb-4">
@@ -180,16 +222,23 @@ const TransectionHistory = () => {
       {!id && (
         <TableHeader
           data={alltrandata}
-          onFilter={(data) => setFilteredTableData(data)}
+          // onFilter={(data) => setFilteredTableData(data)}
           showCreateButton={false}
           showPrivateFilter={false}
-        />
+          showStatusFilter={false}
+          onSearch={(value) => debouncedSearch(value)}
+          />
       )}
       
       <ReusableTable
         columns={columns}
           data={id ? transactionData : filteredTableData}
         rowKey="key"
+        pageSize={10}
+        total={totalUsers}
+        currentPage={page}
+        onPageChange={(p) => setPage(p)}    
+
         actionType={["viewMore"]}
         onView={(record) => {
           setSelectedTrans(record);

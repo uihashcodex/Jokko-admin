@@ -19,6 +19,9 @@ const Walletlist = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedWallet, setSelectedWallet] = useState(null);
 
+  const [totalUsers, setTotalUsers] = useState(0);
+
+
   // ✅ pagination states
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
@@ -64,13 +67,30 @@ const Walletlist = () => {
   // -----------------------------
   // GET ALL WALLETS (ADMIN)
   // -----------------------------
+
+
+  const [filters, setFilters] = useState({
+    search: "",
+    type: "",
+    status: ""
+  });
+
   const getAllWallets = async () => {
 
     try {
 
+      const cleanFilters = Object.fromEntries(
+        Object.entries(filters).filter(([_, v]) => v !== "" && v !== undefined)
+      );
+
       const res = await axios.get(
-        `${constant.backend_url}/users/get-all-wallets?page=${page}&limit=${limit}&search=${search}&status=${status}`,
+        `${constant.backend_url}/users/get-all-wallets`,
         {
+          params: {
+            ...cleanFilters,
+            page: page,
+            limit: 10
+          },
           headers: {
             Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
           },
@@ -78,8 +98,11 @@ const Walletlist = () => {
       );
 
       if (res.data?.success) {
+          const walletss = res.data.result || [];
+        setTotalUsers(res.data.total);
 
-        const walletres = res.data.result.map((item) => ({
+        // const walletres = res.data.result.map((item) => ({
+        const walletres = walletss.map((item) => ({
           key: item?._id,
           walletname: item?.walletName,
           firstname: item?.firstname || "-",
@@ -99,6 +122,7 @@ const Walletlist = () => {
       console.error(error);
     }
   };
+  
 
   useEffect(() => {
 
@@ -108,8 +132,19 @@ const Walletlist = () => {
       getAllWallets();
     }
 
-  }, [page, search, status]);
+  }, [page, filters]);
 
+  const updateFilter = (key, value) => {
+
+    if (key === "status") {
+      value = value === "active" ? true : value === "inactive" ? false : "";
+    }
+
+    const updatedFilters = { ...filters, [key]: value };
+
+    setFilters(updatedFilters);
+    getAllWallets(updatedFilters);
+  };
   // -----------------------------
   // MODAL FIELDS
   // -----------------------------
@@ -183,14 +218,18 @@ const Walletlist = () => {
       {!id && (
         <TableHeader
           data={filteredTableData}
-          onSearch={(value) => {
-            setSearch(value);
-            setPage(1);
-          }}
-          onStatusChange={(value) => {
-            setStatus(value);
-            setPage(1);
-          }}
+          // onSearch={(value) => {
+          //   setSearch(value);
+          //   setPage(1);
+          // }}
+          // onStatusChange={(value) => {
+          //   setStatus(value);
+          //   setPage(1);
+          // }}
+          onSearch={(value) => updateFilter("search", value)}
+          onTypeChange={(value) => updateFilter("type", value)}
+          onVerifyChange={(value) => updateFilter("status", value)}
+          
           showCreateButton={false}
           showPrivateFilter={false}
         />
@@ -202,14 +241,19 @@ const Walletlist = () => {
         columns={columns}
         data={tableData}
         rowKey="key"
-        pageSize={10}
+        // pageSize={10}
 
-        pagination={{
-          current: page,
-          total: total,
-          pageSize: limit,
-          onChange: (p) => setPage(p),
-        }}
+        // pagination={{
+        //   current: page,
+        //   total: total,
+        //   pageSize: limit,
+        //   onChange: (p) => setPage(p),
+        // }}
+
+        pageSize={10}
+        total={totalUsers}
+        currentPage={page}
+        onPageChange={(p) => setPage(p)}  
 
         actionType={["viewMore"]}
 

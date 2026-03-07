@@ -257,15 +257,16 @@ const Dashboard = () => {
           .map((item, index) => ({
             id: item?._id,
             key: index + 1,
-            networkName: item?.network.networkName || "-",
+            networkName: item?.network?.networkName || "-",
             tokenSymbol: item?.tokenSymbol || "-",
             transactionHash: item?.transactionHash || "-",
             from: item?.from || "-",
             to: item?.to || "-",
             amount: item?.amount || "-",
             status: item?.status || "-",
-            DateTime: item?.DateTime || item?.createdAt || "-",
+            DateTime: item?.createdAt || "-",
           }));
+          console.log(data, "datasss");
 
         setTranHistory(data);
       }

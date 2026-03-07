@@ -287,7 +287,9 @@ console.log(data,"data");
           current: currentPage,
           pageSize: pageSize,
           total: total,
-          onChange: (page) => onPageChange?.(page), hideOnSinglePage: true, }}
+          onChange: (page) => onPageChange?.(page), 
+          
+          hideOnSinglePage: true, }}
         scroll={{ x: "max-content" }}
         className="custom-ant-table"
         locale={{
