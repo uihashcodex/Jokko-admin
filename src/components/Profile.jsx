@@ -23,6 +23,7 @@ import QRCode from "react-qr-code";
 import axios from "axios";
 import { message } from "antd"; 
 import { constant } from "../const";
+// import profileimg from "../../public/img/logo-sm.png"
 
 
 const Profile = () => {
@@ -267,8 +268,12 @@ const Profile = () => {
             <div className="text-center mb-5">
               <Avatar
                 size={110}
-                src={profileData?.profile_picture || profileImage}
-                icon={!profileImage && <UserOutlined />}
+                src={
+                  profileData?.profile_picture
+                    ? `${constant.backend_url}/${profileData.profile_picture}`
+                    : profileImage || "/img/logo-sm.png"
+                }
+                icon={!profileData?.profile_picture && !profileImage && <UserOutlined />}
                 className="shadow-md"
               />
             </div>

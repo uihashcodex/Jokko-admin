@@ -24,6 +24,7 @@ const TransectionHistory = () => {
   const [selectedTrans, setSelectedTrans] = useState(null);
   const [totalUsers, setTotalUsers] = useState(0);
   const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(false);
 
   const TransactionFields = [
     {
@@ -109,8 +110,8 @@ const TransectionHistory = () => {
 
   const getAllTransaction = async () => {
     try {
-
-      
+      setLoading(true);
+      const startTime = Date.now();
       const res = await axios.get(`${constant.backend_url}/admin/get-all-transactions`,
 
         {
@@ -148,7 +149,15 @@ const TransectionHistory = () => {
         setFilteredTableData(transres);
 
       }
-    } catch (error) {
+      const elapsed = Date.now() - startTime;
+      const remaining = 500 - elapsed;
+
+      setTimeout(() => {
+        setLoading(false);
+      }, remaining > 0 ? remaining : 0);
+    } 
+    
+    catch (error) {
       console.error(error);
     }
   };
@@ -238,7 +247,7 @@ const TransectionHistory = () => {
         total={totalUsers}
         currentPage={page}
         onPageChange={(p) => setPage(p)}    
-
+        loading={loading} 
         actionType={["viewMore"]}
         onView={(record) => {
           setSelectedTrans(record);

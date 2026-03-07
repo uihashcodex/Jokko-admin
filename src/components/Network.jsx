@@ -13,12 +13,10 @@ import theme from '../config/theme';
 
 
 const Network = () => {
-    const [originalData, setOriginalData] = useState([
-      
-    ]);
+    const [originalData, setOriginalData] = useState([]);
     const [page, setPage] = useState(1);
     const [messageApi, contextHolder] = message.useMessage();
-
+    const [loading, setLoading] = useState(false);
 
     // const [filteredData, setFilteredData] = useState(originalData);
     const [open, setOpen] = useState(false);
@@ -109,12 +107,13 @@ const typeOptions = [
             type:"select",
             options: typeOptions
         },
+        
         {
             label: "Status",
             name: "status",
             type: "select",
             options: statusOptions
-        }
+        },
     ];
 
     const handleCreate = () => {
@@ -141,6 +140,7 @@ const typeOptions = [
 
     const getNetworks = async () => {
         try {
+            setLoading(true);
             const cleanFilters = Object.fromEntries(
                 Object.entries(filters).filter(([_, v]) => v !== "")
             );
@@ -149,7 +149,7 @@ const typeOptions = [
                 page,
                 limit: 10
             });
-
+            const startTime = Date.now();
             const response = await axios.post(
                 `${constant.backend_url}/assets/get-all-networks`,
                 {
@@ -187,14 +187,19 @@ const typeOptions = [
 
                 setOriginalData(formattedData);
 
-            } else {
-                setOriginalData([]);
             }
+            const elapsed = Date.now() - startTime;
+            const remaining = 500 - elapsed;
+
+            setTimeout(() => {
+                setLoading(false);
+            }, remaining > 0 ? remaining : 0);
 
         } catch (error) {
             console.log(error);
             setOriginalData([]);
         }
+       
         
     };
     useEffect(() => {
@@ -216,47 +221,12 @@ const typeOptions = [
 
 
 
-
-    // const handleSubmit = async (values) => {
-    //     try {
-    //         if (selectedRecord) {
-    //             // UPDATE
-    //             const updatedData = originalData.map(item =>
-    //                 item.id === selectedRecord.id
-    //                     ? { ...item, ...values }
-    //                     : item
-    //             );
-
-    //             setOriginalData(updatedData);
-    //             setFilteredData(updatedData);
-    //         }
-    //         else {
-    //             // CREATE NETWORK API
-    //             const { data } = await axios.post(
-    //                 `${constant.backend_url}/assets/add-network`,
-    //                 values,
-    //                 {
-    //                     headers: {
-    //                         "Content-Type": "application/json",
-    //                         Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
-    //                     },
-    //                 }
-    //             );
-
-    //             if (data.success) {
-    //                 getNetworks(); // refresh table
-    //                 setOpen(false);
-    //             }
-    //         }
-
-    //     } catch (error) {
-    //         console.log(error);
-    //     }
-    // };
-
-
     const handleSubmit = async (values) => {
+        const startTime = Date.now(); 
+
         try {
+            setLoading(true);
+
             if (selectedRecord) {
 
                 const payload = {
@@ -268,6 +238,7 @@ const typeOptions = [
                     blockExplorerUrl: values.blockExplorerUrl,
                     type: values.type,
                     verifyStatus: values.status === "active"
+                    
                 };
 
                 console.log("VALUES:", values);
@@ -295,7 +266,7 @@ const typeOptions = [
                     setOpen(false);
                 } else {
                     if (!res.data.success) {
-                        messageApi.warning(res.data.message || "Something went wrong");
+                        messageApi.warning(res.data.message || "Network Already Exists");
                         return;
                     }
                 }
@@ -318,7 +289,8 @@ const typeOptions = [
                             chainId: values.chainId,
                         rpcUrl: values.rpcUrl,
                         blockExplorerUrl: values.blockExplorerUrl,
-                        type: values.type
+                        type: values.type,
+
                     },
                     {
                         headers: {
@@ -340,9 +312,21 @@ const typeOptions = [
 
         } catch (error) {
             console.log(error);
-            messageApi.error("Something went wrong");
+            messageApi.error("Network Already Exists");
+        }
+        finally {
+
+            const elapsed = Date.now() - startTime;
+            const minTime = 800; // loader minimum 800ms
+
+            setTimeout(() => {
+                setLoading(false);
+            }, Math.max(minTime - elapsed, 0));
+
         }
     };
+
+
     const handleUpdate = (record) => {
         setSelectedRecord({
             id: record.id,
@@ -351,34 +335,12 @@ const typeOptions = [
             rpcUrl: record.rpcUrl,
             blockExplorerUrl: record.blockExplorerUrl,
             type: record.type,
+            chainId: record.chainId,
             status: record.status
         });
         setOpen(true);
     };
 
-
-    // const updateNetwork = async (details) => {
-    //     try {
-    //         console.log(details)
-    //         const { data } = await axios.post(`/assets/add-network`,
-    //             details,
-    //             {
-    //                 headers: {
-    //                     Authorization: localStorage.getItem("adminToken"),
-    //                 },
-    //             }
-    //         );
-    //         if (data.success) {
-    //             toast.success("Network Updated Successfully");
-    //             getNetworks();
-    //             handleClose();
-    //         } else {
-    //             toast.error(data.message);
-    //         }
-    //     } catch (error) {
-    //         toast.error(error.message);
-    //     }
-    // }
 
 
     return (
@@ -407,6 +369,8 @@ const typeOptions = [
                     onSearch={(value) => updateFilter("search", value)}
                     onTypeChange={(value) => updateFilter("type", value)}
                     onVerifyChange={(value) => updateFilter("status", value)}
+                    searchTooltip="Search by Chain Id, Network Symbol,  Network Name"
+
                 />
                 <ReusableTable
                     columns={columns}
@@ -416,6 +380,8 @@ const typeOptions = [
                     total={totalUsers}
                     currentPage={page}
                     onPageChange={(p) => setPage(p)} 
+                    loading={loading}
+
                     />
 
                 <ReusableModal

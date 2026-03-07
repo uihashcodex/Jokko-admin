@@ -1,8 +1,8 @@
 import { Table, Dropdown, Button } from "antd";
 import { DownOutlined } from "@ant-design/icons";
-import SelectField from "./SelectField";
+import Select from "./SelectField";
 import { Empty } from "antd";
-import { Select } from "antd";
+// import { Select } from "antd";
 
 
 const ReusableTable = ({
@@ -29,89 +29,6 @@ const ReusableTable = ({
   let updatedColumns = [...columns];
 console.log(data,"data");
 
-// if (actionType) {
-//   updatedColumns.push({
-//     title: "Action",
-//     key: "action",
-//     render: (_, record) => {
-
-//       if (actionType === "view") {
-//         const items = [
-//           { key: "transaction", label: "Transaction" },
-//           { key: "wallet", label: "Wallet" },
-//         ];
-
-//         return (
-//           <Dropdown
-//             menu={{
-//               items,
-//               onClick: ({ key }) => onView?.(record, key),
-//             }}
-//             trigger={["click"]}
-//           >
-//             <Button>
-//               Select <DownOutlined />
-//             </Button>
-//           </Dropdown>
-//         );
-//       }
-
-//       if (actionType === "action") {
-//         const items = [
-//           { key: "edit", label: "Edit" },
-//           { key: "delete", label: "Delete" },
-//         ];
-
-//         return (
-//           <Dropdown
-//             menu={{
-//               items,
-//               onClick: ({ key }) => {
-//                 if (key === "edit") onEdit?.(record);
-//                 if (key === "delete") onDelete?.(record);
-//               },
-//             }}
-//             trigger={["click"]}
-//           >
-//             <Button>
-//               Action <DownOutlined />
-//             </Button>
-//           </Dropdown>
-//         );
-//       }
-
-//       if (actionType === "block") {
-//         const items = [
-//           { key: "block", label: "Block" },
-//           { key: "unblock", label: "UnBlock" },
-//         ];
-
-//         return (
-//           <Dropdown
-//             menu={{
-//               items,
-//               onClick: ({ key }) => {
-//                 if (key === "block") onBlock?.(record);
-//                 if (key === "unblock") onUnblock?.(record);
-//               },
-//             }}
-//             trigger={["click"]}
-//           >
-//             <Button>
-//               Action <DownOutlined />
-//             </Button>
-//           </Dropdown>
-//         );
-//       }
-
-//       return (
-//         <Button type="primary" onClick={() => onUpdate?.(record)}>
-//           {actionLabel}
-//         </Button>
-//       );
-//     },
-//   });
-// }
 
   if (actionType?.includes ("view")) {
   updatedColumns.push({

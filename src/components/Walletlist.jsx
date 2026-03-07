@@ -30,6 +30,7 @@ const Walletlist = () => {
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
   const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(false);
 
   // ✅ filters
   const [search, setSearch] = useState("");
@@ -57,7 +58,7 @@ const Walletlist = () => {
           solanaaddress: item?.solAddress,
           xrpaddress: item?.xrpAddress,
           status: item?.walletStatus ? "Active" : "Inactive",
-        }));
+                }));
 
         setWalletData(walletsList);
 
@@ -82,11 +83,13 @@ const Walletlist = () => {
   const getAllWallets = async () => {
 
     try {
+      setLoading(true);
+
 
       const cleanFilters = Object.fromEntries(
         Object.entries(filters).filter(([_, v]) => v !== "" && v !== undefined)
       );
-
+      const startTime = Date.now();
       const res = await axios.get(
         `${constant.backend_url}/users/get-all-wallets`,
         {
@@ -115,13 +118,18 @@ const Walletlist = () => {
           solanaaddress: item?.solAddress,
           xrpaddress: item?.xrpAddress,
           status: item?.walletStatus ? "Active" : "Inactive",
-
         }));
 
         setFilteredTableData(walletres);
         setTotal(res.data.total || 0);
 
       }
+      const elapsed = Date.now() - startTime;
+      const remaining = 500 - elapsed;
+
+      setTimeout(() => {
+        setLoading(false);
+      }, remaining > 0 ? remaining : 0);
 
     } catch (error) {
       console.error(error);
@@ -139,17 +147,7 @@ const Walletlist = () => {
 
   }, [page, filters]);
 
-  // const updateFilter = (key, value) => {
 
-  //   if (key === "status") {
-  //     value = value === "active" ? true : value === "inactive" ? false : "";
-  //   }
-
-  //   const updatedFilters = { ...filters, [key]: value };
-
-  //   setFilters(updatedFilters);
-  //   getAllWallets(updatedFilters);
-  // };
 
   const updateFilter = (key, value) => {
     if (key === "status") {
@@ -339,14 +337,6 @@ const Walletlist = () => {
       {!id && (
         <TableHeader
           data={filteredTableData}
-          // onSearch={(value) => {
-          //   setSearch(value);
-          //   setPage(1);
-          // }}
-          // onStatusChange={(value) => {
-          //   setStatus(value);
-          //   setPage(1);
-          // }}
           onSearch={(value) => updateFilter("search", value)}
           onTypeChange={(value) => updateFilter("type", value)}
           onVerifyChange={(value) => updateFilter("status", value)}
@@ -362,27 +352,13 @@ const Walletlist = () => {
         columns={columns}
         data={tableData}
         rowKey="key"
-        // pageSize={10}
-
-        // pagination={{
-        //   current: page,
-        //   total: total,
-        //   pageSize: limit,
-        //   onChange: (p) => setPage(p),
-        // }}
-
         pageSize={10}
         total={total}
         currentPage={page}
         onPageChange={(p) => setPage(p)}  
-
         actionType={["block"]}
-
-        // onView={(record) => {
-        //   setSelectedWallet(record);
-        //   setModalOpen(true);
-        // }}
-        onBlock={(record) => handleBlockWallet(record)}   
+        onBlock={(record) => handleBlockWallet(record)}  
+        loading={loading} 
 
       />
 
@@ -405,7 +381,12 @@ const Walletlist = () => {
           >
             <div className="modal-sub-head">{selectedWallet?.label}:</div>
 
-            <div className="modal-sub-para">{selectedWallet?.value}</div>
+            <div className="modal-sub-para" onClick={() => {
+              navigator.clipboard.writeText(selectedWallet?.value);
+              message.success("Address copied!");
+            }}
+              style={{ cursor: "pointer",}}
+            >{selectedWallet?.value}</div>
 
             <Tooltip title="Copy address">
               <CopyOutlined
