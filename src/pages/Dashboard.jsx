@@ -226,42 +226,47 @@ const getuserstabledata = async () => {
   }, []);
 
 
-  const getTransationHistory = async () => {
-    try {
-      const res = await axios.get(
-        `${constant.backend_url}/admin/get-all-transactions`,
-        
-        {
+const getTransationHistory = async () => {
+  try {
 
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
-          },
-        }
-      );
-
-      if (res.data?.success) {
-        const data = res.data.result
-          .slice(0, 3)
-          .map((item, index) => ({
-            id: item?._id,
-            key: index + 1,
-            tokenSymbol: item?.tokenSymbol || "-",
-            networkName: item?.networkName || "-",
-            transactionHash: item?.transactionHash || "-",
-            from: item?.from || "-",
-            to: item?.to || "-",
-            amount: item?.amount || "-",
-            // status: item?.status || "-",
-            DateTime: item?.createdAt || "-",
-          }));
-          console.log(data, "datasss");
-
-        setTranHistory(data);
+    const res = await axios.get(
+      `${constant.backend_url}/admin/get-all-transactions`,
+      {
+        params: {
+          type: "recent",   // ✅ today's transactions
+          page: 1,
+          limit: 3          // ✅ only 3 records
+        },
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+        },
       }
-    } catch (error) {
-      console.error(error);
+    );
+
+    if (res.data?.success) {
+
+      const data = res.data.result.map((item, index) => ({
+        id: item?._id,
+        key: index + 1,
+        tokenSymbol: item?.tokenSymbol || "-",
+        networkName: item?.networkName || "-",
+        transactionHash: item?.transactionHash || "-",
+        from: item?.from || "-",
+        to: item?.to || "-",
+        amount: item?.amount || "-",
+        DateTime: item?.createdAt || "-",
+      }));
+
+      console.log(data, "datasss");
+
+      setTranHistory(data);
+
     }
-  };
+
+  } catch (error) {
+    console.error(error);
+  }
+};
 
   useEffect(() => {
     getTransationHistory();
