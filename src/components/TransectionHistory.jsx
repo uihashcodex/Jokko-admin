@@ -25,6 +25,8 @@ const TransectionHistory = () => {
   const [totalUsers, setTotalUsers] = useState(0);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [networkOptions, setNetworkOptions] = useState([]);
+  const [networkId, setNetworkId] = useState("");
 
   const TransactionFields = [
     {
@@ -42,13 +44,13 @@ const TransectionHistory = () => {
 
     },
   ];
-  
+
   const getTransation = async () => {
     try {
       const res = await axios.post(
         `${constant.backend_url}/admin/getAllUsersWalletTransactions`,
         { user_id: id },
-         {
+        {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
@@ -63,27 +65,27 @@ const TransectionHistory = () => {
         return;
       }
 
-       if (res.data?.success) {
-         const trandata = res.data.data.docs || [];
+      if (res.data?.success) {
+        const trandata = res.data.data.docs || [];
 
 
-         const trans = trandata.map((item) => ({
-        key: item?._id,
-        transactionHash: item?.transactionHash || "-",
-           networkName: item?.network_id?.networkName || "-",
-           amount: item?.amount || "-",
-           from: item?.from || "-",
-           to: item?.to || "-",
-           tokenSymbol: item?.tokenSymbol || "-",
-           status: item?.status || "-",
-      }));
+        const trans = trandata.map((item) => ({
+          key: item?._id,
+          transactionHash: item?.transactionHash || "-",
+          networkName: item?.network_id?.networkName || "-",
+          amount: item?.amount || "-",
+          from: item?.from || "-",
+          to: item?.to || "-",
+          tokenSymbol: item?.tokenSymbol || "-",
+          status: item?.status || "-",
+        }));
 
-        
 
-      setTransactionData(trans);
-         setTotalUsers(trandata.length);
 
-    }
+        setTransactionData(trans);
+        setTotalUsers(trandata.length);
+
+      }
 
     } catch (error) {
       console.error(error);
@@ -98,25 +100,28 @@ const TransectionHistory = () => {
     }
   }, [id]);
 
-  
+
 
 
 
 
   const [filters, setFilters] = useState({
-    search: ""
+    search: "",
+    network_id: ""
   });
 
 
   const getAllTransaction = async () => {
+    const startTime = Date.now();
+
     try {
       setLoading(true);
-      const startTime = Date.now();
       const res = await axios.get(`${constant.backend_url}/admin/get-all-transactions`,
 
         {
           params: {
             search: filters.search,
+            network_id: filters.network_id,   
             page: page,
             limit: 10
           },
@@ -143,23 +148,30 @@ const TransectionHistory = () => {
           tokenSymbol: item?.tokenSymbol || "-",
           // status: item?.status          
         }))
-        console.log(transres,"dsggffgf");
+        console.log(transres, "dsggffgf");
 
         setAlltrandata(transres);
         setFilteredTableData(transres);
 
       }
+      // const elapsed = Date.now() - startTime;
+      // const remaining = 500 - elapsed;
+
+      // setTimeout(() => {
+      //   setLoading(false);
+      // }, remaining > 0 ? remaining : 0);
+    }
+
+    catch (error) {
+      console.error(error);
+    }
+    finally {
       const elapsed = Date.now() - startTime;
       const remaining = 500 - elapsed;
 
       setTimeout(() => {
         setLoading(false);
-      }, remaining > 0 ? remaining : 0);
-    } 
-    
-    catch (error) {
-      console.error(error);
-    }
+      }, remaining > 0 ? remaining : 0);    }
   };
 
   // useEffect(() => {
@@ -172,10 +184,19 @@ const TransectionHistory = () => {
     }
   }, [page, filters, id]);
 
-
-
   const updateFilter = (value) => {
-    setFilters({ search: value });
+    setFilters((prev) => ({
+      ...prev,
+      search: value
+    }));
+    setPage(1);
+  };
+
+  const updateNetworkFilter = (value) => {
+    setFilters((prev) => ({
+      ...prev,
+      network_id: value
+    }));
     setPage(1);
   };
 
@@ -183,7 +204,8 @@ const TransectionHistory = () => {
 
 
   const columns = [
-    { title: "Transaction Hash", dataIndex: "transactionHash" ,
+    {
+      title: "Transaction Hash", dataIndex: "transactionHash",
       render: (trans) => {
         if (!trans) return "-";
         return `${trans.slice(0, 8)}...`;
@@ -191,18 +213,20 @@ const TransectionHistory = () => {
     },
     { title: "Network Name", dataIndex: "networkName" },
     { title: "Amount", dataIndex: "amount" },
-    { title: "From", dataIndex: "from",
+    {
+      title: "From", dataIndex: "from",
       render: (frm) => {
         if (!frm) return "-";
         return `${frm.slice(0, 8)}...`;
       }
-     },
-    { title: "To", dataIndex: "to",
+    },
+    {
+      title: "To", dataIndex: "to",
       render: (to) => {
         if (!to) return "-";
         return `${to.slice(0, 8)}...`;
       }
-     },
+    },
     { title: "Token Symbol", dataIndex: "tokenSymbol" },
     // { title: "Status", dataIndex: "status" },
   ];
@@ -215,6 +239,36 @@ const TransectionHistory = () => {
     []
   );
 
+  const getNetwork = async () => {
+    try {
+      const response = await axios.post(
+        `${constant.backend_url}/assets/get-all-networks?page=1&limit=50`,
+        {},
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+          },
+        }
+      );
+
+      if (response.data?.success) {
+        const netWorkdata = response.data.result.docs.map((item) => ({
+          label: item?.networkName?.toUpperCase(),
+          value: item?._id,
+        }));
+
+        setNetworkOptions(netWorkdata);
+      } else {
+        setNetworkOptions([]);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+  useEffect(() => {
+    getNetwork();
+  }, []);
   return (
     <>
       <div className="flex items-center gap-3 mb-4">
@@ -237,18 +291,22 @@ const TransectionHistory = () => {
           showStatusFilter={false}
           onSearch={(value) => debouncedSearch(value)}
           searchTooltip="Search by User Name"
-          />
+          showNetworkFilter={true}
+          onNetworkChange={updateNetworkFilter}
+          networkOptions={networkOptions}
+        />
       )}
       
       <ReusableTable
         columns={columns}
-          data={id ? transactionData : filteredTableData}
+        // data={id ? transactionData : filteredTableData}
+        data={filteredData}
         rowKey="key"
         pageSize={10}
         total={totalUsers}
         currentPage={page}
-        onPageChange={(p) => setPage(p)}    
-        loading={loading} 
+        onPageChange={(p) => setPage(p)}
+        loading={loading}
         actionType={["viewMore"]}
         onView={(record) => {
           setSelectedTrans(record);
@@ -272,7 +330,7 @@ const TransectionHistory = () => {
         title="Transaction Details"
         showFooter={false}
         description={" "}
-        fields={[]}   
+        fields={[]}
         extraContent={
           <div className="flex flex-col gap-5">
 
@@ -348,7 +406,7 @@ const TransectionHistory = () => {
           </div>
         }
       />
-     
+
     </>
   );
 };

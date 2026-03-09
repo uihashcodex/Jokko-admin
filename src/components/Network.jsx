@@ -17,7 +17,7 @@ const Network = () => {
     const [page, setPage] = useState(1);
     const [messageApi, contextHolder] = message.useMessage();
     const [loading, setLoading] = useState(false);
-    const [deletemodal,setDeletemodal] = useState(false);
+    const [deletemodal, setDeletemodal] = useState(false);
 
     // const [filteredData, setFilteredData] = useState(originalData);
     const [open, setOpen] = useState(false);
@@ -28,11 +28,12 @@ const Network = () => {
         { title: "S.no", dataIndex: "sno", key: "sno" },
         { title: "Network Name", dataIndex: "networkname", key: "networkname" },
         { title: "Network Symbol", dataIndex: "networksymbol", key: "networksymbol" },
-            
+
         { title: "Chain Id", dataIndex: "chainId", key: "chainId" },
 
         { title: "Rpc Url", dataIndex: "rpcUrl", key: "rpcUrl" },
         { title: "BlockExplorer Url", dataIndex: "blockExplorerUrl", key: "blockExplorerUrl" },
+        { title: "Mode Status", dataIndex: "modeStatus", key: "modeStatus" },
         { title: "Status", dataIndex: "status", key: "status" }
     ];
 
@@ -41,11 +42,15 @@ const Network = () => {
         { label: "Inactive", value: "inactive" },
     ];
 
-const typeOptions = [
-        { label: "EVM", value: "evm" },
-        { label: "NON-EVM", value: "nonevm" },
+    const typeOptions = [
+        { label: "EVM", value: "EVM" },
+        { label: "NON-EVM", value: "NON-EVM" },
     ];
-    
+    const modeOptions = [
+        { label: "Mainnet", value: "mainnet" },
+        { label: "Testnet", value: "testnet" },
+    ];
+
     const fields = [
         {
             label: "Network Name",
@@ -80,13 +85,12 @@ const typeOptions = [
         },
 
 
-          {
+        {
             label: "Chain ID",
             name: "chainId",
             span: 12,
             rules: [
                 { required: true, message: "Chain ID is required" },
-                { min: 3, message: "Chain ID must be at least 3 characters" },
             ],
 
         },
@@ -102,22 +106,38 @@ const typeOptions = [
                 },
             ]
         },
-              {
-            label:"Type",
-            name:"type",
-            type:"select",
-            options: typeOptions
+        {
+            label: "Type",
+            name: "type",
+            type: "select",
+            options: typeOptions,
+            rules: [
+                { required: true, message: "Type  is required" }
+            ]
         },
-        
+        {
+            label: "Mode Status",
+            name: "modeStatus",
+            type: "select",
+            options: modeOptions,
+            span: 12,
+            rules: [
+                { required: true, message: "Mode Status is required" }
+            ]
+        },
         {
             label: "Status",
             name: "status",
             type: "select",
             options: statusOptions,
-            span: 24
+            span: 12,
+            rules: [
+                { required: true, message: "Status is required" }
+            ]
 
         },
-        
+
+
     ];
 
     const handleCreate = () => {
@@ -127,7 +147,7 @@ const typeOptions = [
     ;
 
 
-   
+
     const modalFields = selectedRecord
         ? fields
         : fields.filter(f => f.name !== "status");
@@ -136,11 +156,13 @@ const typeOptions = [
     const [filters, setFilters] = useState({
         search: "",
         type: "",
-        status: ""
+        status: "",
+        modeStatus: "",
+
     });
 
 
- 
+
 
     const getNetworks = async () => {
         try {
@@ -163,12 +185,12 @@ const typeOptions = [
                     limit: 10
                 },
                 {
-                  
+
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
                     }
                 }
-                
+
             );
 
             if (response.data?.success) {
@@ -186,7 +208,8 @@ const typeOptions = [
                     rpcUrl: item.rpcUrl,
                     blockExplorerUrl: item.blockExplorerUrl,
                     status: item.verifyStatus == true ? "active" : "inactive",
-                    type: item.type
+                    type: item.type,
+                    modeStatus: item.modeStatus
                 }));
 
                 setOriginalData(formattedData);
@@ -203,8 +226,8 @@ const typeOptions = [
             console.log(error);
             setOriginalData([]);
         }
-       
-        
+
+
     };
     useEffect(() => {
         getNetworks();
@@ -216,17 +239,22 @@ const typeOptions = [
             value = value === "active" ? "true" : value === "inactive" ? "false" : "";
         }
 
+        if (key === "modeStatus") {
+            value = value?.toLowerCase() || "";
+        }
+
         setFilters(prev => ({
             ...prev,
             [key]: value
         }));
+        setPage(1);
     };
 
 
 
 
     const handleSubmit = async (values) => {
-        const startTime = Date.now(); 
+        const startTime = Date.now();
 
         try {
             setLoading(true);
@@ -241,8 +269,8 @@ const typeOptions = [
                     rpcUrl: values.rpcUrl,
                     blockExplorerUrl: values.blockExplorerUrl,
                     type: values.type,
+                    modeStatus: values.modeStatus,
                     verifyStatus: values.status === "active"
-                    
                 };
 
                 console.log("VALUES:", values);
@@ -290,10 +318,12 @@ const typeOptions = [
                     {
                         networkName: values.networkName,
                         networkSymbol: values.networkSymbol,
-                            chainId: values.chainId,
+                        chainId: values.chainId,
                         rpcUrl: values.rpcUrl,
                         blockExplorerUrl: values.blockExplorerUrl,
                         type: values.type,
+                        modeStatus: values.modeStatus 
+                        
 
                     },
                     {
@@ -340,7 +370,8 @@ const typeOptions = [
             blockExplorerUrl: record.blockExplorerUrl,
             type: record.type,
             chainId: record.chainId,
-            status: record.status
+            status: record.status,
+            modeStatus: record.modeStatus
         });
         setOpen(true);
     };
@@ -405,7 +436,8 @@ const typeOptions = [
                     onTypeChange={(value) => updateFilter("type", value)}
                     onVerifyChange={(value) => updateFilter("status", value)}
                     searchTooltip="Search by Chain Id, Network Symbol,  Network Name"
-
+                    onNetChange={(value) => updateFilter("modeStatus", value)}
+                    showNetFilter={true}
                 />
                 <ReusableTable
                     columns={columns}
@@ -418,11 +450,11 @@ const typeOptions = [
                         setDeleteRecord(record);
                         setDeletemodal(true);
                     }}
-                    onPageChange={(p) => setPage(p)} 
+                    onPageChange={(p) => setPage(p)}
                     loading={loading}
                     actionType={["update", "Remove"]}
 
-                    />
+                />
 
                 <ReusableModal
                     open={open}

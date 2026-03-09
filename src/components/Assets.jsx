@@ -16,7 +16,8 @@ const Assets = () => {
     const [originalData, setOriginalData] = useState([]);
     const [networkOptions, setNetworkOptions] = useState([]);
     const [loading, setLoading] = useState(false);
-
+    const [deletemodal, setDeletemodal] = useState(false);
+    const [deleteRecord, setDeleteRecord] = useState(null);
     const [totalUsers, setTotalUsers] = useState(0);
     const columns = [
         { title: "S.no", dataIndex: "sno", key: "sno" },
@@ -112,18 +113,86 @@ const Assets = () => {
     });
 
 
+    // const getToken = async () => {
+    //         const startTime = Date.now();
+
+    //     try {
+    //         setLoading(true);
+
+    //         const cleanFilters = Object.fromEntries(
+    //             Object.entries(filters).filter(([_, v]) => v !== "")
+    //         );
+
+    //         const response = await axios.post(
+    //             `${constant.backend_url}/assets/get-all-tokens`,
+
+    //             {
+    //                 ...cleanFilters,
+    //                 page: page,
+    //                 limit: 10
+    //             },
+    //             {
+    //                 headers: {
+    //                     "Content-Type": "application/json",
+    //                     Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+    //                 },
+    //             }
+    //         );
+
+    //         if (response.data?.success) {
+
+    //             const docs = response.data.result || [];
+    //             setTotalUsers(response.data.total);
+    //             const formattedData = docs.map((item, index) => ({
+    //                 // const formattedData = response.data.result.map((item, index) => ({
+
+    //                 id: item?._id,
+    //                 sno: index + 1,
+    //                 tokenName: item?.tokenName,
+    //                 tokenSymbol: item?.tokenSymbol,
+    //                 contractAddress: item?.contractAddress || "-",
+    //                 tokenDecimals: item?.decimals,
+    //                 status: item?.verifyStatus == true ? "active" : "inactive",
+    //                 network_id: item?.network?._id,
+    //                 networkName: item?.network.networkName,
+    //             }));
+    //             console.log(formattedData, "formattedData");
+    //             setOriginalData(formattedData);
+    //             setFilteredData(formattedData);
+
+    //         }
+            
+       
+
+    //     } catch (error) {
+    //         console.log(error);
+    //         setOriginalData([]);
+    //         setFilteredData([]);
+    //     }
+    //     finally {
+    //         const elapsed = Date.now() - startTime;
+    //         const minTime = 500;
+
+    //         setTimeout(() => {
+    //             setLoading(false);
+    //         }, Math.max(minTime - elapsed, 0));
+    //     }
+    // };
+
+
+
     const getToken = async () => {
+        const startTime = Date.now();
+
         try {
             setLoading(true);
 
             const cleanFilters = Object.fromEntries(
                 Object.entries(filters).filter(([_, v]) => v !== "")
             );
-            const startTime = Date.now();
 
             const response = await axios.post(
                 `${constant.backend_url}/assets/get-all-tokens`,
-
                 {
                     ...cleanFilters,
                     page: page,
@@ -138,44 +207,39 @@ const Assets = () => {
             );
 
             if (response.data?.success) {
-
                 const docs = response.data.result || [];
-                setTotalUsers(response.data.total);
-                const formattedData = docs.map((item, index) => ({
-                    // const formattedData = response.data.result.map((item, index) => ({
 
+                setTotalUsers(response.data.total);
+
+                const formattedData = docs.map((item, index) => ({
                     id: item?._id,
                     sno: index + 1,
                     tokenName: item?.tokenName,
                     tokenSymbol: item?.tokenSymbol,
                     contractAddress: item?.contractAddress || "-",
                     tokenDecimals: item?.decimals,
-                    status: item?.verifyStatus == true ? "active" : "inactive",
+                    status: item?.verifyStatus ? "active" : "inactive",
                     network_id: item?.network?._id,
-
-                    networkName: item?.network.networkName,
+                    networkName: item?.network?.networkName,
                 }));
-                console.log(formattedData, "formattedData");
+
                 setOriginalData(formattedData);
                 setFilteredData(formattedData);
-
             }
-            
-            const elapsed = Date.now() - startTime;
-            const remaining = 500 - elapsed;
-
-            setTimeout(() => {
-                setLoading(false);
-            }, remaining > 0 ? remaining : 0);
 
         } catch (error) {
             console.log(error);
             setOriginalData([]);
             setFilteredData([]);
+        } finally {
+            const elapsed = Date.now() - startTime;
+            const minTime = 500;
+
+            setTimeout(() => {
+                setLoading(false);
+            }, Math.max(minTime - elapsed, 0));
         }
     };
-
-
     useEffect(() => {
         getToken();
     }, [page, filters]);
@@ -337,6 +401,38 @@ const Assets = () => {
           }, 800),
         []
       );
+
+    const handleDelete = async () => {
+        try {
+            setLoading(true);
+
+            const res = await axios.post(
+                `${constant.backend_url}/assets/delete-token`,
+                {
+                    token_id: deleteRecord.id
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+                    },
+                }
+            );
+
+            if (res.data?.success) {
+                message.success("Network removed successfully");
+                setDeletemodal(false);
+                getToken();
+            } else {
+                message.warning(res.data.message || "Delete failed");
+            }
+
+        } catch (error) {
+            console.log(error);
+            message.error("Something went wrong");
+        } finally {
+            setLoading(false);
+        }
+    };
     return (
         <>
 
@@ -370,6 +466,11 @@ const Assets = () => {
                 onUpdate={handleUpdate}
                 pageSize={10}
                 loading={loading}
+                actionType={["update", "Remove"]}
+                onDelete={(record) => {
+                    setDeleteRecord(record);
+                    setDeletemodal(true);
+                }}
             />
 
             <ReusableModal
@@ -381,6 +482,37 @@ const Assets = () => {
                 fields={modalFields}
                 initialValues={selectedAsset}
                 maskClosable={false}
+            />
+            <ReusableModal
+                open={deletemodal}
+                onCancel={() => setDeletemodal(false)}
+                title="Delete Network"
+                showFooter={false}
+                extraContent={
+                    <div className="text-center">
+
+                        <p className="text-gray-300 text-base">
+                            Are you sure you want to delete this network?
+                        </p>
+
+                        <div className="flex justify-between gap-4 mt-6">
+                            <button
+                                className="px-6 py-2 rounded primaty-bg text-black"
+                                onClick={() => setDeletemodal(false)}
+                            >
+                                No
+                            </button>
+
+                            <button
+                                className="px-6 py-2 rounded bg-red-600 text-white"
+                                onClick={handleDelete}
+                            >
+                                Yes
+                            </button>
+                        </div>
+
+                    </div>
+                }
             />
         </>
     );
