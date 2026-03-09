@@ -76,7 +76,7 @@ const Viewdetail = () => {
           name: `${user?.firstname || ""} ${user?.lastname || ""}`.trim() || "-",
           email: user?.email || "-",
           phone: user?.phone || "-",
-          status: user?.blockstatus ? "blocked" : "active",
+          status: user?.blockstatus ? "Inactive" : "active",
           type: user?.type || "-",
           country: user?.country || "-",
           uniqueid: user?.unique_id || "-"

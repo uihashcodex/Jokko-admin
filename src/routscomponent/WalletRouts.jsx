@@ -10,6 +10,7 @@ import Walletlist from "../components/Walletlist";
 import TransectionHistory from "../components/TransectionHistory";
 import AddressGeneration from "../components/AddressGeneration";
 import Griddemo from "../components/Griddemo";
+import Webhook from "../components/webhooks";
 import { constant } from "../const";
 
 
@@ -31,6 +32,7 @@ const WalletRouts = () => {
       <Route path={`/${constant?.adminRoute}/addressgeneration`} element={<AddressGeneration />} />
       <Route path={`/${constant?.adminRoute}/profile`} element={<Profile />} />
       <Route path={`/${constant?.adminRoute}/griddemo`} element={<Griddemo />} />
+      <Route path={`/${constant?.adminRoute}/webhook`} element={<Webhook />} />
     </Routes>
   );
 };
