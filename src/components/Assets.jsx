@@ -16,7 +16,8 @@ const Assets = () => {
     const [originalData, setOriginalData] = useState([]);
     const [networkOptions, setNetworkOptions] = useState([]);
     const [loading, setLoading] = useState(false);
-
+    const [deletemodal, setDeletemodal] = useState(false);
+    const [deleteRecord, setDeleteRecord] = useState(null);
     const [totalUsers, setTotalUsers] = useState(0);
     const columns = [
         { title: "S.no", dataIndex: "sno", key: "sno" },
@@ -170,8 +171,6 @@ const Assets = () => {
             }, Math.max(minTime - elapsed, 0));
         }
     };
-
-
     useEffect(() => {
         getToken();
     }, [page, filters]);
@@ -333,6 +332,38 @@ const Assets = () => {
           }, 800),
         []
       );
+
+    const handleDelete = async () => {
+        try {
+            setLoading(true);
+
+            const res = await axios.post(
+                `${constant.backend_url}/assets/delete-token`,
+                {
+                    token_id: deleteRecord.id
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+                    },
+                }
+            );
+
+            if (res.data?.success) {
+                message.success("Network removed successfully");
+                setDeletemodal(false);
+                getToken();
+            } else {
+                message.warning(res.data.message || "Delete failed");
+            }
+
+        } catch (error) {
+            console.log(error);
+            message.error("Something went wrong");
+        } finally {
+            setLoading(false);
+        }
+    };
     return (
         <>
 
@@ -366,6 +397,11 @@ const Assets = () => {
                 onUpdate={handleUpdate}
                 pageSize={10}
                 loading={loading}
+                actionType={["update", "Remove"]}
+                onDelete={(record) => {
+                    setDeleteRecord(record);
+                    setDeletemodal(true);
+                }}
             />
 
             <ReusableModal
@@ -377,6 +413,37 @@ const Assets = () => {
                 fields={modalFields}
                 initialValues={selectedAsset}
                 maskClosable={false}
+            />
+            <ReusableModal
+                open={deletemodal}
+                onCancel={() => setDeletemodal(false)}
+                title="Delete Network"
+                showFooter={false}
+                extraContent={
+                    <div className="text-center">
+
+                        <p className="text-gray-300 text-base">
+                            Are you sure you want to delete this network?
+                        </p>
+
+                        <div className="flex justify-between gap-4 mt-6">
+                            <button
+                                className="px-6 py-2 rounded primaty-bg text-black"
+                                onClick={() => setDeletemodal(false)}
+                            >
+                                No
+                            </button>
+
+                            <button
+                                className="px-6 py-2 rounded bg-red-600 text-white"
+                                onClick={handleDelete}
+                            >
+                                Yes
+                            </button>
+                        </div>
+
+                    </div>
+                }
             />
         </>
     );

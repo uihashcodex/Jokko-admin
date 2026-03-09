@@ -8,12 +8,17 @@ const { Search } = Input;
 
 const TableHeader = ({
   data = [],
+  networkOptions = [],
   onFilter,
   onSearch, 
   onTypeChange,
   onVerifyChange,
+  onNetChange,
+  onNetworkChange,
   showStatusFilter = true,
   showPrivateFilter = false,
+  showNetFilter = false,
+  showNetworkFilter=false,
   showCreateButton = true,
   searchTooltip,
   onCreate,
@@ -23,6 +28,8 @@ const TableHeader = ({
   const [searchText, setSearchText] = useState("");
   const [status, setStatus] = useState(undefined);
   const [privateType, setPrivateType] = useState(undefined);
+  const [netType, setNetType] = useState(undefined);
+  const [networkType, setNetworkType] = useState(undefined);
 
 // useEffect(() => {
 //   let temp = [...data];
@@ -97,6 +104,39 @@ const TableHeader = ({
               { label: "Individual", value: "individual" },
               { label: "Professional", value: "professional" }
             ]}
+          />
+        </Col>
+      )}
+
+      {showNetFilter && (
+        <Col xs={24} sm={12} md={6} lg={4}>
+          <SelectField
+            placeholder="Select Net Type"
+            value={netType}
+            // onChange={setPrivateType}
+            className="custom-select reheader-modal"
+            onChange={(value) => onNetChange?.(value)}
+
+            options={[
+              { label: "MainNet", value: "Mainnet" },
+              { label: "TestNet", value: "testnet" }
+            ]}
+          />
+        </Col>
+      )}
+
+      {showNetworkFilter && (
+        <Col xs={24} sm={12} md={6} lg={4}>
+          <SelectField
+            placeholder="Select Network Type"
+            value={networkType}
+            // onChange={setPrivateType}
+            className="custom-select reheader-modal"
+            onChange={(value) => {
+              setNetworkType(value);
+              onNetworkChange?.(value);
+            }}
+            options={networkOptions}
           />
         </Col>
       )}

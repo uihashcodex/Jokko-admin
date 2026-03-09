@@ -102,7 +102,7 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
           placement="left"
           open={mobileOpen}
           onClose={() => setMobileOpen(false)}
-          styles={{ body: { padding: 0 } ,background: theme.sidebarSettings.backgroundColor  }}
+          styles={{ body: { padding: 0 }, background: theme.sidebarSettings.backgroundColor }}
           className="mobile-drawer"
           headerStyle={{ display: "none" }}
 
@@ -121,23 +121,24 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
               background: theme.sidebarSettings.backgroundColor,
             }}
             onClick={() => {
-              
+
               // setMobileOpen(false);
             }}
           >
             <div>
-            <img
-              src={theme.logo.image}
-              alt="logo"
-              style={{ height: theme.logo.height }}
-            />
+              <img
+                src={theme.logo.image}
+                alt="logo"
+                style={{ height: theme.logo.height }}
+              />
             </div>
-          <div>
+            <div>
               <Anticon name="PicRightOutlined" style={{ color: "#fff" }}
                 onClick={() => {
-                  setMobileOpen(false)}}
+                  setMobileOpen(false)
+                }}
               />
-          </div>
+            </div>
           </div>
 
           <Menu
@@ -151,7 +152,7 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
             selectedKeys={[
               location.pathname.replace(`/${constant.adminRoute}/`, "")
             ]}
-                        style={{
+            style={{
               background: theme.sidebarSettings.backgroundColor,
               color: theme.sidebarSettings.textColor,
               borderRight: "none"
@@ -193,6 +194,9 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
             .custom-sidebar-menu .ant-menu-item {
               color: ${theme.sidebarSettings.textColor} !important;
             }
+             .custom-sidebar-menu .ant-menu-submenu-title {
+  color: ${theme.sidebarSettings.textColor} !important;
+}
         .custom-sidebar-menu .ant-menu-item-selected {
           background-color: ${theme.sidebarSettings.activeBgColor} !important;
           color: ${theme.sidebarSettings.activeTextColor} !important;
