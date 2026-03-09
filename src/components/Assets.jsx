@@ -111,19 +111,18 @@ const Assets = () => {
         status: ""
     });
 
-
     const getToken = async () => {
+        const startTime = Date.now();
+ 
         try {
             setLoading(true);
-
+ 
             const cleanFilters = Object.fromEntries(
                 Object.entries(filters).filter(([_, v]) => v !== "")
             );
-            const startTime = Date.now();
-
+ 
             const response = await axios.post(
                 `${constant.backend_url}/assets/get-all-tokens`,
-
                 {
                     ...cleanFilters,
                     page: page,
@@ -136,42 +135,39 @@ const Assets = () => {
                     },
                 }
             );
-
+ 
             if (response.data?.success) {
-
                 const docs = response.data.result || [];
+ 
                 setTotalUsers(response.data.total);
+ 
                 const formattedData = docs.map((item, index) => ({
-                    // const formattedData = response.data.result.map((item, index) => ({
-
                     id: item?._id,
                     sno: index + 1,
                     tokenName: item?.tokenName,
                     tokenSymbol: item?.tokenSymbol,
                     contractAddress: item?.contractAddress || "-",
                     tokenDecimals: item?.decimals,
-                    status: item?.verifyStatus == true ? "active" : "inactive",
+                    status: item?.verifyStatus ? "active" : "inactive",
                     network_id: item?.network?._id,
-
-                    networkName: item?.network.networkName,
+                    networkName: item?.network?.networkName,
                 }));
-                console.log(formattedData, "formattedData");
+ 
                 setOriginalData(formattedData);
                 setFilteredData(formattedData);
-
             }
-            
-            const elapsed = Date.now() - startTime;
-            const remaining = 500 - elapsed;
-
-            setTimeout(() => {
-                setLoading(false);
-            }, remaining > 0 ? remaining : 0);
-
+ 
         } catch (error) {
             console.log(error);
             setOriginalData([]);
             setFilteredData([]);
+        } finally {
+            const elapsed = Date.now() - startTime;
+            const minTime = 500;
+ 
+            setTimeout(() => {
+                setLoading(false);
+            }, Math.max(minTime - elapsed, 0));
         }
     };
 
