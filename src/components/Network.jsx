@@ -17,12 +17,13 @@ const Network = () => {
     const [page, setPage] = useState(1);
     const [messageApi, contextHolder] = message.useMessage();
     const [loading, setLoading] = useState(false);
+    const [deletemodal,setDeletemodal] = useState(false);
 
     // const [filteredData, setFilteredData] = useState(originalData);
     const [open, setOpen] = useState(false);
     const [selectedRecord, setSelectedRecord] = useState(null);
     const [totalUsers, setTotalUsers] = useState(0);
-
+    const [deleteRecord, setDeleteRecord] = useState(null);
     const columns = [
         { title: "S.no", dataIndex: "sno", key: "sno" },
         { title: "Network Name", dataIndex: "networkname", key: "networkname" },
@@ -112,8 +113,11 @@ const typeOptions = [
             label: "Status",
             name: "status",
             type: "select",
-            options: statusOptions
+            options: statusOptions,
+            span: 24
+
         },
+        
     ];
 
     const handleCreate = () => {
@@ -341,6 +345,37 @@ const typeOptions = [
         setOpen(true);
     };
 
+    const handleDelete = async () => {
+        try {
+            setLoading(true);
+
+            const res = await axios.post(
+                `${constant.backend_url}/assets/delete-network`,
+                {
+                    network_id: deleteRecord.id
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+                    },
+                }
+            );
+
+            if (res.data?.success) {
+                message.success("Network removed successfully");
+                setDeletemodal(false);
+                getNetworks();
+            } else {
+                message.warning(res.data.message || "Delete failed");
+            }
+
+        } catch (error) {
+            console.log(error);
+            message.error("Something went wrong");
+        } finally {
+            setLoading(false);
+        }
+    };
 
 
     return (
@@ -379,8 +414,13 @@ const typeOptions = [
                     pageSize={10}
                     total={totalUsers}
                     currentPage={page}
+                    onDelete={(record) => {
+                        setDeleteRecord(record);
+                        setDeletemodal(true);
+                    }}
                     onPageChange={(p) => setPage(p)} 
                     loading={loading}
+                    actionType={["update", "Remove"]}
 
                     />
 
@@ -391,6 +431,38 @@ const typeOptions = [
                     title={selectedRecord ? "Update Network" : "Create Network"}
                     fields={modalFields}
                     initialValues={selectedRecord}
+                />
+
+                <ReusableModal
+                    open={deletemodal}
+                    onCancel={() => setDeletemodal(false)}
+                    title="Delete Network"
+                    showFooter={false}
+                    extraContent={
+                        <div className="text-center">
+
+                            <p className="text-gray-300 text-base">
+                                Are you sure you want to delete this network?
+                            </p>
+
+                            <div className="flex justify-between gap-4 mt-6">
+                                <button
+                                    className="px-6 py-2 rounded primaty-bg text-black"
+                                    onClick={() => setDeletemodal(false)}
+                                >
+                                    No
+                                </button>
+
+                                <button
+                                    className="px-6 py-2 rounded bg-red-600 text-white"
+                                    onClick={handleDelete}
+                                >
+                                    Yes
+                                </button>
+                            </div>
+
+                        </div>
+                    }
                 />
             </>
         </div>

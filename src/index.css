@@ -630,6 +630,10 @@ tr {
 .reusable-modal-search .ant-input::placeholder {
     color: #fff !important;
 }
+.reusable-modal-search .ant-input-clear-icon{
+    color: #fff;
+
+}
 
 /* Select */
 
@@ -725,4 +729,19 @@ tr {
 .modal-sub-para{
     font-size: 16px !important;
     color: #c9f07b !important;
+}
+.custom-select.remodal-select{
+    height: 40px !important;
+}
+.custom-select.reheader-modal{
+    height: 32px !important;
+}
+.primary-color{
+    color: #c9f07b !important;
+}
+.primaty-bg{
+    background-color: #c9f07b !important;
+}
+.primaty-bg:hover {
+    background-color: #c9f07bbb !important;
 }

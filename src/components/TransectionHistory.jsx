@@ -70,7 +70,7 @@ const TransectionHistory = () => {
          const trans = trandata.map((item) => ({
         key: item?._id,
         transactionHash: item?.transactionHash || "-",
-           networkName: item?.networkName || "-",
+           networkName: item?.network_id?.networkName || "-",
            amount: item?.amount || "-",
            from: item?.from || "-",
            to: item?.to || "-",
@@ -236,6 +236,7 @@ const TransectionHistory = () => {
           showPrivateFilter={false}
           showStatusFilter={false}
           onSearch={(value) => debouncedSearch(value)}
+          searchTooltip="Search by User Name"
           />
       )}
       
