@@ -340,7 +340,7 @@ const Walletlist = () => {
           onSearch={(value) => updateFilter("search", value)}
           onTypeChange={(value) => updateFilter("type", value)}
           onVerifyChange={(value) => updateFilter("status", value)}
-          searchTooltip="Search by User Name"
+          searchTooltip="Search by User Name, Address"
 
           showCreateButton={false}
           showPrivateFilter={false}

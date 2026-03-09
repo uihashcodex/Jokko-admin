@@ -112,85 +112,16 @@ const Assets = () => {
         status: ""
     });
 
-
-    // const getToken = async () => {
-    //         const startTime = Date.now();
-
-    //     try {
-    //         setLoading(true);
-
-    //         const cleanFilters = Object.fromEntries(
-    //             Object.entries(filters).filter(([_, v]) => v !== "")
-    //         );
-
-    //         const response = await axios.post(
-    //             `${constant.backend_url}/assets/get-all-tokens`,
-
-    //             {
-    //                 ...cleanFilters,
-    //                 page: page,
-    //                 limit: 10
-    //             },
-    //             {
-    //                 headers: {
-    //                     "Content-Type": "application/json",
-    //                     Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
-    //                 },
-    //             }
-    //         );
-
-    //         if (response.data?.success) {
-
-    //             const docs = response.data.result || [];
-    //             setTotalUsers(response.data.total);
-    //             const formattedData = docs.map((item, index) => ({
-    //                 // const formattedData = response.data.result.map((item, index) => ({
-
-    //                 id: item?._id,
-    //                 sno: index + 1,
-    //                 tokenName: item?.tokenName,
-    //                 tokenSymbol: item?.tokenSymbol,
-    //                 contractAddress: item?.contractAddress || "-",
-    //                 tokenDecimals: item?.decimals,
-    //                 status: item?.verifyStatus == true ? "active" : "inactive",
-    //                 network_id: item?.network?._id,
-    //                 networkName: item?.network.networkName,
-    //             }));
-    //             console.log(formattedData, "formattedData");
-    //             setOriginalData(formattedData);
-    //             setFilteredData(formattedData);
-
-    //         }
-            
-       
-
-    //     } catch (error) {
-    //         console.log(error);
-    //         setOriginalData([]);
-    //         setFilteredData([]);
-    //     }
-    //     finally {
-    //         const elapsed = Date.now() - startTime;
-    //         const minTime = 500;
-
-    //         setTimeout(() => {
-    //             setLoading(false);
-    //         }, Math.max(minTime - elapsed, 0));
-    //     }
-    // };
-
-
-
     const getToken = async () => {
         const startTime = Date.now();
-
+ 
         try {
             setLoading(true);
-
+ 
             const cleanFilters = Object.fromEntries(
                 Object.entries(filters).filter(([_, v]) => v !== "")
             );
-
+ 
             const response = await axios.post(
                 `${constant.backend_url}/assets/get-all-tokens`,
                 {
@@ -205,12 +136,12 @@ const Assets = () => {
                     },
                 }
             );
-
+ 
             if (response.data?.success) {
                 const docs = response.data.result || [];
-
+ 
                 setTotalUsers(response.data.total);
-
+ 
                 const formattedData = docs.map((item, index) => ({
                     id: item?._id,
                     sno: index + 1,
@@ -222,11 +153,11 @@ const Assets = () => {
                     network_id: item?.network?._id,
                     networkName: item?.network?.networkName,
                 }));
-
+ 
                 setOriginalData(formattedData);
                 setFilteredData(formattedData);
             }
-
+ 
         } catch (error) {
             console.log(error);
             setOriginalData([]);
@@ -234,7 +165,7 @@ const Assets = () => {
         } finally {
             const elapsed = Date.now() - startTime;
             const minTime = 500;
-
+ 
             setTimeout(() => {
                 setLoading(false);
             }, Math.max(minTime - elapsed, 0));

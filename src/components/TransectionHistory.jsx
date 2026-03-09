@@ -141,9 +141,13 @@ const TransectionHistory = () => {
         const transres = users.map((item) => ({
           key: item?._id,
           transactionHash: item?.transactionHash || "-",
+          firstname:item?.firstname || "-",
           networkName: item?.networkName || "-",
-          amount: item?.amount || "-",
-          from: item?.from || "-",
+          // here
+amount: item?.amount
+  ? `${Number(item.amount).toFixed(4)} ${item?.tokenSymbol || ""}`
+  : "-",          
+  from: item?.from || "-",
           to: item?.to || "-",
           tokenSymbol: item?.tokenSymbol || "-",
           // status: item?.status          
@@ -211,6 +215,8 @@ const TransectionHistory = () => {
         return `${trans.slice(0, 8)}...`;
       }
     },
+        { title: "User Name", dataIndex: "firstname" },
+
     { title: "Network Name", dataIndex: "networkName" },
     { title: "Amount", dataIndex: "amount" },
     {
@@ -290,11 +296,8 @@ const TransectionHistory = () => {
           showPrivateFilter={false}
           showStatusFilter={false}
           onSearch={(value) => debouncedSearch(value)}
-          searchTooltip="Search by User Name"
-          showNetworkFilter={true}
-          onNetworkChange={updateNetworkFilter}
-          networkOptions={networkOptions}
-        />
+          searchTooltip="Hash, Search Network Name, Address, Token Symbol"
+          />
       )}
       
       <ReusableTable
@@ -353,6 +356,10 @@ const TransectionHistory = () => {
               </div>
             </div>
 
+    <div className="flex items-center justify-between bg-[#1f252a] p-3 rounded">
+              <span className="text-gray-400">User Name</span>
+              <span className="text-white">{selectedTrans?.firstname}</span>
+            </div>
             {/* Network */}
             <div className="flex items-center justify-between bg-[#1f252a] p-3 rounded">
               <span className="text-gray-400">Network Name</span>

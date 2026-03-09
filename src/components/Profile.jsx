@@ -306,12 +306,12 @@ const Profile = () => {
                 return false;
               }}
             >
-              <Button
+              {/* <Button
                 icon={<UploadOutlined />}
                 className="mt-4 w-full rounded-lg"
               >
                 Change Photo
-              </Button>
+              </Button> */}
             </Upload>
           </ReusableCard>
         </Col>
