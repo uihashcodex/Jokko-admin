@@ -24,6 +24,7 @@ const ReusableTable = ({
   extra,
   actionType = "update",
   actionLabel = "Update",
+  actionRemove = "Delete",
 }) => {
 
   let updatedColumns = [...columns];
@@ -247,6 +248,7 @@ console.log(data,"data");
     });
   }
 
+
   if (actionType?.includes ("viewMore")) {
     updatedColumns.push({
       title: "View",
@@ -262,6 +264,22 @@ console.log(data,"data");
       ),
     });
   }
+
+if (actionType?.includes("Remove")) {
+  updatedColumns.push({
+    title: "Action",
+    key: "delete",
+    render: (_, record) => (
+      <Button
+        type="primary"
+        onClick={() => onDelete?.(record)}   // ✅ FIXED
+        style={{ background:"#eb2724c9",color:"#fff" }}
+      >
+        {actionRemove || "Delete"}
+      </Button>
+    ),
+  });
+}
   return (
     <>
       {(title) && (

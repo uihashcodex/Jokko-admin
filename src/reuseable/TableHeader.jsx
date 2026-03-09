@@ -54,17 +54,11 @@ const TableHeader = ({
     <Row gutter={[16, 16]} justify="end" style={{ marginBottom: 16 }}>
       
       <Col xs={24} sm={12} md={8} lg={6}>
-        <Tooltip title={searchTooltip} placement="top">
+        <Tooltip title={searchTooltip} placement="top" color="rgb(18 47 42)">
 
         <Search
           placeholder={placeHolder || "Search..."}
           allowClear
-          // onChange={(e) => setSearchText(e.target.value)}
-          // onChange={(e) => {
-          //   const value = e.target.value;
-          //   setSearchText(value);
-          //   onSearch && onSearch(value); // 👈 send value to parent
-          // }}
           onChange={(e) => onSearch?.(e.target.value)}
           className="reusable-modal-search"
         />
@@ -76,15 +70,7 @@ const TableHeader = ({
           <SelectField
             placeholder="Select Status"
             value={status}
-            // onChange={setStatus}
-            // onChange={(value) => onVerifyChange?.(value)}
-            // onChange={(value) => {
-            //   setStatus(value);
-
-            //   const verifyValue = value === "active" ? true : false;
-            //   onVerifyChange?.(verifyValue);
-            // }}
-
+            className="custom-select reheader-modal"
             onChange={(value) => {
               setStatus(value);
               onVerifyChange?.(value);
@@ -104,6 +90,7 @@ const TableHeader = ({
             placeholder="Select Type"
             value={privateType}
             // onChange={setPrivateType}
+            className="custom-select reheader-modal"
             onChange={(value) => onTypeChange?.(value)}
 
             options={[
