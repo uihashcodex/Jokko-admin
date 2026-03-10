@@ -8,6 +8,7 @@ import TableHeader from "../reuseable/TableHeader";
 import ReusableModal from "../reuseable/ReusableModal";
 import { message, Tooltip } from "antd";
 import { CopyOutlined } from "@ant-design/icons";
+import create from "@ant-design/icons/lib/components/IconFont";
 const Walletlist = () => {
 
   const { state } = useLocation();
@@ -77,7 +78,9 @@ const Walletlist = () => {
   const [filters, setFilters] = useState({
     search: "",
     type: "",
-    status: ""
+    status: "",
+    fromDate: "",
+    toDate: ""
   });
 
   const getAllWallets = async () => {
@@ -117,6 +120,8 @@ const Walletlist = () => {
           evmaddress: item?.evmAddress,
           solanaaddress: item?.solAddress,
           xrpaddress: item?.xrpAddress,
+          createdAt: item?.createdAt ? item?.createdAt.split("T")[0] : "",
+          updatedAt: item?.updatedAt ? item?.updatedAt.split("T")[0] : "",
           status: item?.walletStatus ? "Active" : "Inactive",
         }));
 
@@ -259,6 +264,8 @@ const Walletlist = () => {
           </span>
         ) : "-"
     },
+    { title: "Created At", dataIndex: "createdAt", key: "createdAt" },
+    { title: "Updated At", dataIndex: "createdAt", key: "updatedAt" },
 
     { title: "Status", dataIndex: "status" },
   ];
@@ -340,8 +347,12 @@ const Walletlist = () => {
           onSearch={(value) => updateFilter("search", value)}
           onTypeChange={(value) => updateFilter("type", value)}
           onVerifyChange={(value) => updateFilter("status", value)}
+          showDateFilter={true}
+          onDateChange={(dates) => {
+            updateFilter("fromDate", dates?.[0] || "");
+            updateFilter("toDate", dates?.[1] || "");
+          }}
           searchTooltip="Search by User Name, Address"
-
           showCreateButton={false}
           showPrivateFilter={false}
         />

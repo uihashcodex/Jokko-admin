@@ -1,6 +1,5 @@
 import StatCard from "../components/StatCard";
 import ChartsSection from "../components/ChartsSection";
-import DashboardTable from "../components/DashboardTable";
 import theme from '../config/theme';
 import ReusableTable from "../reuseable/ReusableTable";
 import axios from "axios";
@@ -10,47 +9,12 @@ import { useNavigate } from "react-router-dom";
 
 const Dashboard = () => {
   const navigate = useNavigate();
-
   const [dashboardData, setDashboardData] = useState({});
-
   const [userTableData, setUserTableData] = useState([]);
-
-
   const [tranHistory, setTranHistory] = useState([]);
 
 
-  const originalData = [
-    {
-      key: "1",
-      pair: "BTC/USDT",
-      orderId: "ORD123456",
-      buyer: "Arun",
-      tradeType: "Buy",
-      price: "45000",
-      volume: "0.25",
-      exchange: "Binance",
-    },
-    {
-      key: "2",
-      pair: "ETH/USDT",
-      orderId: "ORD789456",
-      buyer: "Vijay",
-      tradeType: "Sell",
-      price: "2500",
-      volume: "1",
-      exchange: "Binance",
-    },
-    {
-      key: "3",
-      pair: "BTC",
-      orderId: "ORD456123",
-      buyer: "System",
-      tradeType: "Deposit",
-      price: "-",
-      volume: "0.5",
-      exchange: "Wallet",
-    },
-  ];
+
 
   const getdashboarddata = async () => {
     try {
@@ -64,7 +28,39 @@ const Dashboard = () => {
       );
 
       if (res.data.success) {
-        setDashboardData(res.data);
+        const data = res.data;
+
+        setDashboardData(data);
+
+        
+        const users = data.recentUsers.map((item) => ({
+          id: item?._id,
+          firstname: item?.firstname || "-",
+          lastname: item?.lastname || "-",
+          email: item?.email || "-",
+          phone: item?.phone || "-",
+          role: item?.role || "-",
+          type: item?.type || "-",
+          verifyStatus: item?.verifyStatus == true ? "active" : "inactive",
+        }));
+
+        setUserTableData(users);
+
+        // Recent Transactions
+        const trans = data.recentTransactions.map((item, index) => ({
+          id: item?._id,
+          key: index + 1,
+          tokenSymbol: item?.tokenSymbol || "-",
+          networkName: item?.network_id || "-",
+          transactionHash: item?.transactionHash || "-",
+          from: item?.from || "-",
+          to: item?.to || "-",
+          amount: item?.amount || "-",
+          DateTime: item?.DateTime || "-",
+        }));
+
+        setTranHistory(trans);
+
       }
     } catch (error) {
       console.error(error);
@@ -144,132 +140,11 @@ const Dashboard = () => {
     {
       title: "Verified",
       dataIndex: "verifyStatus",
-      render: (status) => (status ? "Yes" : "No"),
+      render: (status) => (status ? "active" : "inactive"),
     },
   ];
 
 
-  // const getuserstabledata = async () => {
-  //   try {
-  //     const res = await axios.get(
-  //       `${constant.backend_url}/admin/get-all-users`,
-  //       {},
-  //       {
-  //         headers: {
-  //           Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
-  //         },
-  //       }
-  //     );
-
-  //     if (res.data?.success) {
-  //       const data = res.data.result.map((item, index) => ({
-  //         id: item?._id,
-  //         key: index + 1,
-  //         firstname: item?.firstname || "-",
-  //         lastname: item?.lastname || "-",
-  //         email: item?.email || "-",
-  //         phone: item?.phone || "-",
-  //         role: item?.role || "-",
-  //         type: item?.type || "-",
-  //         verifyStatus: item?.verifyStatus || "-",
-  //       }))
-  //       setUserTableData(data);
-  //       console.log(data, "usrerdada");
-  //     }
-  //   } catch (error) {
-  //     console.error(error);
-  //   }
-  // };
-
-
-const getuserstabledata = async () => {
-  try {
-
-    const res = await axios.get(
-      `${constant.backend_url}/admin/get-all-users`,
-      {
-        params: {
-          type: "recent",   // ✅ only today's users
-          page: 1,
-          limit: 3          // ✅ only 3 users needed
-        },
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
-        },
-      }
-    );
-
-    if (res.data?.success) {
-
-      const data = res.data.result.map((item) => ({
-        id: item?._id,
-        firstname: item?.firstname || "-",
-        lastname: item?.lastname || "-",
-        email: item?.email || "-",
-        phone: item?.phone || "-",
-        role: item?.role || "-",
-        type: item?.type || "-",
-        verifyStatus: item?.verifyStatus ? "Yes" : "No",
-      }));
-
-      setUserTableData(data);
-
-    }
-
-  } catch (error) {
-    console.error(error);
-  }
-};
-  useEffect(() => {
-    getuserstabledata();
-  }, []);
-
-
-const getTransationHistory = async () => {
-  try {
-
-    const res = await axios.get(
-      `${constant.backend_url}/admin/get-all-transactions`,
-      {
-        params: {
-          type: "recent",   // ✅ today's transactions
-          page: 1,
-          limit: 3          // ✅ only 3 records
-        },
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
-        },
-      }
-    );
-
-    if (res.data?.success) {
-
-      const data = res.data.result.map((item, index) => ({
-        id: item?._id,
-        key: index + 1,
-        tokenSymbol: item?.tokenSymbol || "-",
-        networkName: item?.networkName || "-",
-        transactionHash: item?.transactionHash || "-",
-        from: item?.from || "-",
-        to: item?.to || "-",
-        amount: item?.amount || "-",
-        DateTime: item?.createdAt || "-",
-      }));
-
-      console.log(data, "datasss");
-
-      setTranHistory(data);
-
-    }
-
-  } catch (error) {
-    console.error(error);
-  }
-};
-
-  useEffect(() => {
-    getTransationHistory();
-  }, []);
 
 
 

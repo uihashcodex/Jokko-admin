@@ -61,6 +61,11 @@
           "icon": "TransactionOutlined",
           "label": "Transaction History"
         },
+        {
+          "key": "/emailtemplate",
+          "icon": "FileTextOutlined",
+          "label": "Email Template"
+        },
 
      {
       "key": "alchemy",

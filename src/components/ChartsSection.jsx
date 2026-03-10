@@ -22,88 +22,6 @@ export default function DashboardCharts({ dashboardData }) {
 
 
 
-
-
-  const [weeklyUsers, setWeeklyUsers] = useState([]);
-
-  const [weeklyTrans, setWeeklyTrans] = useState([]);
-  const weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-
-  const getDayName = (dateStr) => {
-    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-    const d = new Date(dateStr);
-    return days[d.getDay()];
-  };
-
-  useEffect(() => {
-    getWeeklyUsers();
-  }, []);
-
-  const getWeeklyUsers = async () => {
-    try {
-      const res = await axios.get(`${constant.backend_url}/admin/weekly-users`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
-          },
-        }
-      );
-
-      const apiData = res.data.result.map((item) => ({
-        date: formatDateMonth(item[0]),
-        count: item[1]
-      }));
-
-      const formatted = weekDays.map((day) => {
-        const found = apiData.find((d) => d.day === day);
-        return {
-          date: day,
-          count: found ? found.count : 0
-        };
-      });
-
-      setWeeklyUsers(apiData);
-      // const formatted = res.data.result.map((item) => ({
-      //   date: getDayName(item[0]),   
-      //   count: item[1]   
-      // }));
-
-      // setWeeklyUsers(formatted);
-
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const getWeeklyTransactions = async () => {
-    try {
-      const res = await axios.get(`${constant.backend_url}/admin/weekly-transactions`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
-          },
-        }
-      );
-
-      const apiData = res.data.result.map((item) => ({
-        date: formatDateMonth(item[0]),
-        count: item[1]
-      }));
-
-
-
-      setWeeklyTrans(apiData);
-
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  useEffect(() => {
-    getWeeklyTransactions();
-  }, []);
-
-
   const formatDateMonth = (dateStr) => {
     const d = new Date(dateStr);
     const day = d.getDate();
@@ -111,26 +29,18 @@ export default function DashboardCharts({ dashboardData }) {
     return `${day} ${month}`; // 7 Mar
   };
 
-  const transactionData = [
-    ["Mon", 20],
-    ["Tue", 35],
-    ["Wed", 40],
-    ["Thu", 28],
-    ["Fri", 50],
-    ["Sat", 45],
-    ["Sun", 60]
-  ];
 
-  const transactionWeekData = transactionData.map(item => ({
-    date: item[0],
-    count: item[1]
-  }));
+  const weeklyUsers = dashboardData?.weeklyUsers?.map((item) => ({
+    date: formatDateMonth(item[0]),
+    users_joined: item[1]
+  })) || [];
+
+  const weeklyTrans = dashboardData?.weeklyTransactions?.map((item) => ({
+    date: formatDateMonth(item[0]),
+    user_Transactions: item[1]
+  })) || [];
 
 
-  const pieData = [
-    { name: "Platform fee", value: dashboardData?.individualCount || 0 },
-    { name: "gas fee", value: dashboardData?.professionalCount || 0 },
-  ];
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-7">
@@ -147,7 +57,7 @@ export default function DashboardCharts({ dashboardData }) {
             <Tooltip />
             <Line
               type="monotone"
-              dataKey="count"
+              dataKey="users_joined"
               stroke="#6366f1"
               strokeWidth={3}
             />
@@ -165,7 +75,7 @@ export default function DashboardCharts({ dashboardData }) {
             <Tooltip />
             <Line
               type="monotone"
-              dataKey="count"
+              dataKey="user_Transactions"
               stroke="#6366f1"
               strokeWidth={3}
             />

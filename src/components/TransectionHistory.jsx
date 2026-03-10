@@ -11,6 +11,7 @@ import ReusableModal from "../reuseable/ReusableModal";
 import debounce from "lodash.debounce";
 import { useMemo } from "react";
 import { message } from "antd";
+import create from "@ant-design/icons/lib/components/IconFont";
 
 const TransectionHistory = () => {
   const { id } = useParams();
@@ -107,21 +108,26 @@ const TransectionHistory = () => {
 
   const [filters, setFilters] = useState({
     search: "",
-    network_id: ""
+    network_id: "",
+    fromDate: "",
+    toDate: ""
   });
 
 
-  const getAllTransaction = async () => {
+  const getAllTransaction = async () => { 
     const startTime = Date.now();
 
     try {
       setLoading(true);
+      const cleanFilters = Object.fromEntries(
+        Object.entries(filters).filter(([_, v]) => v !== "" && v !== undefined)
+      );
       const res = await axios.get(`${constant.backend_url}/admin/get-all-transactions`,
 
         {
+          
           params: {
-            search: filters.search,
-            network_id: filters.network_id,   
+            ...cleanFilters,
             page: page,
             limit: 10
           },
@@ -141,15 +147,17 @@ const TransectionHistory = () => {
         const transres = users.map((item) => ({
           key: item?._id,
           transactionHash: item?.transactionHash || "-",
-          firstname:item?.firstname || "-",
+          firstname: item?.firstname || "-",
           networkName: item?.networkName || "-",
           // here
-amount: item?.amount
-  ? `${Number(item.amount).toFixed(4)} ${item?.tokenSymbol || ""}`
-  : "-",          
-  from: item?.from || "-",
+          amount: item?.amount
+            ? `${Number(item.amount).toFixed(4)} ${item?.tokenSymbol || ""}`
+            : "-",
+          from: item?.from || "-",
           to: item?.to || "-",
           tokenSymbol: item?.tokenSymbol || "-",
+          createdAt: item?.createdAt ? item?.createdAt.split("T")[0] : "",
+          updatedAt:item?.updatedAt ? item?.updatedAt.split("T")[0] : "", 
           // status: item?.status          
         }))
         console.log(transres, "dsggffgf");
@@ -175,7 +183,8 @@ amount: item?.amount
 
       setTimeout(() => {
         setLoading(false);
-      }, remaining > 0 ? remaining : 0);    }
+      }, remaining > 0 ? remaining : 0);
+    }
   };
 
   // useEffect(() => {
@@ -189,11 +198,12 @@ amount: item?.amount
   }, [page, filters, id]);
 
   const updateFilter = (value) => {
+    setPage(1);
+
     setFilters((prev) => ({
       ...prev,
       search: value
     }));
-    setPage(1);
   };
 
   const updateNetworkFilter = (value) => {
@@ -215,7 +225,7 @@ amount: item?.amount
         return `${trans.slice(0, 8)}...`;
       }
     },
-        { title: "User Name", dataIndex: "firstname" },
+    { title: "User Name", dataIndex: "firstname" },
 
     { title: "Network Name", dataIndex: "networkName" },
     { title: "Amount", dataIndex: "amount" },
@@ -234,6 +244,8 @@ amount: item?.amount
       }
     },
     { title: "Token Symbol", dataIndex: "tokenSymbol" },
+    { title: "Created At", dataIndex: "createdAt", key: "createdAt" },
+    { title: "Updated At", dataIndex: "createdAt", key: "updatedAt" },
     // { title: "Status", dataIndex: "status" },
   ];
 
@@ -298,11 +310,21 @@ amount: item?.amount
           onSearch={(value) => debouncedSearch(value)}
           searchTooltip="Search By Hash, Address, Token Symbol, Amount"
           showNetworkFilter={true}
+          showDateFilter={true}
+          onDateChange={(dates) => {
+            setPage(1);
+
+            setFilters(prev => ({
+              ...prev,
+              fromDate: dates?.[0] || "",
+              toDate: dates?.[1] || ""
+            }));
+          }}
           onNetworkChange={updateNetworkFilter}
           networkOptions={networkOptions}
-          />
+        />
       )}
-      
+
       <ReusableTable
         columns={columns}
         // data={id ? transactionData : filteredTableData}
@@ -359,7 +381,7 @@ amount: item?.amount
               </div>
             </div>
 
-    <div className="flex items-center justify-between bg-[#1f252a] p-3 rounded">
+            <div className="flex items-center justify-between bg-[#1f252a] p-3 rounded">
               <span className="text-gray-400">User Name</span>
               <span className="text-white">{selectedTrans?.firstname}</span>
             </div>
