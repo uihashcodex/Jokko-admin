@@ -296,7 +296,10 @@ amount: item?.amount
           showPrivateFilter={false}
           showStatusFilter={false}
           onSearch={(value) => debouncedSearch(value)}
-          searchTooltip="Hash, Search Network Name, Address, Token Symbol"
+          searchTooltip="Search By Hash, Address, Token Symbol, Amount"
+          showNetworkFilter={true}
+          onNetworkChange={updateNetworkFilter}
+          networkOptions={networkOptions}
           />
       )}
       
