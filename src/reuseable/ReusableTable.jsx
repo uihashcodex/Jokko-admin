@@ -58,120 +58,33 @@ console.log(data,"data");
     },
   });
 }
+  if (actionType?.includes("webhook")) {
+    updatedColumns.push({
+      title: "Webhook",
+      key: "webhook",
+      render: (_, record) => {
 
-// if (actionType?.includes("block")) {
-//   updatedColumns.push({
-//     title: "Block Users",
-//     key: "block",
-//     render: (_, record) => {
+        const items = [
+          { key: "webhookaddress", label: "Webhook Address" },
+          { key: "webhook", label: "Webhook" },
+        ];
 
-//       const items = [
-//         { key: "block", label: "Block" },
-//         { key: "unblock", label: "UnBlock" },
-//       ];
-
-//       return (
-//         <Dropdown
-//           menu={{
-//             items,
-//             onClick: ({ key }) => {
-//               if (key === "block") onBlock?.(record);
-//               if (key === "unblock") onUnblock?.(record);
-//             },
-//           }}
-//           trigger={["click"]}
-//         >
-//           <Button>
-//             Block <DownOutlined />
-//           </Button>
-//         </Dropdown>
-//       );
-//     },
-//   });
-// }
-
-  // if (actionType?.includes("block")) {
-  //   updatedColumns.push({
-  //     title: "Block Users",
-  //     key: "block",
-  //     render: (_, record) => {
-
-  //       const handleChange = (value) => {
-  //         if (value === "block") onBlock?.(record);
-  //         if (value === "unblock") onUnblock?.(record);
-  //       };
-
-  //       return (
-  //         <Select
-  //           // value={record.status === "blocked" ? "block" : "unblock"}
-  //           value={record.status === "Inactive" ? "block" : "unblock"}
-  //           style={{ width: 120 }}
-  //           onChange={(value) => {
-  //             if (value === "block") onBlock?.(record);
-  //             if (value === "unblock") onUnblock?.(record);
-  //           }}
-  //           options={[
-  //             { value: "block", label: "Block" },
-  //             { value: "unblock", label: "Unblock" },
-  //           ]}
-  //         />
-  //       );
-  //     },
-  //   });
-  // }
-
-  // if (actionType?.includes("block")) {
-  //   updatedColumns.push({
-  //     title: "Block Users",
-  //     key: "block",
-  //     render: (_, record) => {
-
-  //       const isBlocked =
-  //         record.status === "Inactive" ||
-  //         record.status === "blocked";
-
-  //       return (
-  //         <Select
-  //           value={isBlocked ? "block" : "unblock"}
-  //           style={{ width: 120 }}
-  //           onChange={(value) => {
-  //             if (value === "block") onBlock?.(record);
-  //             if (value === "unblock") onUnblock?.(record);
-  //           }}
-  //           options={[
-  //             { value: "block", label: "Block" },
-  //             { value: "unblock", label: "Unblock" },
-  //           ]}
-  //         />
-  //       );
-  //     },
-  //   });
-  // }
-
-  // if (actionType?.includes("block")) {
-  //   updatedColumns.push({
-  //     title: "Block Users",
-  //     key: "block",
-  //     render: (_, record) => {
-
-  //       const isBlocked =
-  //         record.status === "Inactive" ||
-  //         record.status === "blocked";
-
-  //       return (
-  //         <Select
-  //           value={isBlocked ? "block" : "unblock"}
-  //           style={{ width: 120 }}
-  //           onChange={() => onBlock?.(record)}   // ✅ single function
-  //           options={[
-  //             { value: "block", label: "Block" },
-  //             { value: "unblock", label: "Unblock" },
-  //           ]}
-  //         />
-  //       );
-  //     },
-  //   });
-  // }
+        return (
+          <Dropdown
+            menu={{
+              items,
+              onClick: ({ key }) => onView?.(record, key),
+            }}
+            trigger={["click"]}
+          >
+            <Button>
+              Select <DownOutlined />
+            </Button>
+          </Dropdown>
+        );
+      },
+    });
+  }
 
   if (actionType?.includes("block")) {
     updatedColumns.push({

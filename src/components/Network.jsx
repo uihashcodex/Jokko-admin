@@ -24,6 +24,8 @@ const Network = () => {
     const [selectedRecord, setSelectedRecord] = useState(null);
     const [totalUsers, setTotalUsers] = useState(0);
     const [deleteRecord, setDeleteRecord] = useState(null);
+    const [forceDeleteModal, setForceDeleteModal] = useState(false);
+    const [deleteTokens, setDeleteTokens] = useState([]);
     const columns = [
         { title: "S.no", dataIndex: "sno", key: "sno" },
         { title: "Network Name", dataIndex: "networkname", key: "networkname" },
@@ -158,7 +160,8 @@ const Network = () => {
         type: "",
         status: "",
         modeStatus: "",
-
+        fromDate: "",
+        toDate: ""
     });
 
 
@@ -273,9 +276,21 @@ const Network = () => {
                     verifyStatus: values.status === "active"
                 };
 
-                console.log("VALUES:", values);
-                console.log("PAYLOAD:", payload);
-                console.log(values.status);
+               const isSame =
+                    payload.networkName === selectedRecord.networkname &&
+                    payload.chainId === selectedRecord.chainId &&
+                    payload.networkSymbol === selectedRecord.networksymbol &&
+                    payload.rpcUrl === selectedRecord.rpcUrl &&
+                    payload.blockExplorerUrl === selectedRecord.blockExplorerUrl &&
+                    payload.type === selectedRecord.type &&
+                    payload.modeStatus === selectedRecord.modeStatus &&
+                    payload.verifyStatus === (selectedRecord.status === "active");
+                if (isSame) {
+                    message.error("No changes detected");
+                    setLoading(false);
+                    return;
+                }
+
                 const res = await axios.post(
                     `${constant.backend_url}/assets/update-network`,
                     payload,
@@ -376,39 +391,152 @@ const Network = () => {
         setOpen(true);
     };
 
-    const handleDelete = async () => {
+    // const handleDelete = async (forceDelete = false) => {
+    //     try {
+    //         setLoading(true);
+
+    //         const res = await axios.post(
+    //             `${constant.backend_url}/assets/delete-network`,
+    //             {
+    //                 network_id: deleteRecord.id,
+    //                 ...(forceDelete && { force: true })
+
+    //             },
+    //             {
+    //                 headers: {
+    //                     Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+    //                 },
+    //                 validateStatus: () => true
+
+    //             }
+    //         );
+
+         
+    //         if (!res.data.success && res.data.result?.tokenCount > 0) {
+
+    //             setDeleteTokens(res.data.result.tokens);
+    //             setDeletemodal(false);
+    //             setDeletemodal(true);
+
+    //             return;
+    //         }
+
+    //         if (res.data?.success) {
+    //             message.success("Network and related tokens deleted successfully");
+    //             setForceDeleteModal(false);
+    //             setDeletemodal(false);
+    //             getNetworks();
+    //             return;
+    //         } 
+
+    //     } catch (error) {
+    //         message.error("Delete failed");
+    //     } finally {
+    //         setLoading(false);
+    //     }
+    // };
+
+
+    // const handleDelete = async (forceDelete = false) => {
+    //     try {
+    //         setLoading(true);
+
+    //         const res = await axios.post(
+    //             `${constant.backend_url}/assets/delete-network`,
+    //             {
+    //                 network_id: deleteRecord.id,
+    //                 // ...(forceDelete && { force: true })
+    //             },
+                
+    //             {
+    //                 headers: {
+    //                     Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+    //                 },
+    //                 validateStatus: () => true
+    //             }
+    //         );
+
+    //         if (!res.data.success && res.data.result?.tokenCount > 0) {
+
+    //             setDeleteTokens(res.data.result.tokens);
+
+    //             setLoading(false);
+
+    //             setDeletemodal(false);
+    //             setForceDeleteModal(true);
+
+    //             return;
+    //         }
+
+    //         if (res.data.success) {
+
+    //             message.success(res.data.message);
+
+    //             setForceDeleteModal(false);
+    //             setDeletemodal(false);
+
+    //             getNetworks();
+    //         }
+
+    //     } catch (error) {
+    //         message.error("Delete failed");
+    //     } finally {
+    //         setLoading(false);
+    //     }
+    // };
+
+    const handleDelete = async (forceDelete = false) => {
         try {
             setLoading(true);
 
+            const payload = {
+                network_id: deleteRecord.id
+            };
+
+            // only add force when needed
+            if (forceDelete) {
+                payload.force = true;
+            }
+
             const res = await axios.post(
                 `${constant.backend_url}/assets/delete-network`,
-                {
-                    network_id: deleteRecord.id
-                },
+                payload,
                 {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
                     },
+                    validateStatus: () => true
                 }
             );
 
-            if (res.data?.success) {
-                message.success("Network removed successfully");
+            // tokens exist → show second modal
+            if (!res.data.success && res.data.result?.tokenCount > 0) {
+
+                setDeleteTokens(res.data.result.tokens);
+
                 setDeletemodal(false);
+                setForceDeleteModal(true);
+
+                return;
+            }
+
+            // success delete
+            if (res.data.success) {
+
+                message.success(res.data.message || "Deleted successfully");
+
+                setForceDeleteModal(false);
+                setDeletemodal(false);
+
                 getNetworks();
-            } else {
-                message.warning(res.data.message || "Delete failed");
             }
 
         } catch (error) {
-            console.log(error);
-            message.error("Something went wrong");
+            message.error("Delete failed");
         } finally {
             setLoading(false);
         }
     };
-
-
     return (
         < div Style={{ display: "flex", justifyContent: "center", alignItems: "center", flexDirection: "column", width: "100%" }}>
             <>
@@ -438,6 +566,11 @@ const Network = () => {
                     searchTooltip="Search by Chain Id, Network Symbol,  Network Name"
                     onNetChange={(value) => updateFilter("modeStatus", value)}
                     showNetFilter={true}
+                    showDateFilter={true}
+                    onDateChange={(dates) => {
+                        updateFilter("fromDate", dates?.[0] || "");
+                        updateFilter("toDate", dates?.[1] || "");
+                    }}
                 />
                 <ReusableTable
                     columns={columns}
@@ -470,6 +603,7 @@ const Network = () => {
                     onCancel={() => setDeletemodal(false)}
                     title="Delete Network"
                     showFooter={false}
+                    description={"Are you sure you want to delete this network?"}
                     extraContent={
                         <div className="text-center">
 
@@ -487,7 +621,7 @@ const Network = () => {
 
                                 <button
                                     className="px-6 py-2 rounded bg-red-600 text-white"
-                                    onClick={handleDelete}
+                                    onClick={() => handleDelete(false)}
                                 >
                                     Yes
                                 </button>
@@ -496,6 +630,50 @@ const Network = () => {
                         </div>
                     }
                 />
+
+                <ReusableModal
+                    open={forceDeleteModal}
+                    onCancel={() => setForceDeleteModal(false)}
+                    title="Network Contains Tokens"
+                    showFooter={false}
+                    description={"Are you sure you want to delete this network?"}
+                    extraContent={
+                        <div className="text-center">
+
+                            <p className="text-gray-300 mb-3">
+                                This network contains the following tokens:
+                            </p>
+
+                            <p className="text-red-400 font-semibold mb-4">
+                                {deleteTokens.join(", ")}
+                            </p>
+
+                            <p className="text-gray-300">
+                                Deleting this network will also delete these tokens.
+                                Do you want to continue?
+                            </p>
+
+                            <div className="flex justify-between gap-4 mt-6">
+
+                                <button
+                                    className="px-6 py-2 rounded primaty-bg text-black"
+                                    onClick={() => setForceDeleteModal(false)}
+                                >
+                                    Cancel
+                                </button>
+
+                                <button
+                                    className="px-6 py-2 rounded bg-red-600 text-white"
+                                    onClick={() => handleDelete(true)}
+                                >
+                                    Delete Network & Tokens
+                                </button>
+
+                            </div>
+                        </div>
+                    }
+                />
+             
             </>
         </div>
     );

@@ -260,7 +260,7 @@ const Profile = () => {
       <Row gutter={[20, 20]}>
 
         {/* About Me */}
-        <Col xs={24} md={12}>
+        <Col xs={24} md={12} style={{display: "flex",flexDirection: "column" }}>
           <ReusableCard
             title="About Me"
             icon={<UserOutlined />}

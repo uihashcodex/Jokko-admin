@@ -7,6 +7,8 @@ import axios from "axios";
 import { message } from "antd";
 import { useState } from "react";
 import { Flex, Input, Typography } from 'antd';
+import theme from '../config/theme';
+
 const { Title } = Typography;
 const Login = () => {
     const navigate = useNavigate();
@@ -227,20 +229,30 @@ const Login = () => {
     };
 
     return (
-        <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-[#001f3f] via-[#002147] to-[#003366]">
+        <div className="relative min-h-screen flex items-center justify-center "
+            style={{ background:"rgb(4, 35, 30)"}}
+        >
 
-            <div className="relative w-[95%] sm:w-[420px] p-10 
-                bg-white/10 backdrop-blur-xl 
+            <div className="relative w-[95%] sm:w-[420px] p-10
                 rounded-2xl 
                 border border-white/20 
-                shadow-2xl 
-                transition-all duration-500 
-                hover:scale-[1.02] 
-                hover:shadow-[0_0_40px_rgba(255,255,255,0.25)]">
+                "              
+                style={{
+                    backgroundImage: `url(${theme.dashboardheaderimg.image})`,
+                    // height: theme.dashboardheaderimg.height
+                    backgroundPosition: 'center',
+                    boxShadow: '0 0 10px rgba(94, 134, 128, 1)'
+                }}
+                >
                 <div className="absolute inset-0 rounded-2xl 
-                  bg-gradient-to-r from-blue-400/20 via-cyan-400/20 to-indigo-400/20 
+                
                   opacity-0 hover:opacity-100 
-                  transition duration-500 blur-xl -z-10" />
+                  transition duration-500 blur-xl -z-10"
+                  style={{
+                                        backgroundImage: `url(${theme.dashboardheaderimg.image})`,
+                                        height: theme.dashboardheaderimg.height
+                  }}
+                  />
                 {/* Title */}
                 <h2 className="text-3xl font-bold text-white text-center mb-8 tracking-wide">
                     Welcome 
@@ -291,7 +303,10 @@ const Login = () => {
            border-none 
            hover:from-indigo-600 hover:to-blue-500 
            transition-all duration-300"
-
+                  style={{
+                    background:`${theme.sidebarSettings.activeBgColor}`,
+                    color:`${theme.sidebarSettings.activeTextColor}`
+                  }}
                         >
                             Login
                         </Button>

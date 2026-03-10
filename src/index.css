@@ -745,3 +745,117 @@ tr {
 .primaty-bg:hover {
     background-color: #c9f07bbb !important;
 }
+
+/* date-picker */
+.repicker-modal.ant-picker {
+    background-color: #163a33 !important;
+    border: 1px solid #3f7f6b !important;
+    color: #ffffff !important;
+}
+.repicker-modal {
+cursor: pointer;}
+
+.repicker-modal.ant-picker input {
+    color: #fff !important;
+}
+
+.repicker-modal .ant-picker-input>input {
+    color: #fff !important;
+}
+
+.repicker-modal .ant-picker-input>input::placeholder {
+    color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.repicker-modal .ant-picker-separator{
+    color: #fff !important;
+}
+
+/* important fix */
+.repicker-modal .ant-picker-input>input[disabled] {
+    color: #fff !important;
+    -webkit-text-fill-color: #fff !important;
+}
+.repicker-modal .ant-picker-clear {
+    color: #fff !important;
+}
+.repicker-modal.ant-picker .ant-picker-suffix {
+    color: #9be27c !important;
+}
+/* Change Calendar Popup Theme */
+.custom-date-theme .ant-picker-dropdown {
+    background: #163a33 !important;
+}
+
+.custom-date-theme .ant-picker-panel {
+    background: #163a33 !important;
+}
+
+.custom-date-theme .ant-picker-content th {
+    color: #9be27c !important;
+}
+
+.custom-date-theme .ant-picker-cell {
+    color: #ffffff !important;
+}
+
+/* Selected Date Color */
+
+.custom-date-theme .ant-picker-header-view > button {
+    color: #9be27c !important;
+  
+}
+.custom-date-theme .ant-picker-prev-icon,
+.custom-date-theme .ant-picker-next-icon ,
+.custom-date-theme .ant-picker-super-prev-icon,
+.custom-date-theme .ant-picker-super-next-icon {
+    color: #fff !important;
+}
+.custom-date-theme .ant-picker-cell-selected .ant-picker-cell-inner {
+    background: #9be27c !important;
+    color:#fff !important;
+}
+
+.custom-date-theme .ant-picker-cell-selected .custom-date-theme .ant-picker-cell-inner {
+    background: #9be27c !important;
+    color: #000 !important;
+}
+
+.custom-date-theme .ant-picker-cell-in-view.ant-picker-cell-range-start .ant-picker-cell-inner,
+.custom-date-theme .ant-picker-cell-in-view.ant-picker-cell-range-end .ant-picker-cell-inner {
+    background: #9be27c !important;
+    color: #000 !important;
+}
+/*  Hover Date Color */
+.custom-date-theme .ant-picker-cell:hover .ant-picker-cell-inner {
+    background: #2a6f5b !important;
+}
+/* Range Background */
+.custom-date-theme .ant-picker-cell-in-view.ant-picker-cell-range-hover-start::before,
+.custom-date-theme .ant-picker-cell-in-view.ant-picker-cell-range-hover-end::before,
+.custom-date-theme .ant-picker-cell-in-view.ant-picker-cell-in-range::before {
+    background: rgba(155, 226, 124, 0.2) !important;
+}
+
+
+
+@media (max-width: 600px) {
+
+    /* Make panel wrapper single column */
+    .custom-date-theme .ant-picker-panels {
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+    /* Hide second calendar */
+    .custom-date-theme .ant-picker-panels .ant-picker-panel:last-child {
+        display: none !important;
+    }
+
+    /* Prevent empty width */
+    .custom-date-theme .ant-picker-panel-container {
+        width: auto !important;
+        max-width: 100% !important;
+    }
+
+}

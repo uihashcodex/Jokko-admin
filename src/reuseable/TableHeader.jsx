@@ -1,4 +1,4 @@
-import { Row, Col, Input, Tooltip } from "antd";
+import { Row, Col, Input, Tooltip, DatePicker,Grid } from "antd";
 import SelectField from "./SelectField";
 import ReButton from "./Button";
 import { PlusOutlined } from "@ant-design/icons";
@@ -20,6 +20,8 @@ const TableHeader = ({
   showNetFilter = false,
   showNetworkFilter=false,
   showCreateButton = true,
+  showDateFilter = false,
+  onDateChange,
   searchTooltip,
   onCreate,
   placeHolder
@@ -30,7 +32,10 @@ const TableHeader = ({
   const [privateType, setPrivateType] = useState(undefined);
   const [netType, setNetType] = useState(undefined);
   const [networkType, setNetworkType] = useState(undefined);
-
+  const { RangePicker } = DatePicker;
+  const [dateRange, setDateRange] = useState([]);
+  const { useBreakpoint } = Grid;
+  const screens = useBreakpoint();
 // useEffect(() => {
 //   let temp = [...data];
 
@@ -58,7 +63,7 @@ const TableHeader = ({
   console.log(data, onFilter,"data1");
 
   return (
-    <Row gutter={[16, 16]} justify="end" style={{ marginBottom: 16 }}>
+    <Row gutter={[16, 16]} justify="end"  style={{ marginBottom: 16,padding:"0 10px" }}>
       
       <Col xs={24} sm={12} md={8} lg={6}>
         <Tooltip title={searchTooltip} placement="top" color="rgb(18 47 42)">
@@ -140,10 +145,28 @@ const TableHeader = ({
           />
         </Col>
       )}
+      {showDateFilter && (
+        <Col xs={24} sm={12} md={8} lg={6}>
+          <RangePicker
+            value={dateRange}
+            className="custom-select repicker-modal"
+            popupClassName="custom-date-theme"
+            style={{ width: "100%" }}
+            picker="date"
+            placement="bottomLeft"
+            showTime={false}
+            mode={screens.xs ? "date" : undefined}
+            onChange={(dates, dateStrings) => {
+              setDateRange(dates);
+              onDateChange?.(dateStrings);
+            }}
+          />
+        </Col>
+      )}
 
 
       {showCreateButton && (
-        <Col xs={24} sm={12} md={6} lg={4}>
+        <Col xs={24} sm={12} md={4} lg={2}>
           <ReButton
             name="Create"
             type="primary"

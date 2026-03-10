@@ -17,7 +17,7 @@ const columns = [
   { title: "Phone", dataIndex: "phone", key: "phone" },
   { title: "Status", dataIndex: "status", key: "status" },
   { title: "Type", dataIndex: "type", key: "type" },
-  { title: "Country", dataIndex: "country", key: "contry" },
+  { title: "Country", dataIndex: "contry", key: "contry" },
   {
     title: "Unique ID", dataIndex: "uniqueid", key: "uniqueid",
     render: (frm) => {
@@ -25,6 +25,9 @@ const columns = [
       return `${frm.slice(0, 8)}`;
     }
   },
+  { title: "Created At", dataIndex: "createdAt", key: "createdAt" },
+  { title: "Updated At", dataIndex: "createdAt", key: "updatedAt" },
+
 ];
 
 
@@ -46,10 +49,12 @@ const Viewdetail = () => {
   const [filters, setFilters] = useState({
     search: "",
     type: "",
-    blockstatus: ""
+    blockstatus: "",
+    fromDate: "",
+    toDate: ""
   });
 
-  const fetUsers = async (filters = {}) => {
+  const fetUsers = async () => {
     try {
       setLoading(true);
       const cleanFilters = Object.fromEntries(
@@ -79,6 +84,8 @@ const Viewdetail = () => {
           status: user?.blockstatus ? "Inactive" : "active",
           type: user?.type || "-",
           country: user?.country || "-",
+          createdAt: user?.createdAt ? user.createdAt.split("T")[0] : "-",
+          updatedAt: user?.updatedAt ? user.updatedAt.split("T")[0] : "-",
           uniqueid: user?.unique_id || "-"
         }));
 
@@ -104,7 +111,7 @@ const Viewdetail = () => {
   };
 
   useEffect(() => {
-    fetUsers(filters);
+    fetUsers();
   }, [page, filters]);
 
 
@@ -186,6 +193,16 @@ const Viewdetail = () => {
         onSearch={(value) => debouncedSearch(value)}
         onTypeChange={(value) => updateFilter("type", value)}
         onVerifyChange={(value) => updateFilter("blockstatus", value)}
+        showDateFilter={true}
+        onDateChange={(dates) => {
+          setPage(1);
+
+          setFilters(prev => ({
+            ...prev,
+            fromDate: dates?.[0] || "",
+            toDate: dates?.[1] || ""
+          }));
+        }}
         searchTooltip="Search by Name, Email, Phone"
 
       />

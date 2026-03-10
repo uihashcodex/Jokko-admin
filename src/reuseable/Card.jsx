@@ -12,7 +12,7 @@ const ReusableCard = ({
       bordered={false}
       className={`rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 ${className}`}
       bodyStyle={{ padding: 24 }}
-      style={{ backgroundColor: "#5E5E5E33",color:"white" }}
+      style={{ backgroundColor: "#5E5E5E33",color:"white",flex:1 }}
     >
       {(title || icon || extra) && (
         <div className="flex justify-between items-center mb-4 border-b pb-3">

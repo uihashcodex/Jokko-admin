@@ -68,6 +68,17 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
           background-color: ${theme.sidebarSettings.hoverBgColor} !important;
           color: ${theme.sidebarSettings.hoverTextColor} !important;
         }
+          .custom-sidebar-menu .ant-menu-submenu-title {
+            color: ${theme.sidebarSettings.activeTextColor} !important;
+          }
+
+          .custom-sidebar-menu .ant-menu-submenu-selected > .ant-menu-submenu-title {
+  background-color: ${theme.sidebarSettings.activeBgColor} !important;
+  color: ${theme.sidebarSettings.activeTextColor} !important;
+}
+  .custom-sidebar-menu .ant-menu-submenu-selected > .ant-menu-submenu-title .anticon {
+  color: ${theme.sidebarSettings.activeTextColor} !important;
+}
       `}
         </style>
         {/* Mobile Top Bar */}
@@ -201,6 +212,13 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
           background-color: ${theme.sidebarSettings.activeBgColor} !important;
           color: ${theme.sidebarSettings.activeTextColor} !important;
         }
+  .custom-sidebar-menu .ant-menu-submenu-selected > .ant-menu-submenu-title {
+  background-color: ${theme.sidebarSettings.activeBgColor} !important;
+  color: ${theme.sidebarSettings.activeTextColor} !important;
+}
+  .custom-sidebar-menu .ant-menu-submenu-selected > .ant-menu-submenu-title .anticon {
+  color: ${theme.sidebarSettings.activeTextColor} !important;
+}
 
         .custom-sidebar-menu .ant-menu-item-selected .anticon {
           color: ${theme.sidebarSettings.activeTextColor} !important;

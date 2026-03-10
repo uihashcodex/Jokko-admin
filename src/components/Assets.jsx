@@ -29,7 +29,7 @@ const Assets = () => {
         { title: "Status", dataIndex: "status", key: "status" },
     ];
 
-   
+
     const statusOptions = [
         { label: "Active", value: "active" },
         { label: "Inactive", value: "inactive" },
@@ -72,7 +72,7 @@ const Assets = () => {
             label: "Network Id",
             name: "network_id",
             type: "select",
-            options: networkOptions,   
+            options: networkOptions,
             rules: [{ required: true, message: "Network is required" }],
         }
         ,
@@ -80,7 +80,9 @@ const Assets = () => {
             label: "Status",
             name: "status",
             type: "select",
-            options: statusOptions
+            options: statusOptions,
+            rules: [{ required: true, message: "Status is required" }],
+
         }
 
     ];
@@ -109,19 +111,21 @@ const Assets = () => {
     const [filters, setFilters] = useState({
         search: "",
         type: "",
-        status: ""
+        status: "",
+        fromDate: "",
+        toDate: ""
     });
 
     const getToken = async () => {
         const startTime = Date.now();
- 
+
         try {
             setLoading(true);
- 
+
             const cleanFilters = Object.fromEntries(
                 Object.entries(filters).filter(([_, v]) => v !== "")
             );
- 
+
             const response = await axios.post(
                 `${constant.backend_url}/assets/get-all-tokens`,
                 {
@@ -136,28 +140,28 @@ const Assets = () => {
                     },
                 }
             );
- 
+
             if (response.data?.success) {
                 const docs = response.data.result || [];
- 
+
                 setTotalUsers(response.data.total);
- 
+
                 const formattedData = docs.map((item, index) => ({
                     id: item?._id,
                     sno: index + 1,
-                    tokenName: item?.tokenName,
+                    tokenName: item?.tokenName || "-",
                     tokenSymbol: item?.tokenSymbol,
                     contractAddress: item?.contractAddress || "-",
-                    tokenDecimals: item?.decimals,
+                    tokenDecimals: item?.decimals || "-",
                     status: item?.verifyStatus ? "active" : "inactive",
-                    network_id: item?.network?._id,
-                    networkName: item?.network?.networkName,
+                    network_id: item?.network?._id || "-",
+                    networkName: item?.network?.networkName || "-",
                 }));
- 
+
                 setOriginalData(formattedData);
                 setFilteredData(formattedData);
             }
- 
+
         } catch (error) {
             console.log(error);
             setOriginalData([]);
@@ -165,7 +169,7 @@ const Assets = () => {
         } finally {
             const elapsed = Date.now() - startTime;
             const minTime = 500;
- 
+
             setTimeout(() => {
                 setLoading(false);
             }, Math.max(minTime - elapsed, 0));
@@ -181,7 +185,7 @@ const Assets = () => {
         if (key === "status") {
             value = value === "active" ? "true" : value === "inactive" ? "false" : "";
         }
-
+        setPage(1);
         setFilters(prev => ({
             ...prev,
             [key]: value
@@ -189,35 +193,55 @@ const Assets = () => {
     };
 
     const handleSubmit = async (values) => {
-        const startTime = Date.now(); 
+        const startTime = Date.now();
         try {
             setLoading(true);
             if (selectedAsset) {
 
-                // const payload = {
-                //     network_id: selectedAsset.id,
-                //     ...values,
-                //     verifyStatus: values.status === "active"
-                // };
+
                 const payload = {
-                    ...values,
-                    verifyStatus: values.status === "active"
+                    token_id: selectedAsset?.id,
+                    tokenName: values?.tokenName,
+                    tokenSymbol: values?.tokenSymbol,
+                    decimals: Number(values?.tokenDecimals),
+                    contractAddress: values?.contractAddress,
+                    network_id: values?.network_id,
+                    verifyStatus: values?.status === "active"
                 };
+                console.log("PAYLOADss:", payload);
+
+                const isSame =
+                    payload.tokenName === selectedAsset.tokenName &&
+                    payload.tokenSymbol === selectedAsset.tokenSymbol &&
+                    payload.decimals === Number(selectedAsset.tokenDecimals) &&
+                    payload.contractAddress === selectedAsset.contractAddress &&
+                    payload.network_id === selectedAsset.network_id &&
+                    payload.verifyStatus === (selectedAsset.status === "active");
+                if (isSame) {
+                    message.error("No changes detected");
+                    setLoading(false);
+                    return;
+                }
 
                 const res = await axios.post(
                     // `${constant.backend_url}/assets/update-token/${selectedAsset.id}`, payload,
 
                     `${constant.backend_url}/assets/update-token`,
+
                     {
                         token_id: selectedAsset.id,
-                        tokenName: values?.tokenName,
-                        tokenSymbol: values?.tokenSymbol,
-                        decimals: Number(values?.tokenDecimals), 
-                        contractAddress: values?.contractAddress,
-                        network_id: values?.network_id,
-                        verifyStatus: values?.status === "active"   // ⭐ ADD THIS
-
+                        ...payload
                     },
+                    // {
+                    //     token_id: selectedAsset.id,
+                    //     tokenName: values?.tokenName,
+                    //     tokenSymbol: values?.tokenSymbol,
+                    //     decimals: Number(values?.tokenDecimals), 
+                    //     contractAddress: values?.contractAddress,
+                    //     network_id: values?.network_id,
+                    //     verifyStatus: values?.status === "active"  
+
+                    // },
 
                     {
                         headers: {
@@ -231,15 +255,12 @@ const Assets = () => {
                 console.log(values, "asdfsafdf");
 
                 if (res.data?.success) {
-                    messageApi.success(res.data.message || "Token updated successfully" );
+                    message.success(res.data.message || "Token updated successfully");
                     getToken();
                     setOpen(false);
                 } else {
-                    messageApi.error(res.data?.message || "Failed to update token");
-
+                    message.error(res.data?.message || "Failed to update token");
                 }
-
-
             } else {
                 const create = await axios.post(
                     `${constant.backend_url}/assets/add-tokens`, values,
@@ -253,11 +274,11 @@ const Assets = () => {
                 );
 
                 if (create.data?.success) {
-                    messageApi.success(create.data.message || "Token created successfully");
+                    message.success(create.data.message || "Token created successfully");
                     getToken();
                     setOpen(false);
                 } else {
-                    messageApi.error(create.data?.message || "Failed to create token");
+                    message.error(create.data?.message || "Failed to create token");
 
                 }
 
@@ -325,13 +346,13 @@ const Assets = () => {
         console.log("networkOptions updated:", networkOptions);
     }, [networkOptions]);
 
-      const debouncedSearch = useMemo(
+    const debouncedSearch = useMemo(
         () =>
-          debounce((value) => {
-            updateFilter("search", value);
-          }, 800),
+            debounce((value) => {
+                updateFilter("search", value);
+            }, 800),
         []
-      );
+    );
 
     const handleDelete = async () => {
         try {
@@ -387,6 +408,11 @@ const Assets = () => {
                 onSearch={(value) => debouncedSearch(value)}
                 onTypeChange={(value) => updateFilter("type", value)}
                 onVerifyChange={(value) => updateFilter("status", value)}
+                showDateFilter={true}
+                onDateChange={(dates) => {
+                    updateFilter("fromDate", dates?.[0] || "");
+                    updateFilter("toDate", dates?.[1] || "");
+                }}
                 searchTooltip="Search by Token Name, Token Symbol, contract address,NetWork Name "
 
             />
@@ -418,6 +444,7 @@ const Assets = () => {
                 open={deletemodal}
                 onCancel={() => setDeletemodal(false)}
                 title="Delete Network"
+                description={"Are you sure you want to delete this network?"}
                 showFooter={false}
                 extraContent={
                     <div className="text-center">
