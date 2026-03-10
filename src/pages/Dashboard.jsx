@@ -302,6 +302,8 @@ const getTransationHistory = async () => {
         <StatCard title="Total Network" value={dashboardData?.totalNetworks || 0} />
         <StatCard title="EVM Network" value={dashboardData?.evenetworks || 0} />
         <StatCard title="Non EVM Network" value={dashboardData?.nonevmnetworks || 0} />
+        <StatCard title="Sleeping Wallets" value={dashboardData?.sleepingwallets || 0} />
+
       </div>
 
       <ChartsSection dashboardData={dashboardData} />
