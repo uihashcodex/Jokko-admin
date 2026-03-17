@@ -84,12 +84,23 @@
           "key": "/profile",
           "icon": "SettingOutlined",
           "label": "Profile"
-        }
+        },
+          {
+            "key": "/pushnotification",
+            "icon": "SettingOutlined",
+            "label": "Push Notification"
+          },
+          {
+            "key": "/emailtemplatemanagementnew",
+            "icon": "SettingOutlined",
+            "label": "Emailtemplatemanagementnew"
+          }
       ]
     }
   },
   "button": {
-    "backgroundColor1": "primary"
+    "backgroundColor1": "#C9F07B"
+    
   },
   "projectName": "Jokko-admin"
 }

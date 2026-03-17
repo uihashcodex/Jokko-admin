@@ -59,6 +59,9 @@ const Assets = () => {
             label: "Token Decimals",
             name: "tokenDecimals",
             span: 12,
+            rules: [
+                { required: true, message: "Contract Address is required" },
+            ],
         },
         {
             label: "Contract Address",

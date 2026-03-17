@@ -16,7 +16,7 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
   const location = useLocation();
   console.log(location.pathname, 'pathname');
 
-
+  const currentPath = location.pathname.replace(`/${constant.adminRoute}`, "");
   const [mobileOpen, setMobileOpen] = useState(false);
 
   // ✅ Get Active Sidebar Based on Type
@@ -197,7 +197,7 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
     <>
       <style>
         {`
-          .custom-sidebar-menu.ant-menu {
+         .custom-sidebar-menu.ant-menu {
               background: transparent !important;
               border-right: none !important;
             }
@@ -231,7 +231,6 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
           .custom-sidebar-menu  .ant-menu-item-active:hover{
           background-color: ${theme.sidebarSettings.activeBgColor} !important;
           color: ${theme.sidebarSettings.activeTextColor} !important;
-
 
           }
       `}
@@ -299,7 +298,9 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
         <Menu
           className="custom-sidebar-menu"
           mode="inline"
-          selectedKeys={[location.pathname?.replace(/^\/[^/]+/, "")]}
+          // selectedKeys={[location.pathname?.replace(/^\/[^/]+/, "")]}
+          selectedKeys={[currentPath]}
+
           style={{
             background: theme.sidebarSettings.backgroundColor,
             color: theme.sidebarSettings.textColor,

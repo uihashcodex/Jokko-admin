@@ -48,7 +48,7 @@ const Viewdetail = () => {
 
   const [filters, setFilters] = useState({
     search: "",
-    type: "",
+    userType: "",
     blockstatus: "",
     fromDate: "",
     toDate: ""
@@ -191,7 +191,7 @@ const Viewdetail = () => {
         showCreateButton={false}
         showPrivateFilter={true}
         onSearch={(value) => debouncedSearch(value)}
-        onTypeChange={(value) => updateFilter("type", value)}
+        onTypeChange={(value) => updateFilter("userType", value)}
         onVerifyChange={(value) => updateFilter("blockstatus", value)}
         showDateFilter={true}
         onDateChange={(dates) => {

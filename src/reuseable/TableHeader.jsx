@@ -1,8 +1,8 @@
 import { Row, Col, Input, Tooltip, DatePicker,Grid } from "antd";
 import SelectField from "./SelectField";
 import ReButton from "./Button";
-import { PlusOutlined } from "@ant-design/icons";
 import { useState, useEffect } from "react";
+import { CloseCircleFilled, CalendarOutlined, PlusOutlined, SwapRightOutlined } from "@ant-design/icons";
 
 const { Search } = Input;
 
@@ -20,9 +20,11 @@ const TableHeader = ({
   showNetFilter = false,
   showNetworkFilter=false,
   showCreateButton = true,
+  showseletButton = false,
   showDateFilter = false,
   onDateChange,
   searchTooltip,
+  onSelect,
   onCreate,
   placeHolder
 }) => {
@@ -33,9 +35,12 @@ const TableHeader = ({
   const [netType, setNetType] = useState(undefined);
   const [networkType, setNetworkType] = useState(undefined);
   const { RangePicker } = DatePicker;
-  const [dateRange, setDateRange] = useState([]);
-  const { useBreakpoint } = Grid;
+    const { useBreakpoint } = Grid;
   const screens = useBreakpoint();
+
+  const [dateRange, setDateRange] = useState([]);
+  const [mobileStep, setMobileStep] = useState("start");
+  const [mobileOpen, setMobileOpen] = useState(false);
 // useEffect(() => {
 //   let temp = [...data];
 
@@ -145,7 +150,7 @@ const TableHeader = ({
           />
         </Col>
       )}
-      {showDateFilter && (
+      {/* {showDateFilter && (
         <Col xs={24} sm={12} md={8} lg={6}>
           <RangePicker
             value={dateRange}
@@ -157,20 +162,117 @@ const TableHeader = ({
             showTime={false}
             mode={screens.xs ? "date" : undefined}
             onChange={(dates, dateStrings) => {
-              setDateRange(dates);
-              onDateChange?.(dateStrings);
+              const safeDates = dates ?? [];
+              setDateRange(safeDates);
+              onDateChange?.(dateStrings ?? []);
             }}
           />
+        </Col>
+      )} */}
+
+      {showDateFilter && (
+        <Col xs={24} sm={12} md={8} lg={6}>
+          {screens.xs ? (
+            <div style={{ position: "relative", width: "100%" }}>
+              <DatePicker
+                open={mobileOpen}
+                allowClear={false}
+                className="custom-select repicker-modal"
+                popupClassName="custom-date-theme"
+                style={{ width: "100%" }}
+                placeholder="Select Date Range"
+                value={dateRange?.[0] || null}
+                inputReadOnly
+                suffixIcon={dateRange?.length === 2 ? null : <CalendarOutlined />} format={() => {
+                  if (dateRange?.[0] && dateRange?.[1]) {
+                    return `${dateRange[0].format("YYYY-MM-DD")} "<CalendarOutlined />" ${dateRange[1].format(
+                      "YYYY-MM-DD"
+                    )}`;
+                  }
+                  if (dateRange?.[0]) {
+                    return `${dateRange[0].format("YYYY-MM-DD")} - ...`;
+                  }
+                  return "";
+                }}
+                onOpenChange={(open) => setMobileOpen(open)}
+                onChange={(date) => {
+                  if (mobileStep === "start") {
+                    setDateRange([date, null]);
+                    setMobileStep("end");
+
+                    setTimeout(() => {
+                      setMobileOpen(true);
+                    }, 200);
+                  } else {
+                    const range = [dateRange?.[0], date];
+                    setDateRange(range);
+                    setMobileStep("start");
+                    setMobileOpen(false);
+
+                    onDateChange?.([
+                      range?.[0]?.format("YYYY-MM-DD"),
+                      range?.[1]?.format("YYYY-MM-DD"),
+                    ]);
+                  }
+                }}
+              />
+
+              {dateRange?.length === 2 && (
+                <CloseCircleFilled
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setDateRange([]);
+                    setMobileStep("start");
+                    onDateChange?.([]);
+                  }}
+                  style={{
+                    position: "absolute",
+                    right: 10,
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    color: "#86c871",
+                    cursor: "pointer",
+                    fontSize: 16,
+                  }}
+                />
+              )}
+            </div>
+          ) : (
+            <RangePicker
+              value={dateRange}
+              className="custom-select repicker-modal"
+              popupClassName="custom-date-theme"
+              style={{ width: "100%" }}
+              picker="date"
+              placement="bottomLeft"
+              showTime={false}
+              onChange={(dates, dateStrings) => {
+                setDateRange(dates);
+                onDateChange?.(dateStrings);
+              }}
+            />
+          )}
         </Col>
       )}
 
 
       {showCreateButton && (
-        <Col xs={24} sm={12} md={4} lg={2}>
+        <Col xs={24} sm={12} md={4} lg={4}>
           <ReButton
             name="Create"
             type="primary"
             onClick={onCreate}
+            icon={<PlusOutlined />}
+          />
+        </Col>
+      )}
+      {showseletButton && (
+        <Col xs={24} sm={12} md={4} lg={4}>
+          <ReButton
+            name="Select Template"
+            type="primary"
+            onClick={onSelect}
             icon={<PlusOutlined />}
           />
         </Col>
