@@ -58,6 +58,8 @@ const Walletlist = () => {
           evmaddress: item?.evmAddress,
           solanaaddress: item?.solAddress,
           xrpaddress: item?.xrpAddress,
+          createdAt: item?.createdAt ? item?.createdAt.split("T")[0] : "",
+          updatedAt: item?.updatedAt ? item?.updatedAt.split("T")[0] : "",
           status: item?.walletStatus ? "Active" : "Inactive",
                 }));
 
@@ -349,8 +351,13 @@ const Walletlist = () => {
           onVerifyChange={(value) => updateFilter("status", value)}
           showDateFilter={true}
           onDateChange={(dates) => {
-            updateFilter("fromDate", dates?.[0] || "");
-            updateFilter("toDate", dates?.[1] || "");
+            setPage(1);
+
+            setFilters(prev => ({
+              ...prev,
+              fromDate: dates?.[0] || "",
+              toDate: dates?.[1] || ""
+            }));
           }}
           searchTooltip="Search by User Name, Address"
           showCreateButton={false}

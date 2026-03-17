@@ -428,7 +428,15 @@ const Profile = () => {
               }}
             >
               <Button
-                onClick={() => navigator.clipboard.writeText(secret)}
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(secret);
+                    message.success("Secret key copied successfully");
+                  } catch (err) {
+                    message.error("Failed to copy secret key");
+                  }
+                }}
+              
               >
                 Copy
               </Button>

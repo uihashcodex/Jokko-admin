@@ -168,7 +168,7 @@ const Dashboard = () => {
         </div>
       </div>
       {/* Cards Section */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
         <StatCard title="Total Users" value={dashboardData?.totalusers || 0} />
         <StatCard title="Individual Users" value={dashboardData?.individualCount || 0} />
         <StatCard title="Professional Users" value={dashboardData?.professionalCount || 0} />
@@ -178,6 +178,12 @@ const Dashboard = () => {
         <StatCard title="EVM Network" value={dashboardData?.evenetworks || 0} />
         <StatCard title="Non EVM Network" value={dashboardData?.nonevmnetworks || 0} />
         <StatCard title="Sleeping Wallets" value={dashboardData?.sleepingwallets || 0} />
+        <StatCard title="Users per mobile" value={dashboardData?.userspermobile || 0} />
+        <StatCard title="Download rate" value={dashboardData?.downloadrate || 0} />
+        <StatCard title="Account creation rate" value={dashboardData?.accountcreationrate || 0} />
+        <StatCard title="Average balance per user" value={dashboardData?.averageuser || 0} />
+        <StatCard title="Average number of swap per user" value={dashboardData?.averageswap || 0} />
+        <StatCard title="Average amount swapped" value={dashboardData?.averageamtswap || 0} />
 
       </div>
 

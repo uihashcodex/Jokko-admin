@@ -70,6 +70,18 @@ const Webhook = () => {
   const modalFields = selectedAsset ? updateFields : createFields;
 
 
+  const formatDate = (timestamp) => {
+    if (!timestamp) return "-";
+    const d = new Date(timestamp);
+
+    return d.toLocaleString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+  };
 
   const fetchAlchemyWebhooks = async () => {
     const startTime = Date.now();
@@ -97,7 +109,7 @@ const Webhook = () => {
           name: user?.name || "-",
           webtype: user?.webhook_type || "-",
           weburl: user?.webhook_url || "-",
-          // timedate: user?.timestamp || "-",
+          datetime: formatDate(user?.time_created),
           status: user?.is_active ? "Active" : "Inactive",
         }));
 
@@ -185,10 +197,10 @@ const Webhook = () => {
     { title: "Name", dataIndex: "name", key: "name" },
     { title: "web Type", dataIndex: "webtype", key: "webtype" },
     { title: "web Url", dataIndex: "weburl", key: "weburl" },
-    { title: "Time/Date", dataIndex: "timedate", key: "timedate" },
+    { title: "Date/Time", dataIndex: "datetime", key: "datetime" },
     { title: "Status", dataIndex: "status", key: "status" },
   ];
-
+  
   return (
     <div>
       <div

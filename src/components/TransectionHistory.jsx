@@ -78,6 +78,8 @@ const TransectionHistory = () => {
           from: item?.from || "-",
           to: item?.to || "-",
           tokenSymbol: item?.tokenSymbol || "-",
+          createdAt: item?.createdAt ? item?.createdAt.split("T")[0] : "",
+          updatedAt: item?.updatedAt ? item?.updatedAt.split("T")[0] : "", 
           status: item?.status || "-",
         }));
 
