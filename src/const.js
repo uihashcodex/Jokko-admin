@@ -3,7 +3,7 @@ import config from "./config/theme";
 export const constant = {
     //live url
     backend_url: "https://api-jokkowallet.hashcodexperts.com/jokkoapi",
-        // backend_url: "http://localhost:3700/jokkoapi",
+        // backend_url: "http://localhost:3700/jokkoa`xxxxxx`xxpi",
 
     adminRoute: config?.project?.name.split(" ")
         .map((word, index) =>
