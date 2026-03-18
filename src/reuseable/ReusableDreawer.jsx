@@ -58,6 +58,11 @@ const ReusableDrawer = ({
                         size="large"
                         placeholder={field.placeholder}
                         disabled={field.disabled}
+                        onChange={(e) => {
+                            if (field.onChange) {
+                                field.onChange(e);
+                            }
+                        }}
                     />
                 );
 
@@ -95,7 +100,14 @@ const ReusableDrawer = ({
                 return (
                     <ReactQuill
                         value={form.getFieldValue(field.name)}
-                        onChange={(value) => form.setFieldsValue({ [field.name]: value })}
+                        onChange={(value) => {
+                            form.setFieldsValue({ [field.name]: value });
+
+                            // 🔥 VERY IMPORTANT
+                            if (field.onChange) {
+                                field.onChange(value);
+                            }
+                        }}
                         placeholder={field.placeholder || "Type email content..."}
                         modules={field.modules}
                         formats={field.formats}

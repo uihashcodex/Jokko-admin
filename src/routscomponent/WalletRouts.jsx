@@ -13,8 +13,12 @@ import Griddemo from "../components/Griddemo";
 import Webhook from "../components/webhooks"; 
 import EmailTemplateManagement from "../components/EmailTemplateManagement"; 
 import PushNotification from "../components/pushnotification";
-import EmailTemplateManagementnew from "../components/EmailTemplateManagementnew";
+import EmailTemplateManagementnew from "../components/EmailTemplateManagementnew"; 
+import TrendingCurrency from "../components/TrendingCurrency";
+import DefaultCurrency from "../components/DefaultCurrency";
 import { constant } from "../const";
+import SupportPage from "../components/support";
+
 
 
 
@@ -39,6 +43,10 @@ const WalletRouts = () => {
       <Route path={`/${constant?.adminRoute}/emailtemplate`} element={<EmailTemplateManagement />} />
       <Route path={`/${constant?.adminRoute}/pushnotification`} element={<PushNotification />} />
       <Route path={`/${constant?.adminRoute}/emailtemplatemanagementnew`} element={<EmailTemplateManagementnew />} />
+      <Route path={`/${constant?.adminRoute}/trendingcurrency`} element={<TrendingCurrency />} />
+      <Route path={`/${constant?.adminRoute}/defaultcurrency`} element={<DefaultCurrency />} />
+      <Route path={`/${constant?.adminRoute}/support`} element={<SupportPage />} />
+
     </Routes>
   );
 };

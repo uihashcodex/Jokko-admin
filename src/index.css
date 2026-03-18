@@ -1309,3 +1309,23 @@ tr {
 .editor.ar3{
 width: 100% !important;
 }
+.support-segment .ant-segmented-item-selected{
+ background: #C9F07B;
+}
+.support-segment .ant-segmented-item-label.ant-segmented-item-selected:hover {
+    color: #000 !important;
+}
+.support-segment .ant-segmented-item-label:hover{
+    color: #ffffffbb;
+  
+}
+
+.template-card img {
+    width: 180px;
+    height: 120px;
+    object-fit: contain;
+    /* no crop, but may leave space */
+    background: #fff;
+    /* optional for empty space */
+}
+
