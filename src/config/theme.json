@@ -14,7 +14,7 @@
     "image": "/img/headerbg3.jpg",
     "height": 150
   },
- "primaryColor": "#C9F07B",
+  "primaryColor": "#C9F07B",
   "sidebarType": "wallet",
   "sidebarSettings": {
     "backgroundColor": "#04231EF0",
@@ -62,45 +62,57 @@
           "label": "Transaction History"
         },
         {
+          "key": "alchemy",
+          "label": "Alchemy Details",
+          "icon": "ApiOutlined",
+          "children": [
+            {
+              "key": "webhook",
+              "label": "Webhook",
+              "icon": "LinkOutlined"
+            }
+          ]
+        },
+        {
+          "key": "/trendingcurrency",
+          "icon": "RiseOutlined",
+          "label": "Trending Currency"
+        },
+        {
+          "key": "/defaultcurrency",
+          "icon": "AimOutlined",
+          "label": "Default Currency"
+        },
+        {
+          "key": "/pushnotification",
+          "icon": "PushpinOutlined",
+          "label": "Push Notification"
+        },
+        {
           "key": "/emailtemplate",
           "icon": "FileTextOutlined",
           "label": "Email Template"
         },
-
-     {
-      "key": "alchemy",
-      "label": "Alchemy Details",
-      "icon": "ApiOutlined",
-      "children": [
         {
-          "key": "webhook",
-          "label": "Webhook",
-          "icon": "LinkOutlined"
-        }
-      ]
-    },
-        
+          "key": "/emailtemplatemanagementnew",
+          "icon": "MailOutlined",
+          "label": "Emailtemplatemanagementnew"
+        },
+        {
+          "key": "/support",
+          "icon": "CommentOutlined",
+          "label": "Support"
+        },
         {
           "key": "/profile",
           "icon": "SettingOutlined",
           "label": "Profile"
-        },
-          {
-            "key": "/pushnotification",
-            "icon": "SettingOutlined",
-            "label": "Push Notification"
-          },
-          {
-            "key": "/emailtemplatemanagementnew",
-            "icon": "SettingOutlined",
-            "label": "Emailtemplatemanagementnew"
-          }
+        }
       ]
     }
   },
   "button": {
     "backgroundColor1": "#C9F07B"
-    
   },
   "projectName": "Jokko-admin"
 }
