@@ -167,8 +167,10 @@ const Dashboard = () => {
           </h1>
         </div>
       </div>
+
+      <ChartsSection dashboardData={dashboardData} />
       {/* Cards Section */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-20">
         <StatCard title="Total Users" value={dashboardData?.totalusers || 0} />
         <StatCard title="Individual Users" value={dashboardData?.individualCount || 0} />
         <StatCard title="Professional Users" value={dashboardData?.professionalCount || 0} />
@@ -187,7 +189,7 @@ const Dashboard = () => {
 
       </div>
 
-      <ChartsSection dashboardData={dashboardData} />
+    
 
       {/* <DashboardTable /> */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">

@@ -180,7 +180,7 @@ const Viewdetail = () => {
       >
         <div className="display-3 w-full">
           <h1 className="text-white p-7 font-bold text-2xl">
-            View Detail             </h1>
+            User Detail             </h1>
         </div>
       </div>  
       

@@ -22,6 +22,7 @@ const TableHeader = ({
   showCreateButton = true,
   showseletButton = false,
   showDateFilter = false,
+  showSearch=true,
   onDateChange,
   searchTooltip,
   onSelect,
@@ -69,7 +70,7 @@ const TableHeader = ({
 
   return (
     <Row gutter={[16, 16]} justify="end"  style={{ marginBottom: 16,padding:"0 10px" }}>
-      
+      {showSearch &&
       <Col xs={24} sm={12} md={8} lg={6}>
         <Tooltip title={searchTooltip} placement="top" color="rgb(18 47 42)">
 
@@ -81,6 +82,7 @@ const TableHeader = ({
         />
         </Tooltip>
       </Col>
+}
 
       {showStatusFilter && (
         <Col xs={24} sm={12} md={6} lg={4}>

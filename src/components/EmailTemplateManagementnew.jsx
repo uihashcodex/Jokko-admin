@@ -49,8 +49,8 @@ const EmailTemplateManagementnew = () => {
     toolbar: [
       [{ header: [1, 2, 3, false] }],
       ["bold", "italic", "underline"],
-      [{ align: [] }],
       [{ list: "ordered" }, { list: "bullet" }],
+      [{ align: [] }],
       ["link"],
       ["clean"]
     ]
@@ -64,7 +64,9 @@ const EmailTemplateManagementnew = () => {
     "align",
     "list",
     "bullet",
-    "link"
+    "link",
+    "indent",     // ✅ REQUIRED for list
+    "direction",  // ✅ optional
   ];
 
   const fields = [
@@ -110,46 +112,37 @@ const EmailTemplateManagementnew = () => {
  const templates = {
         template1: `
 <div style="font-family:Arial, sans-serif;">
-  
-  <div style="max-width:600px;margin:auto;">
-<div style="background:#122f2a;border:1px solid #ddd;color:#fff">
-    <div style="height:10px;background:#c9f07b"></div>
+<div style="padding:20px 10px;">
 
-    <div style="text-align:center;padding:30px">
-      <img src="/img/logo.png" style="width:80px;margin-bottom:10px"/>
-      <h1 style="color:#fff;margin:10px 0;" class="text-lg font-bold">
-        {{subject}}
-      </h1>
-    </div>
+<div style="max-width:450px;width:100%;margin:0 auto;background:#122f2a;color:#fff;border-radius:6px;overflow:hidden">
 
-<div style="padding:30px;color:#fff;line-height:1.6">
+<div style="height:6px;background:#c9f07b"></div>
 
-<div style="margin-bottom:10px; text-align:center;">
-  {{content}}
+<div style="text-align:center;padding:20px">
+<img src="/img/logo.png" style="width:60px;margin-bottom:8px"/>
+<h2 style="margin:5px 0;">{{subject}}</h2>
 </div>
-      <p>Thank You,</p>
 
-      <p>
-        Jokko Wallet
-
-      </p>
-
-    </div>
-
-  </div>
-    <div style="text-align:center;color:#000;font-size:13px;margin-top:2px;background:#c9f07b;padding:10px">
-  Copyright © 2026 | Jokko Wallet <br/>
-  </div>
+<div style="padding:20px;font-size:13px;line-height:1.5;">
+{{content}}
+<p style="margin-top:10px">Thank You,<br/>Jokko Wallet</p>
+</div>
+<div style="text-align:center;background:#c9f07b;font-size:12px;padding:8px;color:#000;">
+© 2026 Jokko Wallet
+</div>
+</div>
 
 
-  </div>
+
+</div>
 </div>
 `,
 
         template2: `
-        <div style="font-family:Arial, sans-serif;background:#f4f4f4;padding:40px 0">
+          <div style="max-width:450px;margin:0 auto">
 
-  <div style="max-width:600px;margin:auto">
+        <div style="font-family:Arial, sans-serif;background:#f4f4f4;padding:20px 0">
+
 
     <div style="background:#c9f07b;height:120px;text-align:center">
       <div style="padding-top:35px">
@@ -165,7 +158,7 @@ const EmailTemplateManagementnew = () => {
         text-align:center;
         max-width:500px;
       ">
-      <div class="flex justify-center">
+      <div style="display:flex,justify-content:flex-start,margin-bottom:20px">
       <img src="/img/logo.png" style="width:100px;margin-bottom:10px"/>
 </div>
       <h2 style="margin-bottom:15px;color:#333">{{subject}}</h2>
@@ -175,14 +168,7 @@ const EmailTemplateManagementnew = () => {
         {{content}}
       </div>
 
-      <p style="margin-top:25px;color:#666">
-        If you have any questions, just reply to this email—we're always happy
-        to help out.
-      </p>
-
-      <p style="margin-top:15px;color:#333">
-        The Jokko Wallet Team
-      </p>
+     
 
     </div>
 
@@ -199,14 +185,14 @@ const EmailTemplateManagementnew = () => {
 `,
         template3: `
 <div style="font-family:Arial, sans-serif;background:#f5f5f5;padding:50px 0">
-
   <div style="
-      max-width:600px;
+      max-width:450px;
+      width:100%;
       margin:auto;
       background:white;
       border-radius:20px;
       border:1px solid #ddd;
-      padding:40px;
+      padding:20px;
       text-align:center;
   ">
 
@@ -244,8 +230,9 @@ Copyright © 2026 | Jokko Wallet
 `,
         template4: `
 <div style="font-family:Arial, sans-serif;background:#f4f4f4;padding:40px 0">
+<div style="padding:20px 10px;">
 
-  <div style="max-width:600px;margin:auto;background:white;border:1px solid #ddd">
+  <div style="max-width:450px;margin:auto;background:white;border:1px solid #ddd">
 
     <div style="
         background:#095246;
@@ -255,25 +242,15 @@ Copyright © 2026 | Jokko Wallet
         font-size:22px;
         font-weight:600;
       ">
-      Responsive Email Template
-    </div>
+{{subject}}    </div>
 
     <div style="padding:35px;color:#444;font-size:15px;line-height:1.7">
-
+<div class="flex justify-center">
+      <img src="/img/logo.png" style="width:100px;margin-bottom:10px"/>
+</div>
       <p>Hello {{name}},</p>
 
-      <p>
-       ******************************************************************
-       <br/>
-       *********************************************************
-      </p>
-
-     <p>
-       ******************************************************************
-       <br/>
-       *********************************************************
-      </p>
-
+  
 
       <div>
         {{content}}
@@ -289,67 +266,93 @@ Copyright © 2026 | Jokko Wallet
         padding:20px;
         font-size:13px;
       ">
-      Copyright © 2024 | Your brand name
+      Copyright © 2024 | Jokko Wallet
     </div>
 
+  </div>
   </div>
 
 </div>
 `,
         template5: `
-<div style="font-family:Arial, sans-serif;background:#1a1a1a;padding:40px 0">
+<div style="margin:0;font-family:Arial, sans-serif;">
 
-  <div style="max-width:600px;margin:auto;background:#ffffff">
+<div style="padding:20px 10px;">
 
-    <!-- logo -->
-     <div style="display:flex;align-items:center;justify-content:center;padding-top:20px">
-      <div style="width:80px;height:80px;">
-        <img src="/img/logo-sm.png" style="width:40px"/>
-      </div>
+    <div style="
+  max-width:450px;
+  width:100%;
+  margin:0 auto;
+  background:#ffffff;
+  border-radius:6px;
+  overflow:hidden;
+  border:1px solid #eee;
+">
+            <div style="
+                background:#1a1a1a;
+                text-align:center;
+                padding:10px;
+                color:#fff;
+                font-size:12px;
+              ">
+            </div>
+            <!-- Logo -->
+            <div style="padding:15px 20px;">
+      <img src="/img/logo-sm.png" style="width:40px"/>
+            </div>
+
+            <!-- Title -->
+            <div style="padding:0 20px;">
+                <h2 style="margin:0;font-size:20px;color:#111;">
+                    {{subject}}
+                </h2>
+            </div>
+
+
+
+
+            <div style="color:#555;font-size:15px;line-height:1.6;padding:0 20px;margin-top: 20px;">
+                {{content}}
+            </div>
+            <!-- Footer Content -->
+            <div style="padding:10px 20px;color:#555;font-size:12px;">
+                <p><b>Regards</b><br />Team Jokko wallet</p>
+            </div>
+
+            <!-- Bottom Footer -->
+            <div style="
+        background:#1a1a1a;
+        text-align:center;
+        padding:10px;
+        color:#fff;
+        font-size:12px;
+      ">
+                <p>Want updates through more platforms?</p>
+
+                <div style="margin:15px 0">
+                    <span style="margin:0 8px">Twitter</span>
+                    <span style="margin:0 8px">Facebook</span>
+                    <span style="margin:0 8px">YouTube</span>
+                    <span style="margin:0 8px">Instagram</span>
+                </div>
+
+
+                <p>
+                    Unsubscribe • Privacy policy • Contact us
+                </p>
+            </div>
+
+        </div>
+
     </div>
-
-    <!-- title -->
-    <div style="padding:0 40px">
-      <h1 style="font-size:32px;color:#111;margin-bottom:20px">
-        {{subject}}
-      </h1>
-
-      <!-- content -->
-      <div style="color:#555;font-size:15px;line-height:1.6">
-        {{content}}
-      </div>
-
-
-
-    </div>
-
-  </div>
-
-  <!-- footer -->
-  <div style="text-align:center;color:#aaa;margin-top:40px;font-size:13px">
-
-    <p>Want updates through more platforms?</p>
-
-    <div style="margin:15px 0">
-      <span style="margin:0 8px">Twitter</span>
-      <span style="margin:0 8px">Facebook</span>
-      <span style="margin:0 8px">YouTube</span>
-      <span style="margin:0 8px">Instagram</span>
-    </div>
-
-
-    <p>
-      Unsubscribe • Privacy policy • Contact us
-    </p>
-
-  </div>
 
 </div>
 `,
         template6: `
+          <div style="max-width:450px;margin:auto;background:white;border-radius:8px;overflow:hidden;margin-top:10px;margin-bottom:10px">
+
 <div style="font-family:Arial, sans-serif;background:#f2f2f2;padding:40px 0">
 
-  <div style="max-width:600px;margin:auto;background:white;border-radius:8px;overflow:hidden">
 
     <!-- header -->
     <div style="background:#122f2a;padding:25px">
@@ -367,20 +370,13 @@ Copyright © 2026 | Jokko Wallet
         {{content}}
       </div>
 
-      <p style="color:#666;font-size:14px">
-        If you did not request a password reset, you can safely ignore this email.
-      </p>
-
     </div>
 
   </div>
 
   <!-- footer -->
-  <div style="text-align:center;color:#888;font-size:12px;margin-top:25px">
-    Flash is a webtool that is a free open source JavaScript framework
-    that can be accessed from a browser or mobile device in a Web browser.
-    <br/><br/>
-    © 2022 Flash Inc. All Rights Reserved
+  <div style="text-align:center;color:#888;font-size:12px;margin-top:5px;background:#f2f2f2;padding-top:10px">
+    © 2022 Jokko Wallet Inc. All Rights Reserved
   </div>
 
 </div>
@@ -539,10 +535,36 @@ Copyright © 2026 | Jokko Wallet
     }
   }, [drawerOpen, selectedRow]);
 
+  // const previewHtml =
+  //   templates[selectedDesign]
+  //     ?.replace(/{{subject}}/g, liveSubject || selectedRow?.subject || "Email Subject")
+  //     ?.replace(/{{content}}/g, liveBody || selectedRow?.body || "Email content here...");
+
+  const formattedContent = (liveBody || selectedRow?.body || "")
+
+    // headings
+    .replace(/<h1>/g, '<h1 style="font-size:26px;font-weight:bold;margin:10px 0;">')
+    .replace(/<h2>/g, '<h2 style="font-size:22px;font-weight:bold;margin:10px 0;">')
+    .replace(/<h3>/g, '<h3 style="font-size:18px;font-weight:bold;margin:10px 0;">')
+
+    // alignment
+    .replace(/class="ql-align-center"/g, 'style="text-align:center;"')
+    .replace(/class="ql-align-right"/g, 'style="text-align:right;"')
+    .replace(/class="ql-align-justify"/g, 'style="text-align:justify;"')
+
+    // ✅ FINAL LIST FIX
+    .replace(/<ul>/g, '<ul style="padding-left:20px;margin:10px 0;list-style-type:disc;list-style-position:inside;">')
+    .replace(/<ol>/g, '<ol style="padding-left:0;margin:10px 0;list-style-type:decimal;list-style-position:inside;">')
+    .replace(/<li>/g, '<li style="margin-bottom:5px;">')
+
+    // paragraph
+    .replace(/<p>/g, '<p style="margin:5px 0;">');
+    
+
   const previewHtml =
     templates[selectedDesign]
       ?.replace(/{{subject}}/g, liveSubject || selectedRow?.subject || "Email Subject")
-      ?.replace(/{{content}}/g, liveBody || selectedRow?.body || "Email content here...");
+      ?.replace(/{{content}}/g, formattedContent);
 
   return (
     <div>
@@ -626,11 +648,11 @@ Copyright © 2026 | Jokko Wallet
                   width: "600px", // 🔥 FIXED WIDTH
                   background: "#fff"
                 }}
-              dangerouslySetInnerHTML={{
-                __html: templates[selectedDesign]
-                  ?.replace(/{{subject}}/g, liveSubject || selectedRow?.subject || "Email Subject")
-                  ?.replace(/{{content}}/g, liveBody || selectedRow?.body || "Email content here...")
-              }}
+                dangerouslySetInnerHTML={{
+                  __html: templates[selectedDesign]
+                    ?.replace(/{{subject}}/g, liveSubject || selectedRow?.subject || "Email Subject")
+                    ?.replace(/{{content}}/g, formattedContent)
+                }}
             />
             </div>
 

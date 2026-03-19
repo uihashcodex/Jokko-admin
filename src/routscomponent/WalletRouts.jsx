@@ -16,6 +16,8 @@ import PushNotification from "../components/pushnotification";
 import EmailTemplateManagementnew from "../components/EmailTemplateManagementnew"; 
 import TrendingCurrency from "../components/TrendingCurrency";
 import DefaultCurrency from "../components/DefaultCurrency";
+import RoleManagement from "../components/RoleManagement";
+import StaffManagement from "../components/staffManagement"
 import { constant } from "../const";
 import SupportPage from "../components/support";
 
@@ -46,6 +48,8 @@ const WalletRouts = () => {
       <Route path={`/${constant?.adminRoute}/trendingcurrency`} element={<TrendingCurrency />} />
       <Route path={`/${constant?.adminRoute}/defaultcurrency`} element={<DefaultCurrency />} />
       <Route path={`/${constant?.adminRoute}/support`} element={<SupportPage />} />
+      <Route path={`/${constant?.adminRoute}/rolemanagement`} element={<RoleManagement />} />
+      <Route path={`/${constant?.adminRoute}/staffmanagement`} element={<StaffManagement />} />
 
     </Routes>
   );
