@@ -26,6 +26,8 @@ const Assets = () => {
         { title: "Token Decimals", dataIndex: "tokenDecimals", key: "tokenDecimals" },
         { title: "Contract Address", dataIndex: "contractAddress", key: "contractAddress" },
         { title: "Network Name", dataIndex: "networkName", key: "networkName" },
+        { title: "Created At", dataIndex: "createdAt", key: "createdAt" },
+        { title: "Updated At", dataIndex: "createdAt", key: "updatedAt" },
         { title: "Status", dataIndex: "status", key: "status" },
     ];
 
@@ -158,6 +160,8 @@ const Assets = () => {
                     tokenDecimals: item?.decimals || "-",
                     status: item?.verifyStatus ? "active" : "inactive",
                     network_id: item?.network?._id || "-",
+                    createdAt: item?.createdAt ? item.createdAt.split("T")[0] : "-",
+                    updatedAt: item?.updatedAt ? item.updatedAt.split("T")[0] : "-",
                     networkName: item?.network?.networkName || "-",
                 }));
 

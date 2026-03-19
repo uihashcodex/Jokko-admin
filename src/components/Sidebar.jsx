@@ -4,6 +4,7 @@ import Anticon from "../reuseable/Anticon";
 import { useState } from "react";
 import theme from "../config/theme.json";
 import { constant } from "../const";
+import { filterSidebar } from "../utils/filterSidebar";
 
 const { Sider } = Layout;
 const { useBreakpoint } = Grid;
@@ -41,7 +42,20 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
     });
 
   // ✅ Safe Menu Items
-  const menuItems = buildMenuItems(activeSidebar?.menuItems || []);
+  // const menuItems = buildMenuItems(activeSidebar?.menuItems || []);
+
+  const user = JSON.parse(localStorage.getItem("user")) || {
+    permissions: ["ALL"] 
+  };
+
+  // 👉 filter based on permission
+  const filteredSidebar = filterSidebar(
+    activeSidebar?.menuItems || [],
+    user.permissions
+  );
+
+  // 👉 then build menu
+  const menuItems = buildMenuItems(filteredSidebar);
 
   const handleLogout = () => {
     localStorage.clear(); // or removeItem("token")
@@ -246,19 +260,23 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
           position: "fixed",
           height: "100vh",
           left: 0,
+          display: "flex",
+          flexDirection: "column",
         }}
+        className="side-bar"
       >
         {/* Logo Section */}
         <div
           style={{
             height: 60,
             display: "flex",
+            minHeight: 60,
             alignItems: "center",
             justifyContent: collapsed ? "center" : "space-between",
             padding: collapsed ? 0 : "0 16px",
             cursor: "pointer",
           }}
-          onClick={() => navigate("/")}
+          // onClick={() => navigate("/")}
         >
           <img
             // src={theme.logo.image}
@@ -295,6 +313,13 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
           </div>
         )}
 
+        <div
+          style={{
+            flex: 1,
+            overflowY: "auto",
+          }}
+        >
+
         <Menu
           className="custom-sidebar-menu"
           mode="inline"
@@ -309,18 +334,22 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
           onClick={({ key }) => navigate(`/${constant?.adminRoute}/${key}`)}
           items={menuItems}
         />
+        </div>
         <div
           onClick={handleLogout}
           style={{
-            position: "absolute",
-            bottom: 20,
-            width: "100%",
-            textAlign: collapsed ? "center" : "left",
+            height: 60,
+            minHeight: 60,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: collapsed ? "center" : "flex-start",
             paddingLeft: collapsed ? 0 : 24,
             cursor: "pointer",
             color: "red",
             fontWeight: 500,
-          }}
+            borderTop: "1px solid rgba(255,255,255,0.1)",
+            boxShadow: "0px -6px 30px -8px rgba(255, 255, 255, 0.32)"
+                    }}
         >
           <Anticon name="LogoutOutlined" />{" "}
           {!collapsed && <span style={{ marginLeft: 10 }}>Logout</span>}

@@ -99,13 +99,28 @@
           "label": "Emailtemplatemanagementnew"
         },
         {
+          "key": "management",
+          "label": "Management",
+          "icon": "SettingOutlined",
+          "children": [
+            {
+              "key": "/rolemanagement",
+              "label": "Role Management"
+            },
+            {
+              "key": "/staffmanagement",
+              "label": "Staff Management"
+            }
+          ]
+        },
+        {
           "key": "/support",
           "icon": "CommentOutlined",
           "label": "Support"
         },
         {
           "key": "/profile",
-          "icon": "SettingOutlined",
+          "icon": "UserOutlined",
           "label": "Profile"
         }
       ]

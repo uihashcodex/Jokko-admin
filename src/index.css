@@ -1329,3 +1329,21 @@ width: 100% !important;
     /* optional for empty space */
 }
 
+.side-bar .ant-layout-sider-children{
+display: flex;
+flex-direction: column;
+}
+.support-meta .ant-empty-description{
+color: #fff;
+}
+.modal-search .ant-input{
+background: transparent !important;
+color: #ffff;
+}
+.modal-search .ant-input::placeholder {
+color: #fff;
+}
+
+.modal-search .ant-input-clear-icon {
+    color: #fff;
+}

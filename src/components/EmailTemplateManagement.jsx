@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import {  Button } from "antd";
+import { Button } from "antd";
 import ReusableModal from "../reuseable/ReusableModal";
 import theme from '../config/theme';
 import { CheckOutlined } from "@ant-design/icons";
@@ -52,10 +52,10 @@ const TemplateDesignSelector = () => {
         <div style={{ padding: "20px" }}>
             {/* 🔥 Selected Template */}
             <div
-               
+
                 style={{ marginBottom: "20px", }}
             >
-            <div className="white text-2xl mb-5">Default Template</div>
+                <div className="white text-2xl mb-5">Default Template</div>
                 <div className="template-card template-des active ">
                     <div className="tick-icon">
                         <CheckOutlined />
@@ -105,9 +105,9 @@ const TemplateDesignSelector = () => {
                 description="Please confirm your selection"
                 showFooter={false} // ❗ we handle buttons manually
                 extraContent={
-                    <div style={{ textAlign: "center" }}>
+                    <div style={{ textAlign: "center", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
 
-                        {/* Preview */}
+
                         <img
                             src={`/img/email-tem-${pendingTemplate?.replace("template", "")}.png`}
                             alt="preview"
@@ -169,6 +169,58 @@ const TemplateDesignSelector = () => {
           border: 3px solid #52c41a;
           transform: scale(1.05);
         }
+          .template-card {
+              cursor: pointer;
+              text-align: center;
+              transition: 0.3s;
+              position: relative; /* IMPORTANT */
+                 }
+
+/* Image styling */
+.template-card img {
+  width: 180px;
+  border-radius: 10px;
+  border: 2px solid transparent;
+}
+
+/* Hover effect */
+.template-card:hover img {
+  transform: scale(1.05);
+  border: 2px solid #C9F07B;
+}
+
+/* Active (selected template) */
+.template-card.active img {
+  border: 3px solid #52c41a;
+  transform: scale(1.05);
+}
+
+/* 🔥 Tick Icon Base */
+.tick-icon {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #52c41a;
+  color: white;
+  border-radius: 50%;
+  padding: 5px;
+  font-size: 10px;
+
+  display: none;
+
+  z-index: 10; /* 🔥 IMPORTANT FIX */
+}
+
+
+/* ✅ Always show for active */
+.template-card.active .tick-icon {
+  display: block;
+}
+
+/* 🖱️ Show only on hover */
+.template-card:hover .tick-icon {
+  display: block;
+}
       `}</style>
         </div>
     );
