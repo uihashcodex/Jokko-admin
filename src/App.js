@@ -66,7 +66,7 @@ function AppRoutesWithLoader() {
     {/* Blur Content */}
     <div className={`transition-all duration-300 ${loading ? "blur-sm pointer-events-none" : ""}`}>
       <Routes>
-        <Route path="/" element={<Navigate to={`/${constant.adminRoute}`} />} />
+        {/* <Route path="/" element={<Navigate to={`/${constant.adminRoute}`} />} /> */}
         <Route path={`/${constant.adminRoute}`} element={<Login />} />
 
         <Route element={<PrivateRoute />}>

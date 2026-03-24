@@ -959,19 +959,18 @@ tr {
     padding: 20px;
 }
 
+/* 
 .template-card {
     width: 180px;
     flex-shrink: 0;
     cursor: pointer;
     text-align: center;
-}
-
+} */
+/* 
 .template-img {
     width: 100%;
     height: 140px;
-    /* fixed height for all images */
     object-fit: cover;
-    /* keeps image ratio without stretching */
     border-radius: 6px;
 }
 
@@ -984,7 +983,7 @@ tr {
     display: flex;
     gap: 20px;
     align-items: flex-start;
-}
+} */
 
 .editor,
 .preview {
@@ -1093,11 +1092,11 @@ tr {
     padding: 20px;
 }
 
-.template-card {
+/* .template-card {
     width: 180px;
     cursor: pointer;
     text-align: center;
-}
+} */
 
 .template-img {
     width: 100%;
@@ -1303,21 +1302,26 @@ tr {
 .template-card:hover .delete-icon {
     opacity: 1;
 }
-.drawer-header svg{
-    color:#fff;
+
+.drawer-header svg {
+    color: #fff;
 }
-.editor.ar3{
-width: 100% !important;
+
+.editor.ar3 {
+    width: 100% !important;
 }
-.support-segment .ant-segmented-item-selected{
- background: #C9F07B;
+
+.support-segment .ant-segmented-item-selected {
+    background: #C9F07B;
 }
+
 .support-segment .ant-segmented-item-label.ant-segmented-item-selected:hover {
     color: #000 !important;
 }
-.support-segment .ant-segmented-item-label:hover{
+
+.support-segment .ant-segmented-item-label:hover {
     color: #ffffffbb;
-  
+
 }
 
 .template-card img {
@@ -1329,21 +1333,49 @@ width: 100% !important;
     /* optional for empty space */
 }
 
-.side-bar .ant-layout-sider-children{
-display: flex;
-flex-direction: column;
+.side-bar .ant-layout-sider-children {
+    display: flex;
+    flex-direction: column;
 }
-.support-meta .ant-empty-description{
-color: #fff;
+
+.support-meta .ant-empty-description {
+    color: #fff;
 }
-.modal-search .ant-input{
-background: transparent !important;
-color: #ffff;
+
+.modal-search .ant-input {
+    background: transparent !important;
+    color: #ffff;
 }
+
 .modal-search .ant-input::placeholder {
-color: #fff;
+    color: #fff;
 }
 
 .modal-search .ant-input-clear-icon {
     color: #fff;
+}
+
+.upload-templatecard {
+    padding: 10px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.upload-templatecard.active {
+    border: 3px solid #c9f07b;
+    border-radius: 12px;
+}
+
+.upload-templatecard:hover {
+    transform: scale(1.05);
+}
+.statcard .ant-card-body{
+padding: 20px;
+}
+
+.header-content-img{
+    background-image: url("../src/assets/image/headerbg3.jpg");
+    background-size: cover;
+    background-position: center;
+    height: 150px;
 }

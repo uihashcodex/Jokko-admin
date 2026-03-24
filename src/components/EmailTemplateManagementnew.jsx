@@ -7,7 +7,7 @@ import ReusableModal from "../reuseable/ReusableModal";
 import axios from "axios";
 import theme from '../config/theme';
 import { constant } from "../const";
-import {message } from 'antd';
+import { message } from 'antd';
 
 
 const EmailTemplateManagementnew = () => {
@@ -15,7 +15,9 @@ const EmailTemplateManagementnew = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  
+  const [deleteRecord, setDeleteRecord] = useState(null);
+  const [deletemodal, setDeletemodal] = useState(false);
+
   const [previewOpen, setPreviewOpen] = useState(false);
   const [originalData, setOriginalData] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -38,7 +40,8 @@ const EmailTemplateManagementnew = () => {
       title: "Body", dataIndex: "body", render: (to) => {
         if (!to) return "-";
         return `${to.slice(0, 20)}...`;
-      } },
+      }
+    },
     { title: "Status", dataIndex: "status", }
   ];
 
@@ -80,24 +83,76 @@ const EmailTemplateManagementnew = () => {
       label: "Email Subject",
       type: "text",
       rules: [{ required: true, message: "Subject is required" }],
-        onChange: (e) => setLiveSubject(e.target.value) // ✅
+      onChange: (e) => setLiveSubject(e.target.value) // ✅
 
     },
     {
       name: "body",
       label: "Email Body",
       type: "editor",
+      // type: "textarea",
       span: 24,
       modules: modules,
       formats: formats,
       onChange: (val) => setLiveBody(val) // ✅ CORRECT
 
     },
+
+
+    
     // {
     //   label: "Active",
     //   name: "is_active",
     //   type: "switch"
     // }
+  ];
+
+
+  const createFields = [
+    {
+      label: "Event Key",
+      name: "event_key",
+      type: "text"
+    },
+    {
+      name: "subject",
+      label: "Email Subject",
+      type: "text",
+      rules: [{ required: true, message: "Subject is required" }],
+      onChange: (e) => setLiveSubject(e.target.value)
+    },
+    {
+      name: "body",
+      label: "Email Body",
+      type: "textarea", // ✅ TEXTAREA for CREATE
+      span: 24,
+      rows: 6,
+      onChange: (e) => setLiveBody(e.target.value)
+    }
+  ];
+
+  const updateFields = [
+    {
+      label: "Event Key",
+      name: "event_key",
+      type: "text"
+    },
+    {
+      name: "subject",
+      label: "Email Subject",
+      type: "text",
+      rules: [{ required: true, message: "Subject is required" }],
+      onChange: (e) => setLiveSubject(e.target.value)
+    },
+    {
+      name: "body",
+      label: "Email Body",
+      type: "editor", // ✅ EDITOR for UPDATE
+      span: 24,
+      modules: modules,
+      formats: formats,
+      onChange: (val) => setLiveBody(val)
+    }
   ];
 
 
@@ -109,284 +164,318 @@ const EmailTemplateManagementnew = () => {
     }
   }, []);
 
- const templates = {
-        template1: `
-<div style="font-family:Arial, sans-serif;">
-<div style="padding:20px 10px;">
+  // const templates = {
+  //   template1: `
+  // <div style="font-family:Arial, sans-serif;">
+  // <div style="padding:20px 10px;">
 
-<div style="max-width:450px;width:100%;margin:0 auto;background:#122f2a;color:#fff;border-radius:6px;overflow:hidden">
+  // <div style="max-width:600px;width:100%;margin:0 auto;background:#122f2a;color:#fff;border-radius:6px;overflow:hidden">
 
-<div style="height:6px;background:#c9f07b"></div>
+  // <div style="height:6px;background:#c9f07b"></div>
 
-<div style="text-align:center;padding:20px">
-<img src="/img/logo.png" style="width:60px;margin-bottom:8px"/>
-<h2 style="margin:5px 0;">{{subject}}</h2>
-</div>
-
-<div style="padding:20px;font-size:13px;line-height:1.5;">
-{{content}}
-<p style="margin-top:10px">Thank You,<br/>Jokko Wallet</p>
-</div>
-<div style="text-align:center;background:#c9f07b;font-size:12px;padding:8px;color:#000;">
-© 2026 Jokko Wallet
-</div>
-</div>
-
-
-
-</div>
-</div>
-`,
-
-        template2: `
-          <div style="max-width:450px;margin:0 auto">
-
-        <div style="font-family:Arial, sans-serif;background:#f4f4f4;padding:20px 0">
-
-
-    <div style="background:#c9f07b;height:120px;text-align:center">
-      <div style="padding-top:35px">
-      </div>
-    </div>
-
-    <div style="
-        background:white;
-        margin:-60px auto 0;
-        padding:40px;
-        border-radius:4px;
-        box-shadow:0 2px 8px rgba(0,0,0,0.1);
-        text-align:center;
-        max-width:500px;
-      ">
-      <div style="display:flex,justify-content:flex-start,margin-bottom:20px">
-      <img src="/img/logo.png" style="width:100px;margin-bottom:10px"/>
-</div>
-      <h2 style="margin-bottom:15px;color:#333">{{subject}}</h2>
-
-
-      <div style="text-align:left;color:#666;font-size:14px;line-height:1.6">
-        {{content}}
-      </div>
-
-     
-
-    </div>
-
-    <div style="text-align:center;color:#888;font-size:12px;margin-top:25px">
-      Dashboard · Billing · Help <br/><br/>
-      If these emails get annoying, feel free to 
-      <a href="#" style="color:#888">unsubscribe</a>.<br/><br/>
-      Jokko Wallet
-    </div>
-
-  </div>
-
-</div>
-`,
-        template3: `
-<div style="font-family:Arial, sans-serif;background:#f5f5f5;padding:50px 0">
-  <div style="
-      max-width:450px;
-      width:100%;
-      margin:auto;
-      background:white;
-      border-radius:20px;
-      border:1px solid #ddd;
-      padding:20px;
-      text-align:center;
-  ">
-
-    <div style="margin-bottom:20px" class="flex justify-center">
-      <img src="/img/logo-sm.png"
-           style="width:70px;height:70px;border-radius:12px"/>
-    </div>
-
-    <h2 style="font-size:28px;margin-bottom:10px;color:#222">
-     {{subject}}
-    </h2>
-
-
-
-    <div style="color:#666;font-size:15px;line-height:1.6;margin-top:20px;text-align:left">
-      {{content}}
-    </div>
-
-
-
-    <div style="
-        background:#f2f2f2;
-        border-radius:12px;
-        padding:20px;
-        margin-top:30px;
-        font-size:14px;
-        color:#777;
-    ">
-Copyright © 2026 | Jokko Wallet
-    </div>
-
-  </div>
-
-</div>
-`,
-        template4: `
-<div style="font-family:Arial, sans-serif;background:#f4f4f4;padding:40px 0">
-<div style="padding:20px 10px;">
-
-  <div style="max-width:450px;margin:auto;background:white;border:1px solid #ddd">
-
-    <div style="
-        background:#095246;
-        color:white;
-        text-align:center;
-        padding:30px 20px;
-        font-size:22px;
-        font-weight:600;
-      ">
-{{subject}}    </div>
-
-    <div style="padding:35px;color:#444;font-size:15px;line-height:1.7">
-<div class="flex justify-center">
-      <img src="/img/logo.png" style="width:100px;margin-bottom:10px"/>
-</div>
-      <p>Hello {{name}},</p>
-
-  
-
-      <div>
-        {{content}}
-      </div>
-
-
-    </div>
-
-    <div style="
-        background:#2f2f2f;
-        color:#ccc;
-        text-align:center;
-        padding:20px;
-        font-size:13px;
-      ">
-      Copyright © 2024 | Jokko Wallet
-    </div>
-
-  </div>
-  </div>
-
-</div>
-`,
-        template5: `
-<div style="margin:0;font-family:Arial, sans-serif;">
-
-<div style="padding:20px 10px;">
-
-    <div style="
-  max-width:450px;
-  width:100%;
-  margin:0 auto;
-  background:#ffffff;
-  border-radius:6px;
-  overflow:hidden;
-  border:1px solid #eee;
-">
-            <div style="
-                background:#1a1a1a;
-                text-align:center;
-                padding:10px;
-                color:#fff;
-                font-size:12px;
-              ">
-            </div>
-            <!-- Logo -->
-            <div style="padding:15px 20px;">
-      <img src="/img/logo-sm.png" style="width:40px"/>
-            </div>
-
-            <!-- Title -->
-            <div style="padding:0 20px;">
-                <h2 style="margin:0;font-size:20px;color:#111;">
-                    {{subject}}
-                </h2>
-            </div>
-
-
-
-
-            <div style="color:#555;font-size:15px;line-height:1.6;padding:0 20px;margin-top: 20px;">
-                {{content}}
-            </div>
-            <!-- Footer Content -->
-            <div style="padding:10px 20px;color:#555;font-size:12px;">
-                <p><b>Regards</b><br />Team Jokko wallet</p>
-            </div>
-
-            <!-- Bottom Footer -->
-            <div style="
-        background:#1a1a1a;
-        text-align:center;
-        padding:10px;
-        color:#fff;
-        font-size:12px;
-      ">
-                <p>Want updates through more platforms?</p>
-
-                <div style="margin:15px 0">
-                    <span style="margin:0 8px">Twitter</span>
-                    <span style="margin:0 8px">Facebook</span>
-                    <span style="margin:0 8px">YouTube</span>
-                    <span style="margin:0 8px">Instagram</span>
-                </div>
-
-
-                <p>
-                    Unsubscribe • Privacy policy • Contact us
-                </p>
-            </div>
-
-        </div>
-
-    </div>
-
-</div>
-`,
-        template6: `
-          <div style="max-width:450px;margin:auto;background:white;border-radius:8px;overflow:hidden;margin-top:10px;margin-bottom:10px">
-
-<div style="font-family:Arial, sans-serif;background:#f2f2f2;padding:40px 0">
-
-
-    <!-- header -->
-    <div style="background:#122f2a;padding:25px">
-      <img src="/img/logo-sm.png" style="width:40px"/>
-    </div>
-
-    <!-- content -->
-    <div style="padding:40px">
-
-      <h1 style="color:#000;font-size:28px;margin-bottom:20px">
-        {{subject}}
-      </h1>
-
-      <div style="color:#555;font-size:16px;line-height:1.6;margin-bottom:25px">
-        {{content}}
-      </div>
-
-    </div>
-
-  </div>
-
-  <!-- footer -->
-  <div style="text-align:center;color:#888;font-size:12px;margin-top:5px;background:#f2f2f2;padding-top:10px">
-    © 2022 Jokko Wallet Inc. All Rights Reserved
-  </div>
-
-</div>
-`,
-
-    };
+  // <div style="text-align:center;padding:20px">
+  // <img src="/img/logo.png" style="width:60px;margin-bottom:8px"/>
+
+  // <h2 style="margin:5px 0;">{{subject}}</h2>
+  // </div>
+
+  // <div style="padding:20px;font-size:13px;line-height:1.5;">
+  // {{content}}
+  // <p style="margin-top:10px">Thank You,<br/>Jokko Wallet</p>
+  // </div>
+  // <div style="text-align:center;background:#c9f07b;font-size:12px;padding:8px;color:#000;">
+  // © 2026 Jokko Wallet
+  // </div>
+  // </div>
+  // </div>
+  // </div>
+  // `,
+
+  //   template2: `
+
+  //         <div style="font-family:Arial, sans-serif;background:#f4f4f4;padding:20px 0">
+  //           <div style="max-width:600px;width:100%;margin:0 auto;">
+
+
+  //     <div style="background:#c9f07b;height:120px;text-align:center">
+  //       <div style="padding-top:35px">
+  //       </div>
+  //     </div>
+
+  //     <div style="
+  //         background:white;
+  //         margin:-60px auto 0;
+  //         padding:40px;
+  //         border-radius:4px;
+  //         box-shadow:0 2px 8px rgba(0,0,0,0.1);
+  //         text-align:center;
+  //         max-width:500px;
+  //       ">
+  //       <div style="display:flex,justify-content:flex-start,margin-bottom:20px">
+  //       <img src="/img/logo.png" style="width:100px;margin-bottom:10px"/>
+  // </div>
+  //       <h2 style="margin-bottom:15px;color:#333">{{subject}}</h2>
+
+
+  //       <div style="text-align:left;color:#666;font-size:14px;line-height:1.6">
+  //         {{content}}
+  //       </div>
+
+
+
+  //     </div>
+
+  //     <div style="text-align:center;color:#888;font-size:12px;margin-top:25px">
+  //       Dashboard · Billing · Help <br/><br/>
+  //       If these emails get annoying, feel free to 
+  //       <a href="#" style="color:#888">unsubscribe</a>.<br/><br/>
+  //       Jokko Wallet
+  //     </div>
+
+  //   </div>
+
+  // </div>
+  // `,
+  //   template3: `
+  // <div style="font-family:Arial, sans-serif;">
+  // <div style="padding:20px 10px;">
+
+  //   <div style="
+  //     max-width:600px;width:100%;margin:0 auto;
+  //       background:white;
+  //       border-radius:20px;
+  //       border:1px solid #ddd;
+  //       padding:20px;
+  //       text-align:center;
+  //   ">
+
+  //     <div style="margin-bottom:20px" class="flex justify-center">
+  //       <img src="/img/logo-sm.png"
+  //            style="width:70px;height:70px;border-radius:12px"/>
+  //     </div>
+
+  //     <h2 style="font-size:28px;margin-bottom:10px;color:#222">
+  //      {{subject}}
+  //     </h2>
+
+
+
+  //     <div style="color:#666;font-size:15px;line-height:1.6;margin-top:20px;text-align:left">
+  //       {{content}}
+  //     </div>
+
+
+
+  //     <div style="
+  //         background:#f2f2f2;
+  //         border-radius:12px;
+  //         padding:20px;
+  //         margin-top:30px;
+  //         font-size:14px;
+  //         color:#777;
+  //     ">
+  // Copyright © 2026 | Jokko Wallet
+  //     </div>
+
+  //   </div>
+  //   </div>
+
+  // </div>
+  // `,
+  //   template4: `
+  // <div style="font-family:Arial, sans-serif;">
+  // <div style="padding:20px 10px;">
+
+  //   <div style="max-width:600px;width:100%;margin:0 auto;background:white;border:1px solid #ddd">
+
+  //     <div style="
+  //         background:#095246;
+  //         color:white;
+  //         text-align:center;
+  //         padding:30px 20px;
+  //         font-size:22px;
+  //         font-weight:600;
+  //       ">
+  // {{subject}}    </div>
+
+  //     <div style="padding:35px;color:#444;font-size:15px;line-height:1.7">
+  // <div class="flex justify-center">
+  //       <img src="/img/logo.png" style="width:100px;margin-bottom:10px"/>
+  // </div>
+  //       <p>Hello {{name}},</p>
+
+
+
+  //       <div>
+  //         {{content}}
+  //       </div>
+
+
+  //     </div>
+
+  //     <div style="
+  //         background:#2f2f2f;
+  //         color:#ccc;
+  //         text-align:center;
+  //         padding:20px;
+  //         font-size:13px;
+  //       ">
+  //       Copyright © 2024 | Jokko Wallet
+  //     </div>
+
+  //   </div>
+  //   </div>
+
+  // </div>
+  // `,
+  //   template5: `
+  // <div style="margin:0;font-family:Arial, sans-serif;">
+
+  // <div style="padding:20px 10px;">
+
+  //     <div style="
+  // max-width:600px;width:100%;margin:0 auto;
+  //   background:#ffffff;
+  //   border-radius:6px;
+  //   overflow:hidden;
+  //   border:1px solid #eee;
+  // ">
+  //             <div style="
+  //                 background:#1a1a1a;
+  //                 text-align:center;
+  //                 padding:10px;
+  //                 color:#fff;
+  //                 font-size:12px;
+  //               ">
+  //             </div>
+  //             <!-- Logo -->
+  //             <div style="padding:15px 20px;">
+  //       <img src="/img/logo-sm.png" style="width:40px"/>
+  //             </div>
+
+  //             <!-- Title -->
+  //             <div style="padding:0 20px;">
+  //                 <h2 style="margin:0;font-size:20px;color:#111;">
+  //                     {{subject}}
+  //                 </h2>
+  //             </div>
+
+
+
+
+  //             <div style="color:#555;font-size:15px;line-height:1.6;padding:0 20px;margin-top: 20px;">
+  //                 {{content}}
+  //             </div>
+  //             <!-- Footer Content -->
+  //             <div style="padding:10px 20px;color:#555;font-size:12px;">
+  //                 <p><b>Regards</b><br />Team Jokko wallet</p>
+  //             </div>
+
+  //             <!-- Bottom Footer -->
+  //             <div style="
+  //         background:#1a1a1a;
+  //         text-align:center;
+  //         padding:10px;
+  //         color:#fff;
+  //         font-size:12px;
+  //       ">
+  //                 <p>Want updates through more platforms?</p>
+
+  //                 <div style="margin:15px 0">
+  //                     <span style="margin:0 8px">Twitter</span>
+  //                     <span style="margin:0 8px">Facebook</span>
+  //                     <span style="margin:0 8px">YouTube</span>
+  //                     <span style="margin:0 8px">Instagram</span>
+  //                 </div>
+
+
+  //                 <p>
+  //                     Unsubscribe • Privacy policy • Contact us
+  //                 </p>
+  //             </div>
+
+  //         </div>
+
+  //     </div>
+
+  // </div>
+  // `,
+  //   template6: `
+
+  // <div style="font-family:Arial, sans-serif;">
+  // <div style="padding:20px 10px;">
+
+  //    <div style="max-width:600px;width:100%;margin:0 auto;background:white;border-radius:8px;overflow:hidden;margin-top:10px;margin-bottom:10px">
+
+  //     <!-- header -->
+  //      <div style="padding:15px 20px;">
+  //       <img src="/img/logo-sm.png" style="width:40px"/>
+  //             </div>
+
+  //     <!-- content -->
+  //     <div style="padding:40px">
+
+  //       <h1 style="color:#000;font-size:28px;margin-bottom:20px">
+  //         {{subject}}
+  //       </h1>
+
+  //       <div style="color:#555;font-size:16px;line-height:1.6;margin-bottom:25px">
+  //         {{content}}
+  //       </div>
+
+  //     </div>
+  //   <!-- footer -->
+  //   <div style="text-align:center;color:#888;font-size:12px;margin-top:5px;background:#f2f2f2;padding-top:10px">
+  //     © 2022 Jokko Wallet Inc. All Rights Reserved
+  //   </div>
+  //   </div>
+  //   </div>
+  // </div>
+  // `,
+
+  // };
 
 
 
   // ---------------- GET EMAIL TEMPLATES ----------------
+
+
+  const [designTemplates, setDesignTemplates] = useState([]);
+
+  const fetchDesignTemplates = async () => {
+    try {
+      const res = await axios.post(
+        `${constant.backend_url}/admin/templates`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+          },
+        }
+      );
+
+      if (res.data?.success) {
+        setDesignTemplates(res.data.result);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    fetchDesignTemplates();
+  }, []);
+
+
+  useEffect(() => {
+    if (designTemplates.length > 0) {
+      const defaultTemp = designTemplates.find(t => t.isDefault);
+
+      if (defaultTemp) {
+        setGlobalDesign(defaultTemp.template_name);
+      }
+    }
+  }, [designTemplates]);
 
   const getEmailTemplates = async () => {
 
@@ -397,7 +486,7 @@ Copyright © 2026 | Jokko Wallet
       setLoading(true);
 
       const response = await axios.get(
-        `${constant.backend_url}/admin/get-emailtemplates`,
+        `${constant.backend_url}/admin/get-emailcontent`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("adminToken")}`
@@ -414,8 +503,9 @@ Copyright © 2026 | Jokko Wallet
           event_key: item.event_key,
           subject: item.subject,
           body: item.body,
-          design: item.design, 
+          design: item.template_name,
           is_active: item.is_active,
+          template_name: item.template_name,
           status: item.is_active ? "Active" : "Inactive"
         }));
 
@@ -452,12 +542,49 @@ Copyright © 2026 | Jokko Wallet
 
   const handleUpdate = (record) => {
     setSelectedRow(record);
-    setSelectedDesign(record.design || globalDesign);
+    setSelectedDesign(record.design ? record.design : globalDesign);
     setIsActive(record.is_active ?? false); // ✅
     setDrawerOpen(true);
   };
 
   // ---------------- UPDATE SUBMIT ----------------
+
+
+  const handleCreate = async (values) => {
+    try {
+      setLoading(true);
+
+      const res = await axios.post(
+        `${constant.backend_url}/admin/add-emailcontent`,
+        {
+          event_key: values.event_key,
+          subject: values.subject,
+          body: values.body,
+          template_name: selectedDesign, // or globalDesign
+          is_active: true
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+          },
+        }
+      );
+
+      if (res.data?.success) {
+        message.success(res.data.message || "Created successfully");
+        setModalOpen(false);
+        getEmailTemplates(); // refresh table
+      } else {
+        message.warning(res.data.message || "Create failed");
+      }
+
+    } catch (error) {
+      console.log(error);
+      message.error("Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (values) => {
 
@@ -474,13 +601,14 @@ Copyright © 2026 | Jokko Wallet
           event_key: selectedRow.event_key,
           subject: values.subject,
           body: values.body,
+          template_name: selectedDesign,
           is_active: isActive
-                        };
+        };
         const isSame =
           payload.subject === selectedRow.subject &&
           payload.body === selectedRow.body &&
-          payload.is_active === selectedRow.is_active;
-
+          payload.is_active === selectedRow.is_active &&
+          selectedDesign === selectedRow.template_name
         if (isSame) {
           message.error("No changes detected");
           return;
@@ -488,14 +616,14 @@ Copyright © 2026 | Jokko Wallet
       }
 
       const response = await axios.post(
-        `${constant.backend_url}/admin/edit-email-template`,
+        `${constant.backend_url}/admin/edit-emailcontent`,
         {
           event_key: selectedRow?.event_key,
           subject: values?.subject,
           body: values?.body,
-          design: selectedDesign,
+          template_name: selectedDesign,
           is_active: isActive
-                },
+        },
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("adminToken")}`
@@ -524,7 +652,7 @@ Copyright © 2026 | Jokko Wallet
       }, Math.max(minTime - elapsed, 0));
     }
 
-  
+
 
   };
 
@@ -535,10 +663,7 @@ Copyright © 2026 | Jokko Wallet
     }
   }, [drawerOpen, selectedRow]);
 
-  // const previewHtml =
-  //   templates[selectedDesign]
-  //     ?.replace(/{{subject}}/g, liveSubject || selectedRow?.subject || "Email Subject")
-  //     ?.replace(/{{content}}/g, liveBody || selectedRow?.body || "Email content here...");
+
 
   const formattedContent = (liveBody || selectedRow?.body || "")
 
@@ -559,20 +684,60 @@ Copyright © 2026 | Jokko Wallet
 
     // paragraph
     .replace(/<p>/g, '<p style="margin:5px 0;">');
-    
+
+
+  const activeDesign = selectedDesign || globalDesign;
+
+  const selectedTemplateObj = designTemplates.find(
+    (t) => t.template_name === activeDesign
+  );
 
   const previewHtml =
-    templates[selectedDesign]
+    selectedTemplateObj?.html
       ?.replace(/{{subject}}/g, liveSubject || selectedRow?.subject || "Email Subject")
-      ?.replace(/{{content}}/g, formattedContent);
+      ?.replace(/{{content}}/g, formattedContent)
+    || "<p>No template found</p>";
+
+  const handleDelete = async () => {
+    try {
+      setLoading(true);
+
+      const res = await axios.post(
+        `${constant.backend_url}/admin/delete-emailcontent`,
+        {
+          event_key: deleteRecord?.event_key, // ✅ IMPORTANT
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+          },
+        }
+      );
+
+      if (res.data?.success) {
+        message.success(res.data.message || "Deleted successfully");
+        setDeletemodal(false);
+        getEmailTemplates();
+      } else {
+        message.warning(res.data.message || "Delete failed");
+      }
+
+    } catch (error) {
+      console.log(error);
+      message.error("Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div>
 
       <TableHeader
         data={originalData}
-        showCreateButton={false}
-      />
+        showCreateButton={true}
+        onCreate={() => setModalOpen(true)}
+              />
 
       <ReusableTable
         columns={columns}
@@ -581,54 +746,23 @@ Copyright © 2026 | Jokko Wallet
         total={total}
         currentPage={page}
         onPageChange={(p) => setPage(p)}
-        actionType="update"
+        actionType={["update","Remove"]}
         onUpdate={handleUpdate}
+        onDelete={(record) => {
+          setDeleteRecord(record);
+          setDeletemodal(true);
+        }}
       />
 
       <ReusableDrawer
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
         title="Update Email Template"
-        fields={fields}
+        fields={updateFields}
         initialValues={selectedRow}
         onSubmit={handleSubmit}
         width={"85%"}
         additionalContent={
-          // <div className=" mt-6">
-
-          //   <h3 className="text-white mb-3">Select Template Design</h3>
-
-          //   <div className="display-1">
-          //   <div className="flex gap-3">
-
-          //     {["template1", "template2", "template3"].map((design) => (
-          //       <div
-          //         key={design}
-          //         className={`template-card ${selectedDesign === design ? "active" : ""}`}
-          //         onClick={() => setSelectedDesign(design)}
-          //       >
-          //         <img
-          //           src={`/img/email-tem-${design.replace("template", "")}.png`}
-          //           className="template-img"
-          //         />
-          //         <p className="white">{design}</p>
-          //       </div>
-          //     ))}
-
-          //   </div>
-
-          //   <div className="mt-4">
-          //     <Button
-          //       className="preview-btn"
-          //       onClick={() => setPreviewOpen(true)}
-          //                       style={{ background: theme.sidebarSettings.activeBgColor }}
-          //     >
-          //       Preview
-          //     </Button>
-          //     </div>
-          //   </div>
-
-          // </div>
           <div className="mt-6">
             <h3 className="text-white mb-2">Template Preview</h3>
 
@@ -649,33 +783,24 @@ Copyright © 2026 | Jokko Wallet
                   background: "#fff"
                 }}
                 dangerouslySetInnerHTML={{
-                  __html: templates[selectedDesign]
-                    ?.replace(/{{subject}}/g, liveSubject || selectedRow?.subject || "Email Subject")
-                    ?.replace(/{{content}}/g, formattedContent)
+                  __html: previewHtml || "",
                 }}
-            />
+
+              />
             </div>
 
             <div className="text-center">
-            <Button
-              onClick={() => setDesignModalOpen(true)}
-              style={{ background: theme.sidebarSettings.activeBgColor }}
-            >
-              Change Template
-            </Button>
+              <Button
+                onClick={() => setDesignModalOpen(true)}
+                style={{ background: theme.sidebarSettings.activeBgColor }}
+              >
+                Change Template
+              </Button>
             </div>
 
             <div className="mt-6">
               <label className="text-white mr-3">Active</label>
-              {/* <Switch
-                checked={selectedRow?.is_active ?? false}
-                                onChange={(val) => {
-                  setSelectedRow((prev) => ({
-                    ...prev,
-                    is_active: val
-                  }));
-                }}
-              /> */}
+
               <Switch
                 checked={isActive}
                 onChange={(val) => setIsActive(val)}
@@ -713,51 +838,135 @@ Copyright © 2026 | Jokko Wallet
         showFooter={false}
         description={" "}
         extraContent={
-          
+
           <>
-        
-          <div className="flex gap-3 flex-wrap justify-center">
 
-              {["template1", "template2", "template3", "template4", "template5", "template6"].filter((design) => design !== selectedDesign) // 🔥 HIDE SELECTED
-                .map((design) => (
+            <div className="flex gap-3 flex-wrap justify-center">
 
-              <div
-                key={design}
-                className="template-card "
-                onClick={() => setPendingDesign(design)}
-              >
-                <img
-                  src={`/img/email-tem-${design.replace("template", "")}.png`}
-                  className="template-img"
-                />
-                <p className="white">{design}</p>
-              </div>
-            ))}
+              {designTemplates
+                .filter((t) => t.template_name !== selectedDesign)
+                .map((template) => (
 
-            {/* confirm section */}
-            {pendingDesign && (
-              <div className="mt-4 text-center w-full">
-                <p className="white">Use this template?</p>
-
-                <div className="flex justify-center gap-2 mt-2">
-                  <Button onClick={() => setPendingDesign(null)}>Cancel</Button>
-
-                  <Button
-                    type="primary"
-                    onClick={() => {
-                      setSelectedDesign(pendingDesign);
-                      setDesignModalOpen(false);
-                      setPendingDesign(null);
+                  <div
+                    key={template._id}
+                    className="template-card upload-templatecard"
+                    onClick={() => setPendingDesign(template.template_name)}
+                    style={{
+                      border:
+                        pendingDesign === template.template_name
+                          ? "2px solid #c9f07b"
+                          : "2px solid transparent",
+                      borderRadius: "12px",
+                      cursor: "pointer",
+                      transition: "0.2s"
                     }}
-                    style={{ background: theme.sidebarSettings.activeBgColor }}
                   >
-                    Confirm
-                  </Button>
+                    {/* <div
+                      dangerouslySetInnerHTML={{
+                        __html: template.html,
+                      }}
+                    /> */}
+
+                    <div
+                      style={{
+                        width: "220px",
+                        height: "180px",
+                        overflow: "hidden",
+                        borderRadius: "12px",
+                        border: "1px solid #ddd",
+                        background: "#fff",
+                        position: "relative"
+                      }}
+                    >
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: 0,
+                          left: 0,
+                          transform: "scale(0.4)",
+                          transformOrigin: "top left",
+                          width: "600px"
+                        }}
+                        dangerouslySetInnerHTML={{
+                          __html: template.html,
+                        }}
+                      />
+                    </div>
+                    <p>{template.template_name}</p>
+                  </div>
+                ))}
+
+              {/* confirm section */}
+              {pendingDesign && (
+                <div className="mt-4 text-center w-full">
+                  <p className="white">Use this template?</p>
+
+                  <div className="flex justify-center gap-2 mt-2">
+                    <Button onClick={() => setPendingDesign(null)}>Cancel</Button>
+
+                    <Button
+                      type="primary"
+                      onClick={() => {
+                        setSelectedDesign(pendingDesign);
+                        setDesignModalOpen(false);
+                        setPendingDesign(null);
+                        setSelectedRow(prev => ({
+                          ...prev,
+                          design: pendingDesign
+                        }));
+                      }}
+                      style={{ background: theme.sidebarSettings.activeBgColor }}
+                    >
+                      Confirm
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
           </>
+        }
+      />
+
+      <ReusableModal
+        open={modalOpen}
+        onCancel={() => setModalOpen(false)}
+        title="Create Email Template"
+        onSubmit={handleCreate}
+        fields={createFields}
+        showFooter={true}
+      />
+
+
+      <ReusableModal
+        open={deletemodal}
+        onCancel={() => setDeletemodal(false)}
+        title="Delete Network"
+        description={"Are you sure you want to delete this network?"}
+        showFooter={false}
+        extraContent={
+          <div className="text-center">
+
+            <p className="text-gray-300 text-base">
+              Are you sure you want to delete this network?
+            </p>
+
+            <div className="flex justify-between gap-4 mt-6">
+              <button
+                className="px-6 py-2 rounded primaty-bg text-black"
+                onClick={() => setDeletemodal(false)}
+              >
+                No
+              </button>
+
+              <button
+                className="px-6 py-2 rounded bg-red-600 text-white"
+                onClick={handleDelete}
+              >
+                Yes
+              </button>
+            </div>
+
+          </div>
         }
       />
 

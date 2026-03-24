@@ -44,7 +44,7 @@ const WalletRouts = () => {
       <Route path={`/${constant?.adminRoute}/webhook`} element={<Webhook />} />
       <Route path={`/${constant?.adminRoute}/emailtemplate`} element={<EmailTemplateManagement />} />
       <Route path={`/${constant?.adminRoute}/pushnotification`} element={<PushNotification />} />
-      <Route path={`/${constant?.adminRoute}/emailtemplatemanagementnew`} element={<EmailTemplateManagementnew />} />
+      <Route path={`/${constant?.adminRoute}/emailcontent`} element={<EmailTemplateManagementnew />} />
       <Route path={`/${constant?.adminRoute}/trendingcurrency`} element={<TrendingCurrency />} />
       <Route path={`/${constant?.adminRoute}/defaultcurrency`} element={<DefaultCurrency />} />
       <Route path={`/${constant?.adminRoute}/support`} element={<SupportPage />} />

@@ -155,11 +155,12 @@ const Dashboard = () => {
         <h1 className="text-white text-start p-7 font-bold text-2xl">DashBoard</h1>
       </div> */}
       <div
-        className="mb-5 w-full rounded-lg bg-cover bg-center flex items-center"
-        style={{
-          backgroundImage: `url(${theme.dashboardheaderimg.image})`,
-          height: theme.dashboardheaderimg.height
-        }}
+        className="mb-5 w-full rounded-lg bg-cover bg-center flex items-center header-content-img"
+        // style={{
+        //   backgroundImage: `url(${theme.dashboardheaderimg.image})`,
+        //   height: theme.dashboardheaderimg.height
+        // }}
+
       >
         <div className="display-3 w-full">
           <h1 className="text-white p-7 font-bold text-2xl">
@@ -185,7 +186,8 @@ const Dashboard = () => {
         <StatCard title="Account creation rate" value={dashboardData?.accountcreationrate || 0} />
         <StatCard title="Average balance per user" value={dashboardData?.averageuser || 0} />
         <StatCard title="Average number of swap per user" value={dashboardData?.averageswap || 0} />
-        <StatCard title="Average amount swapped" value={dashboardData?.averageamtswap || 0} />
+        <StatCard title="Unused Wallet Users" value={dashboardData?.unusedWalletUsers || 0} />
+        <StatCard title="Unused Wallet Percentage" value={dashboardData?.unusedWalletPercentage + " %" || 0} />
 
       </div>
 

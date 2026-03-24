@@ -396,11 +396,11 @@ const Assets = () => {
         <>
 
             <div
-                className="mb-5 w-full rounded-lg bg-cover bg-center flex items-center"
-                style={{
-                    backgroundImage: `url(${theme.dashboardheaderimg.image})`,
-                    height: theme.dashboardheaderimg.height
-                }}
+                className="mb-5 w-full rounded-lg bg-cover bg-center flex items-center header-content-img"
+                // style={{
+                //     backgroundImage: `url(${theme.dashboardheaderimg.image})`,
+                //     height: theme.dashboardheaderimg.height
+                // }}
             >
                 <div className="display-3 w-full">
                     <h1 className="text-white p-7 font-bold text-2xl">

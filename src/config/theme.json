@@ -8,7 +8,7 @@
     "image": "/favicon.ico"
   },
   "project": {
-    "name": "Jokko-admin"
+    "name": ""
   },
   "dashboardheaderimg": {
     "image": "/img/headerbg3.jpg",
@@ -94,9 +94,9 @@
           "label": "Email Template"
         },
         {
-          "key": "/emailtemplatemanagementnew",
+          "key": "/emailcontent",
           "icon": "MailOutlined",
-          "label": "Emailtemplatemanagementnew"
+          "label": "Email Content"
         },
         {
           "key": "management",
