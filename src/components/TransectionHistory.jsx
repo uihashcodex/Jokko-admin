@@ -12,6 +12,8 @@ import debounce from "lodash.debounce";
 import { useMemo } from "react";
 import { message } from "antd";
 import create from "@ant-design/icons/lib/components/IconFont";
+import ChartsSection from "../components/ChartsSection";
+
 
 const TransectionHistory = () => {
   const { id } = useParams();
@@ -289,6 +291,30 @@ const TransectionHistory = () => {
   useEffect(() => {
     getNetwork();
   }, []);
+
+// transation chart
+  const [dashboardData, setDashboardData] = useState({});
+
+  const getDashboardData = async () => {
+    try {
+      const res = await axios.get(`${constant.backend_url}/admin/dashboard`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+        },
+      });
+
+      if (res.data.success) {
+        setDashboardData(res.data);
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  useEffect(() => {
+    getDashboardData();
+  }, []);
+
   return (
     <>
       <div className="flex items-center gap-3 mb-4">
@@ -301,6 +327,12 @@ const TransectionHistory = () => {
         )}
         <h2 className="text-2xl font-semibold  white">Transaction History</h2>
       </div>
+
+            <div className="mt-5">
+        <ChartsSection dashboardData={dashboardData} showtransactionChart={true}
+      />
+            </div>
+            
 
       {!id && (
         <TableHeader

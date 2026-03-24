@@ -5,6 +5,8 @@ import { useState } from "react";
 import theme from "../config/theme.json";
 import { constant } from "../const";
 import { filterSidebar } from "../utils/filterSidebar";
+import logo from "../assets/image/logo.png";
+import logomb from "../assets/image/logo-sm.png";
 
 const { Sider } = Layout;
 const { useBreakpoint } = Grid;
@@ -69,6 +71,7 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
       <>
         <style>
           {`
+          
         .custom-sidebar-menu .ant-menu-item-selected {
           background-color: ${theme.sidebarSettings.activeBgColor} !important;
           color: ${theme.sidebarSettings.activeTextColor} !important;
@@ -108,7 +111,7 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
         >
           <div onClick={() => navigate("/")}>
             <img
-              src={theme.logo.image}
+              src={logo}
               alt="logo"
               style={{ height: theme.logo.height }}
             />
@@ -168,7 +171,7 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
 
           <Menu
             mode="inline"
-            className="custom-sidebar-menu-mobile"
+            className="custom-sidebar-menu"
             // selectedKeys={[location.pathname]}
             onClick={({ key }) => {
               navigate(`/${constant.adminRoute}/${key}`);
@@ -280,7 +283,9 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
         >
           <img
             // src={theme.logo.image}
-            src={collapsed ? theme.logo.collapsedImage : theme.logo.image}
+            // src={collapsed ? theme.logo.collapsedImage : theme.logo.image}
+            src={collapsed ? logomb : logo}
+
 
             alt="logo"
             style={{

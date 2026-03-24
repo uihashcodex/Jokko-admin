@@ -4,6 +4,7 @@ export const constant = {
     //live url
     backend_url: "https://api-jokkowallet.hashcodexperts.com/jokkoapi",
         // backend_url: "http://localhost:3700/jokkoa`xxxxxx`xxpi",
+    
 
     adminRoute: config?.project?.name.split(" ")
         .map((word, index) =>
@@ -12,4 +13,6 @@ export const constant = {
                 : word.charAt(0).toUpperCase() + word.slice(1)
         )
         .join(""),
+        
+    // adminRoute: "",
 }

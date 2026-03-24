@@ -8,6 +8,7 @@ import Search from "antd/es/transfer/search";
 import { Flex, message } from 'antd';
 import { rule } from "postcss";
 import theme from '../config/theme';
+import StatCard from "../components/StatCard";
 
 
 
@@ -18,6 +19,7 @@ const Network = () => {
     const [messageApi, contextHolder] = message.useMessage();
     const [loading, setLoading] = useState(false);
     const [deletemodal, setDeletemodal] = useState(false);
+    const [dashboardData, setDashboardData] = useState({});
 
     // const [filteredData, setFilteredData] = useState(originalData);
     const [open, setOpen] = useState(false);
@@ -391,100 +393,6 @@ const Network = () => {
         setOpen(true);
     };
 
-    // const handleDelete = async (forceDelete = false) => {
-    //     try {
-    //         setLoading(true);
-
-    //         const res = await axios.post(
-    //             `${constant.backend_url}/assets/delete-network`,
-    //             {
-    //                 network_id: deleteRecord.id,
-    //                 ...(forceDelete && { force: true })
-
-    //             },
-    //             {
-    //                 headers: {
-    //                     Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
-    //                 },
-    //                 validateStatus: () => true
-
-    //             }
-    //         );
-
-         
-    //         if (!res.data.success && res.data.result?.tokenCount > 0) {
-
-    //             setDeleteTokens(res.data.result.tokens);
-    //             setDeletemodal(false);
-    //             setDeletemodal(true);
-
-    //             return;
-    //         }
-
-    //         if (res.data?.success) {
-    //             message.success("Network and related tokens deleted successfully");
-    //             setForceDeleteModal(false);
-    //             setDeletemodal(false);
-    //             getNetworks();
-    //             return;
-    //         } 
-
-    //     } catch (error) {
-    //         message.error("Delete failed");
-    //     } finally {
-    //         setLoading(false);
-    //     }
-    // };
-
-
-    // const handleDelete = async (forceDelete = false) => {
-    //     try {
-    //         setLoading(true);
-
-    //         const res = await axios.post(
-    //             `${constant.backend_url}/assets/delete-network`,
-    //             {
-    //                 network_id: deleteRecord.id,
-    //                 // ...(forceDelete && { force: true })
-    //             },
-                
-    //             {
-    //                 headers: {
-    //                     Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
-    //                 },
-    //                 validateStatus: () => true
-    //             }
-    //         );
-
-    //         if (!res.data.success && res.data.result?.tokenCount > 0) {
-
-    //             setDeleteTokens(res.data.result.tokens);
-
-    //             setLoading(false);
-
-    //             setDeletemodal(false);
-    //             setForceDeleteModal(true);
-
-    //             return;
-    //         }
-
-    //         if (res.data.success) {
-
-    //             message.success(res.data.message);
-
-    //             setForceDeleteModal(false);
-    //             setDeletemodal(false);
-
-    //             getNetworks();
-    //         }
-
-    //     } catch (error) {
-    //         message.error("Delete failed");
-    //     } finally {
-    //         setLoading(false);
-    //     }
-    // };
-
     const handleDelete = async (forceDelete = false) => {
         try {
             setLoading(true);
@@ -537,22 +445,52 @@ const Network = () => {
             setLoading(false);
         }
     };
+
+
+    // dashboard data
+
+
+    const getDashboardData = async () => {
+        try {
+            const res = await axios.get(`${constant.backend_url}/admin/dashboard`, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+                },
+            });
+
+            if (res.data.success) {
+                setDashboardData(res.data);
+            }
+        } catch (err) {
+            console.log(err);
+        }
+    };
+
+    useEffect(() => {
+        getDashboardData();
+    }, []);
     return (
         < div Style={{ display: "flex", justifyContent: "center", alignItems: "center", flexDirection: "column", width: "100%" }}>
             <>
                 {contextHolder}
 
                 <div
-                    className="mb-5 w-full rounded-lg bg-cover bg-center flex items-center"
-                    style={{
-                        backgroundImage: `url(${theme.dashboardheaderimg.image})`,
-                        height: theme.dashboardheaderimg.height
-                    }}
+                    className="mb-5 w-full rounded-lg bg-cover bg-center flex items-center header-content-img"
+                    // style={{
+                    //     backgroundImage: `url(${theme.dashboardheaderimg.image})`,
+                    //     height: theme.dashboardheaderimg.height
+                    // }}
                 >
                     <div className="display-3 w-full">
                         <h1 className="text-white p-7 font-bold text-2xl">
                             Network                </h1>
                     </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-20 mb-10">
+                    <StatCard title="Total Network" value={dashboardData?.totalNetworks || 0} />
+                    <StatCard title="EVM Network" value={dashboardData?.evenetworks || 0} />
+                    <StatCard title="Non EVM Network" value={dashboardData?.nonevmnetworks || 0} />
                 </div>
 
                 <TableHeader
