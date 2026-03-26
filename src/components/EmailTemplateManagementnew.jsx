@@ -21,16 +21,24 @@ const EmailTemplateManagementnew = () => {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [originalData, setOriginalData] = useState([]);
   const [loading, setLoading] = useState(false);
-  // const [selectedDesign, setSelectedDesign] = useState("template1");
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
-  const [selectedDesign, setSelectedDesign] = useState("template1"); // local
+  const [selectedDesign, setSelectedDesign] = useState("template1"); // local (used for update)
   const [globalDesign, setGlobalDesign] = useState("template1"); // default
   const [designModalOpen, setDesignModalOpen] = useState(false);
   const [pendingDesign, setPendingDesign] = useState(null);
   const [liveBody, setLiveBody] = useState("");
   const [liveSubject, setLiveSubject] = useState("");
   const [isActive, setIsActive] = useState(false);
+
+  // ---- CREATE DRAWER state ----
+  const [createDrawerOpen, setCreateDrawerOpen] = useState(false);
+  const [liveCreateBody, setLiveCreateBody] = useState("");
+  const [liveCreateSubject, setLiveCreateSubject] = useState("");
+  const [createDesign, setCreateDesign] = useState("template1");
+  const [isCreateActive, setIsCreateActive] = useState(true);
+  const [createDesignModalOpen, setCreateDesignModalOpen] = useState(false);
+  const [pendingCreateDesign, setPendingCreateDesign] = useState(null);
   // ---------------- TABLE COLUMNS ----------------
 
   const columns = [
@@ -99,7 +107,7 @@ const EmailTemplateManagementnew = () => {
     },
 
 
-    
+
     // {
     //   label: "Active",
     //   name: "is_active",
@@ -119,15 +127,16 @@ const EmailTemplateManagementnew = () => {
       label: "Email Subject",
       type: "text",
       rules: [{ required: true, message: "Subject is required" }],
-      onChange: (e) => setLiveSubject(e.target.value)
+      onChange: (e) => setLiveCreateSubject(e.target.value)
     },
     {
       name: "body",
       label: "Email Body",
-      type: "textarea", // ✅ TEXTAREA for CREATE
+      type: "editor", // ✅ EDITOR for CREATE (matches update)
       span: 24,
-      rows: 6,
-      onChange: (e) => setLiveBody(e.target.value)
+      modules: modules,
+      formats: formats,
+      onChange: (val) => setLiveCreateBody(val)
     }
   ];
 
@@ -560,8 +569,8 @@ const EmailTemplateManagementnew = () => {
           event_key: values.event_key,
           subject: values.subject,
           body: values.body,
-          template_name: selectedDesign, // or globalDesign
-          is_active: true
+          template_name: createDesign || globalDesign,
+          is_active: isCreateActive
         },
         {
           headers: {
@@ -572,8 +581,10 @@ const EmailTemplateManagementnew = () => {
 
       if (res.data?.success) {
         message.success(res.data.message || "Created successfully");
-        setModalOpen(false);
-        getEmailTemplates(); // refresh table
+        setCreateDrawerOpen(false);
+        setLiveCreateBody("");
+        setLiveCreateSubject("");
+        getEmailTemplates();
       } else {
         message.warning(res.data.message || "Create failed");
       }
@@ -663,39 +674,49 @@ const EmailTemplateManagementnew = () => {
     }
   }, [drawerOpen, selectedRow]);
 
+  // Reset create drawer state when it opens
+  useEffect(() => {
+    if (createDrawerOpen) {
+      setLiveCreateBody("");
+      setLiveCreateSubject("");
+      setCreateDesign(globalDesign);
+      setIsCreateActive(true);
+    }
+  }, [createDrawerOpen]);
 
 
-  const formattedContent = (liveBody || selectedRow?.body || "")
 
-    // headings
-    .replace(/<h1>/g, '<h1 style="font-size:26px;font-weight:bold;margin:10px 0;">')
-    .replace(/<h2>/g, '<h2 style="font-size:22px;font-weight:bold;margin:10px 0;">')
-    .replace(/<h3>/g, '<h3 style="font-size:18px;font-weight:bold;margin:10px 0;">')
+  const formatBody = (raw) =>
+    (raw || "")
+      .replace(/<h1>/g, '<h1 style="font-size:26px;font-weight:bold;margin:10px 0;">')
+      .replace(/<h2>/g, '<h2 style="font-size:22px;font-weight:bold;margin:10px 0;">')
+      .replace(/<h3>/g, '<h3 style="font-size:18px;font-weight:bold;margin:10px 0;">')
+      .replace(/class="ql-align-center"/g, 'style="text-align:center;"')
+      .replace(/class="ql-align-right"/g, 'style="text-align:right;"')
+      .replace(/class="ql-align-justify"/g, 'style="text-align:justify;"')
+      .replace(/<ul>/g, '<ul style="padding-left:20px;margin:10px 0;list-style-type:disc;list-style-position:inside;">')
+      .replace(/<ol>/g, '<ol style="padding-left:0;margin:10px 0;list-style-type:decimal;list-style-position:inside;">')
+      .replace(/<li>/g, '<li style="margin-bottom:5px;">')
+      .replace(/<p>/g, '<p style="margin:5px 0;">');
 
-    // alignment
-    .replace(/class="ql-align-center"/g, 'style="text-align:center;"')
-    .replace(/class="ql-align-right"/g, 'style="text-align:right;"')
-    .replace(/class="ql-align-justify"/g, 'style="text-align:justify;"')
+  const formattedContent = formatBody(liveBody || selectedRow?.body || "");
+  const formattedCreateContent = formatBody(liveCreateBody);
 
-    // ✅ FINAL LIST FIX
-    .replace(/<ul>/g, '<ul style="padding-left:20px;margin:10px 0;list-style-type:disc;list-style-position:inside;">')
-    .replace(/<ol>/g, '<ol style="padding-left:0;margin:10px 0;list-style-type:decimal;list-style-position:inside;">')
-    .replace(/<li>/g, '<li style="margin-bottom:5px;">')
-
-    // paragraph
-    .replace(/<p>/g, '<p style="margin:5px 0;">');
-
-
+  // --- UPDATE preview ---
   const activeDesign = selectedDesign || globalDesign;
-
-  const selectedTemplateObj = designTemplates.find(
-    (t) => t.template_name === activeDesign
-  );
-
+  const selectedTemplateObj = designTemplates.find((t) => t.template_name === activeDesign);
   const previewHtml =
     selectedTemplateObj?.html
       ?.replace(/{{subject}}/g, liveSubject || selectedRow?.subject || "Email Subject")
       ?.replace(/{{content}}/g, formattedContent)
+    || "<p>No template found</p>";
+
+  // --- CREATE preview ---
+  const createTemplateObj = designTemplates.find((t) => t.template_name === (createDesign || globalDesign));
+  const createPreviewHtml =
+    createTemplateObj?.html
+      ?.replace(/{{subject}}/g, liveCreateSubject || "Email Subject")
+      ?.replace(/{{content}}/g, formattedCreateContent)
     || "<p>No template found</p>";
 
   const handleDelete = async () => {
@@ -736,8 +757,8 @@ const EmailTemplateManagementnew = () => {
       <TableHeader
         data={originalData}
         showCreateButton={true}
-        onCreate={() => setModalOpen(true)}
-              />
+        onCreate={() => setCreateDrawerOpen(true)}
+      />
 
       <ReusableTable
         columns={columns}
@@ -745,8 +766,9 @@ const EmailTemplateManagementnew = () => {
         loading={loading}
         total={total}
         currentPage={page}
+        pageSize={10}
         onPageChange={(p) => setPage(p)}
-        actionType={["update","Remove"]}
+        actionType={["update", "Remove"]}
         onUpdate={handleUpdate}
         onDelete={(record) => {
           setDeleteRecord(record);
@@ -927,13 +949,132 @@ const EmailTemplateManagementnew = () => {
         }
       />
 
-      <ReusableModal
-        open={modalOpen}
-        onCancel={() => setModalOpen(false)}
+      {/* ---- CREATE EMAIL DRAWER (same design as Update) ---- */}
+      <ReusableDrawer
+        open={createDrawerOpen}
+        onClose={() => setCreateDrawerOpen(false)}
         title="Create Email Template"
-        onSubmit={handleCreate}
         fields={createFields}
-        showFooter={true}
+        initialValues={{}}
+        onSubmit={handleCreate}
+        width={"85%"}
+        additionalContent={
+          <div className="mt-6">
+            <h3 className="text-white mb-2">Template Preview</h3>
+
+            {/* LIVE PREVIEW */}
+            <div
+              style={{
+                background: "transparent",
+                borderRadius: "10px",
+                padding: "20px",
+                marginBottom: "15px",
+                display: "flex",
+                justifyContent: "center"
+              }}
+            >
+              <div
+                style={{ width: "600px", background: "#fff" }}
+                dangerouslySetInnerHTML={{ __html: createPreviewHtml }}
+              />
+            </div>
+
+            <div className="text-center">
+              <Button
+                onClick={() => setCreateDesignModalOpen(true)}
+                style={{ background: theme.sidebarSettings.activeBgColor }}
+              >
+                Change Template
+              </Button>
+            </div>
+
+            <div className="mt-6">
+              <label className="text-white mr-3">Active</label>
+              <Switch
+                checked={isCreateActive}
+                onChange={(val) => setIsCreateActive(val)}
+              />
+            </div>
+          </div>
+        }
+      />
+
+      {/* ---- CREATE TEMPLATE PICKER MODAL ---- */}
+      <ReusableModal
+        open={createDesignModalOpen}
+        onCancel={() => setCreateDesignModalOpen(false)}
+        title="Select Template Design"
+        showFooter={false}
+        description={" "}
+        extraContent={
+          <>
+            <div className="flex gap-3 flex-wrap justify-center">
+              {designTemplates
+                .filter((t) => t.template_name !== createDesign)
+                .map((template) => (
+                  <div
+                    key={template._id}
+                    className="template-card upload-templatecard"
+                    onClick={() => setPendingCreateDesign(template.template_name)}
+                    style={{
+                      border:
+                        pendingCreateDesign === template.template_name
+                          ? "2px solid #c9f07b"
+                          : "2px solid transparent",
+                      borderRadius: "12px",
+                      cursor: "pointer",
+                      transition: "0.2s"
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: "220px",
+                        height: "180px",
+                        overflow: "hidden",
+                        borderRadius: "12px",
+                        border: "1px solid #ddd",
+                        background: "#fff",
+                        position: "relative"
+                      }}
+                    >
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: 0,
+                          left: 0,
+                          transform: "scale(0.4)",
+                          transformOrigin: "top left",
+                          width: "600px"
+                        }}
+                        dangerouslySetInnerHTML={{ __html: template.html }}
+                      />
+                    </div>
+                    <p>{template.template_name}</p>
+                  </div>
+                ))}
+
+              {pendingCreateDesign && (
+                <div className="mt-4 text-center w-full">
+                  <p className="white">Use this template?</p>
+                  <div className="flex justify-center gap-2 mt-2">
+                    <Button onClick={() => setPendingCreateDesign(null)}>Cancel</Button>
+                    <Button
+                      type="primary"
+                      onClick={() => {
+                        setCreateDesign(pendingCreateDesign);
+                        setCreateDesignModalOpen(false);
+                        setPendingCreateDesign(null);
+                      }}
+                      style={{ background: theme.sidebarSettings.activeBgColor }}
+                    >
+                      Confirm
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </>
+        }
       />
 
 

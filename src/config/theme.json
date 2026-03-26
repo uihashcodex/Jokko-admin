@@ -78,12 +78,7 @@
           "icon": "RiseOutlined",
           "label": "Trending Currency"
         },
-        {
-          "key": "/defaultcurrency",
-          "icon": "AimOutlined",
-          "label": "Default Currency"
-        },
-        {
+               {
           "key": "/pushnotification",
           "icon": "PushpinOutlined",
           "label": "Push Notification"

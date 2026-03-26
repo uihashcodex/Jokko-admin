@@ -17,9 +17,10 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
 
   const navigate = useNavigate();
   const location = useLocation();
-  console.log(location.pathname, 'pathname');
+  // console.log(location.pathname, 'pathname');
 
-  const currentPath = location.pathname.replace(`/${constant.adminRoute}`, "");
+  const currentPath = location.pathname;
+  console.log(currentPath, 'currentPath');
   const [mobileOpen, setMobileOpen] = useState(false);
 
   // ✅ Get Active Sidebar Based on Type
@@ -47,7 +48,7 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
   // const menuItems = buildMenuItems(activeSidebar?.menuItems || []);
 
   const user = JSON.parse(localStorage.getItem("user")) || {
-    permissions: ["ALL"] 
+    permissions: ["ALL"]
   };
 
   // 👉 filter based on permission
@@ -279,7 +280,7 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
             padding: collapsed ? 0 : "0 16px",
             cursor: "pointer",
           }}
-          // onClick={() => navigate("/")}
+        // onClick={() => navigate("/")}
         >
           <img
             // src={theme.logo.image}
@@ -325,20 +326,20 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
           }}
         >
 
-        <Menu
-          className="custom-sidebar-menu"
-          mode="inline"
-          // selectedKeys={[location.pathname?.replace(/^\/[^/]+/, "")]}
-          selectedKeys={[currentPath]}
+          <Menu
+            className="custom-sidebar-menu"
+            mode="inline"
+            // selectedKeys={[location.pathname?.replace(/^\/[^/]+/, "")]}
+            selectedKeys={[currentPath]}
 
-          style={{
-            background: theme.sidebarSettings.backgroundColor,
-            color: theme.sidebarSettings.textColor,
-            borderRight: "none"
-          }}
-          onClick={({ key }) => navigate(`/${constant?.adminRoute}/${key}`)}
-          items={menuItems}
-        />
+            style={{
+              background: theme.sidebarSettings.backgroundColor,
+              color: theme.sidebarSettings.textColor,
+              borderRight: "none"
+            }}
+            onClick={({ key }) => navigate(`/${constant?.adminRoute}/${key}`)}
+            items={menuItems}
+          />
         </div>
         <div
           onClick={handleLogout}
@@ -354,7 +355,7 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
             fontWeight: 500,
             borderTop: "1px solid rgba(255,255,255,0.1)",
             boxShadow: "0px -6px 30px -8px rgba(255, 255, 255, 0.32)"
-                    }}
+          }}
         >
           <Anticon name="LogoutOutlined" />{" "}
           {!collapsed && <span style={{ marginLeft: 10 }}>Logout</span>}
