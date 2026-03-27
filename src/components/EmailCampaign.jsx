@@ -1,16 +1,22 @@
 import { useState, useEffect } from "react";
-import { Button, Form, Select, Tag, Modal, message, ConfigProvider } from "antd";
+import { Button, Form, Select, Tag, Modal, message, ConfigProvider, Input, Spin } from "antd";
 import { RocketOutlined, EditOutlined, UserAddOutlined } from "@ant-design/icons";
 import axios from "axios";
 import { constant } from "../const";
 import TableHeader from "../reuseable/TableHeader";
 import ReusableTable from "../reuseable/ReusableTable";
 import theme from "../config/theme";
+import { capitalize } from "../utils/capitalize";
 
 const TYPE_OPTIONS = [
   { label: "Professional", value: "professional" },
   { label: "Individual", value: "individual" },
 ];
+
+const sharedProps = {
+  spinning: true,
+  percent: 0,
+};
 
 const EmailCampaign = () => {
   const [createForm] = Form.useForm();
@@ -18,7 +24,7 @@ const EmailCampaign = () => {
 
   const [campaigns, setCampaigns] = useState([]);
   const [emailContents, setEmailContents] = useState([]);
-  
+
   const [tableLoading, setTableLoading] = useState(false);
   const [contentLoading, setContentLoading] = useState(false);
 
@@ -57,8 +63,10 @@ const EmailCampaign = () => {
           sno: i + 1,
           id: item._id,
           event_key: item.content_info.event_key,
-          campaign_name:  item.content_info.subject || item.campaign_name || "-",
-          
+          campaign_name: item.campaign_name || "-",
+          template_name: item.content_info.template_name || "-",
+          subject: item.content_info.subject || "-",
+
         }));
         setCampaigns(rows);
       } else {
@@ -95,13 +103,12 @@ const EmailCampaign = () => {
 
   // ── create campaign ───────────────────────────────────────────────────────
   const handleCreate = async (values) => {
-    console.log(values,'values');
-    
+
     setCreateLoading(true);
     try {
       const { data } = await axios.post(
         `${constant.backend_url}/brevo/createCampaign`,
-        { campaign_name: values?.event_key?.label, type: values.type, content_id: values?.event_key?.value },
+        { campaign_name: values?.campaign_name, type: values.type, content_id: values?.event_key?.value },
         { headers: authHeader }
       );
       if (data.success) {
@@ -123,8 +130,10 @@ const EmailCampaign = () => {
   const openUpdate = (record) => {
     setSelectedRow(record);
     updateForm.setFieldsValue({
-      event_key: record.event_key,
+      event_key: { label: record.subject, value: record.content_id },
       type: record.type,
+      campaign_name: record.campaign_name,
+      _id: record._id
     });
     setUpdateOpen(true);
   };
@@ -132,9 +141,10 @@ const EmailCampaign = () => {
   const handleUpdate = async (values) => {
     setUpdateLoading(true);
     try {
-      const { data } = await axios.post(
-        `${constant.backend_url}/admin/update-campaign`,
-        { id: selectedRow.id, event_key: values.event_key, type: values.type },
+      const content_id = values?.event_key?.value;
+      const { data } = await axios.put(
+        `${constant.backend_url}/brevo/updateCampaign/${values?._id}`,
+        { content_id: content_id },
         { headers: authHeader }
       );
       if (data.success) {
@@ -143,6 +153,7 @@ const EmailCampaign = () => {
         updateForm.resetFields();
         fetchCampaigns();
       } else {
+        console.log("🚀 ~ handleUpdate ~ data:", data)
         message.error(data.message || "Failed to update campaign.");
       }
     } catch {
@@ -158,18 +169,17 @@ const EmailCampaign = () => {
     setAddUserOpen(true);
   };
 
-  const handleAddUser = async (values) => {
+  const handleAddUser = async () => {
     setAddUserLoading(true);
     try {
       const { data } = await axios.post(
-        `${constant.backend_url}/admin/add-campaign-user`,
-        { campaign_id: selectedRow.id, email: values.email },
+        `${constant.backend_url}/brevo/batchJoinContactList`,
+        { campaign_id: selectedRow.id },
         { headers: authHeader }
       );
       if (data.success) {
         message.success(data.message || "User added successfully!");
         setAddUserOpen(false);
-        addUserForm.resetFields();
       } else {
         message.error(data.message || "Failed to add user.");
       }
@@ -185,8 +195,8 @@ const EmailCampaign = () => {
     setPublishingId(record.id);
     try {
       const { data } = await axios.post(
-        `${constant.backend_url}/admin/publish-campaign`,
-        { id: record.id },
+        `${constant.backend_url}/brevo/sendCampineEmail`,
+        { campaign_id: record._id },
         { headers: authHeader }
       );
       if (data.success) {
@@ -205,19 +215,21 @@ const EmailCampaign = () => {
   // ── table columns ─────────────────────────────────────────────────────────
   const columns = [
     { title: "S.No", dataIndex: "sno", width: 60 },
+    { title: "Campaign Name", dataIndex: "campaign_name" },
+    { title: "Template Name", dataIndex: "template_name" },
     { title: "Event Key", dataIndex: "event_key" },
-    { title: "Subject", dataIndex: "campaign_name", render: (v) => v || "-" },
+    { title: "Subject", dataIndex: "subject", render: (v) => v || "-" },
     {
       title: "Type",
       dataIndex: "type",
       render: (v) =>
         v ? (
           <Tag color={v === "professional" ? "blue" : "green"}>
-            {v.charAt(0).toUpperCase() + v.slice(1)}
+            {capitalize(v)}
           </Tag>
         ) : "-",
     },
-   
+
     {
       title: "Actions",
       key: "actions",
@@ -238,7 +250,7 @@ const EmailCampaign = () => {
             onClick={() => openAddUser(record)}
             style={btnStyles.addUser}
           >
-            Add User
+            Add Existing Users
           </Button>
           <Button
             size="small"
@@ -286,6 +298,24 @@ const EmailCampaign = () => {
         <div style={modalStyles.divider} />
 
         <Form form={form} layout="vertical" onFinish={onFinish}>
+          <Form.Item name="_id" hidden>
+            <Input />
+          </Form.Item>
+
+          {/* Campaign Name */}
+          <Form.Item
+            label={<span style={modalStyles.label}>Campaign Name</span>}
+            name="campaign_name"
+            rules={[{ required: true, message: "Please enter campaign name" }]}
+          >
+            <Input
+              placeholder="Enter campaign name"
+              className="ec-input"
+              disabled={updateOpen}
+              style={{ height: 44, color: updateOpen ? "#fff" : "#000", }}
+            />
+          </Form.Item>
+
           <Form.Item
             label={<span style={modalStyles.label}>Email Content</span>}
             name="event_key"
@@ -298,7 +328,7 @@ const EmailCampaign = () => {
               style={{ height: 44 }}
               labelInValue
               options={emailContents.map((item) => ({
-                label: item.subject || item.event_key,
+                label: item.event_key,
                 value: item._id,
               }))}
             />
@@ -312,8 +342,9 @@ const EmailCampaign = () => {
             <Select
               placeholder="Select type"
               className="ec-select"
-              style={{ height: 44 }}
               options={TYPE_OPTIONS}
+              disabled={updateOpen}
+              style={{ height: 44, color: updateOpen ? "#fff" : "#000", }}
             />
           </Form.Item>
 
@@ -389,7 +420,7 @@ const EmailCampaign = () => {
       >
         <Modal
           open={addUserOpen}
-          onCancel={() => { setAddUserOpen(false); addUserForm.resetFields(); }}
+          onCancel={() => { setAddUserOpen(false); }}
           footer={null}
           centered
           width="90%"
@@ -406,13 +437,15 @@ const EmailCampaign = () => {
               <UserAddOutlined style={{ fontSize: 18, color: "#c9f07b" }} />
             </div>
             <div>
-              <p style={modalStyles.title}>Add User to Campaign</p>
-              <p style={modalStyles.subtitle}>Enter the user email to add.</p>
+              <p style={modalStyles.title}>Add Users to Campaign</p>
+              {/* <p style={modalStyles.subtitle}>Enter the user email to add.</p> */}
             </div>
           </div>
           <div style={modalStyles.divider} />
 
-          <Form form={addUserForm} layout="vertical" onFinish={handleAddUser}>
+          Are you sure to add existing users of type {capitalize(selectedRow?.type)} to this campaign?
+
+          {/* <Form form={addUserForm} layout="vertical" onFinish={handleAddUser}>
             <Form.Item
               label={<span style={modalStyles.label}>User Email</span>}
               name="email"
@@ -428,23 +461,26 @@ const EmailCampaign = () => {
               />
             </Form.Item>
 
-            <div style={modalStyles.btnRow}>
+            </Form> */}
+          <div style={modalStyles.btnRow}>
+            {!addUserLoading ? <>
               <Button
-                onClick={() => { setAddUserOpen(false); addUserForm.resetFields(); }}
+                onClick={() => { setAddUserOpen(false); }}
                 style={modalStyles.cancelBtn}
+                disabled={addUserLoading}
               >
                 Cancel
               </Button>
               <Button
-                htmlType="submit"
+                onClick={handleAddUser}
                 loading={addUserLoading}
                 style={modalStyles.submitBtn}
                 className="ec-publish-btn"
               >
-                Add User
+                Yes
               </Button>
-            </div>
-          </Form>
+            </> : <Spin {...sharedProps} styles={{ indicator: { color: "#C9F07B" } }} />}
+          </div>
         </Modal>
       </ConfigProvider>
 

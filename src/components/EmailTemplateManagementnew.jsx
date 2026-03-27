@@ -812,6 +812,7 @@ const EmailTemplateManagementnew = () => {
             </div>
 
             <div className="text-center">
+              <h3 className="text-white mb-2">{selectedRow?.template_name}</h3>
               <Button
                 onClick={() => setDesignModalOpen(true)}
                 style={{ background: theme.sidebarSettings.activeBgColor }}
