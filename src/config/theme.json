@@ -84,14 +84,26 @@
           "label": "Push Notification"
         },
         {
-          "key": "/emailtemplate",
-          "icon": "FileTextOutlined",
-          "label": "Email Template"
-        },
-        {
-          "key": "/emailcontent",
+          "key": "email",
           "icon": "MailOutlined",
-          "label": "Email Content"
+          "label": "Email",
+          "children": [
+            {
+              "key": "/emailcontent",
+              "icon": "FileOutlined",
+              "label": "Email Content"
+            },
+            {
+              "key": "/emailtemplate",
+              "icon": "FileTextOutlined",
+              "label": "Email Template"
+            },
+            {
+              "key": "/emailcampaign",
+              "icon": "RocketOutlined",
+              "label": "Email Campaign"
+            }
+          ]
         },
         {
           "key": "management",
