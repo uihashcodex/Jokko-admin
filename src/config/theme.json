@@ -8,7 +8,7 @@
     "image": "/favicon.ico"
   },
   "project": {
-    "name": "Jokko-admin"
+    "name": ""
   },
   "dashboardheaderimg": {
     "image": "/img/headerbg3.jpg",
@@ -78,25 +78,47 @@
           "icon": "RiseOutlined",
           "label": "Trending Currency"
         },
-        {
-          "key": "/defaultcurrency",
-          "icon": "AimOutlined",
-          "label": "Default Currency"
-        },
-        {
+               {
           "key": "/pushnotification",
           "icon": "PushpinOutlined",
           "label": "Push Notification"
         },
         {
-          "key": "/emailtemplate",
-          "icon": "FileTextOutlined",
-          "label": "Email Template"
+          "key": "email",
+          "icon": "MailOutlined",
+          "label": "Email",
+          "children": [
+            {
+              "key": "/emailcontent",
+              "icon": "FileOutlined",
+              "label": "Email Content"
+            },
+            {
+              "key": "/emailtemplate",
+              "icon": "FileTextOutlined",
+              "label": "Email Template"
+            },
+            {
+              "key": "/emailcampaign",
+              "icon": "RocketOutlined",
+              "label": "Email Campaign"
+            }
+          ]
         },
         {
-          "key": "/emailtemplatemanagementnew",
-          "icon": "MailOutlined",
-          "label": "Emailtemplatemanagementnew"
+          "key": "management",
+          "label": "Management",
+          "icon": "SettingOutlined",
+          "children": [
+            {
+              "key": "/rolemanagement",
+              "label": "Role Management"
+            },
+            {
+              "key": "/staffmanagement",
+              "label": "Staff Management"
+            }
+          ]
         },
         {
           "key": "/support",
@@ -105,7 +127,7 @@
         },
         {
           "key": "/profile",
-          "icon": "SettingOutlined",
+          "icon": "UserOutlined",
           "label": "Profile"
         }
       ]

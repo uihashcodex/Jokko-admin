@@ -8,6 +8,7 @@ import { message } from 'antd';
 import theme from '../config/theme';
 import debounce from "lodash.debounce";
 import { useMemo } from "react";
+import { Switch } from 'antd';
 
 
 
@@ -26,6 +27,9 @@ const Assets = () => {
         { title: "Token Decimals", dataIndex: "tokenDecimals", key: "tokenDecimals" },
         { title: "Contract Address", dataIndex: "contractAddress", key: "contractAddress" },
         { title: "Network Name", dataIndex: "networkName", key: "networkName" },
+        { title: "Created At", dataIndex: "createdAt", key: "createdAt" },
+        { title: "Updated At", dataIndex: "createdAt", key: "updatedAt" },
+        { title: "Default Network", dataIndex: "isDefaultNetwork", key: "isDefaultNetwork" },
         { title: "Status", dataIndex: "status", key: "status" },
     ];
 
@@ -119,6 +123,33 @@ const Assets = () => {
         toDate: ""
     });
 
+    const handleDefaultNetworkChange = async (record) => {
+        try {
+            setLoading(true);
+            const { data } = await axios.post(
+                `${constant.backend_url}/assets/set-default-asset`,
+                {
+                    // token_id: record?.id,
+                    asset: record
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+                    },
+                }
+            );
+            if (data?.success == true) {
+                messageApi.success(data?.message);
+                getToken();
+            }
+        } catch (error) {
+            console.log(error);
+            messageApi.error(error.response?.data?.message);
+        } finally {
+            setLoading(false);
+        }
+    }
+
     const getToken = async () => {
         const startTime = Date.now();
 
@@ -158,7 +189,10 @@ const Assets = () => {
                     tokenDecimals: item?.decimals || "-",
                     status: item?.verifyStatus ? "active" : "inactive",
                     network_id: item?.network?._id || "-",
+                    createdAt: item?.createdAt ? item.createdAt.split("T")[0] : "-",
+                    updatedAt: item?.updatedAt ? item.updatedAt.split("T")[0] : "-",
                     networkName: item?.network?.networkName || "-",
+                    isDefaultNetwork: item?.isDefault === true ? <Switch checked={true} onChange={() => { handleDefaultNetworkChange(item?._id) }} /> : <Switch checked={false} onChange={() => { handleDefaultNetworkChange(item?._id) }} />,
                 }));
 
                 setOriginalData(formattedData);
@@ -392,11 +426,11 @@ const Assets = () => {
         <>
 
             <div
-                className="mb-5 w-full rounded-lg bg-cover bg-center flex items-center"
-                style={{
-                    backgroundImage: `url(${theme.dashboardheaderimg.image})`,
-                    height: theme.dashboardheaderimg.height
-                }}
+                className="mb-5 w-full rounded-lg bg-cover bg-center flex items-center header-content-img"
+            // style={{
+            //     backgroundImage: `url(${theme.dashboardheaderimg.image})`,
+            //     height: theme.dashboardheaderimg.height
+            // }}
             >
                 <div className="display-3 w-full">
                     <h1 className="text-white p-7 font-bold text-2xl">

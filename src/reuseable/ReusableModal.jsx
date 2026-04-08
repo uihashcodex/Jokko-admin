@@ -27,6 +27,7 @@ const ReusableModal = ({
   fields,
   initialValues,
   extraContent,
+  PermissionsContent,
   maskClosable = false,
   description,
   showFooter = true
@@ -71,7 +72,7 @@ const ReusableModal = ({
 
       case "password":
         return (
-          <InputField.Password
+          <Input.Password
             size="large"
             placeholder={field.placeholder}
           />
@@ -221,6 +222,8 @@ const ReusableModal = ({
             layout="vertical"
             onFinish={onSubmit}
           >
+
+            {PermissionsContent}
             <Row gutter={[20, 10]}>
               {fields.map((field) => (
                 <Col

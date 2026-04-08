@@ -9,7 +9,8 @@ import { message } from "antd";
 import debounce from "lodash.debounce";
 import { useMemo } from "react";
 import theme from '../config/theme';
-
+import ChartsSection from "../components/ChartsSection";
+import StatCard from "../components/StatCard";
 
 const columns = [
   { title: "Name", dataIndex: "name", key: "name" },
@@ -169,21 +170,58 @@ const Viewdetail = () => {
   useEffect(() => {
     return () => debouncedSearch.cancel();
   }, [debouncedSearch]);
+
+// dashboard
+  const [dashboardData, setDashboardData] = useState({});
+
+  const getDashboardData = async () => {
+    try {
+      const res = await axios.get(`${constant.backend_url}/admin/dashboard`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+        },
+      });
+
+      if (res.data.success) {
+        setDashboardData(res.data);
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  useEffect(() => {
+    getDashboardData();
+  }, []);
+
+
   return (
     <div>
       <div
-        className="mb-5 w-full rounded-lg bg-cover bg-center flex items-center"
-        style={{
-          backgroundImage: `url(${theme.dashboardheaderimg.image})`,
-          height: theme.dashboardheaderimg.height
-        }}
+        className="mb-5 w-full rounded-lg bg-cover bg-center flex items-center header-content-img"
+        // style={{
+        //   backgroundImage: `url(${theme.dashboardheaderimg.image})`,
+        //   height: theme.dashboardheaderimg.height
+        // }}
       >
         <div className="display-3 w-full">
           <h1 className="text-white p-7 font-bold text-2xl">
-            View Detail             </h1>
+            User Detail             </h1>
         </div>
       </div>  
-      
+
+      {/* 🔥 User Chart Section */}
+      <div className="mt-5">
+        <ChartsSection dashboardData={dashboardData} showOnlyUserChart={true}
+/>
+      </div>
+
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-20 mb-10">
+        <StatCard title="Total Users" value={dashboardData?.totalusers || 0} />
+        <StatCard title="Individual Users" value={dashboardData?.individualCount || 0} />
+        <StatCard title="Professional Users" value={dashboardData?.professionalCount || 0} />
+      </div>
           <TableHeader
         data={originalData}
         onCreate={handleCreate}

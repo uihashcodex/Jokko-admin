@@ -13,9 +13,12 @@ import Griddemo from "../components/Griddemo";
 import Webhook from "../components/webhooks"; 
 import EmailTemplateManagement from "../components/EmailTemplateManagement"; 
 import PushNotification from "../components/pushnotification";
-import EmailTemplateManagementnew from "../components/EmailTemplateManagementnew"; 
+import EmailTemplateManagementnew from "../components/EmailTemplateManagementnew";
+import EmailCampaign from "../components/EmailCampaign";
 import TrendingCurrency from "../components/TrendingCurrency";
 import DefaultCurrency from "../components/DefaultCurrency";
+import RoleManagement from "../components/RoleManagement";
+import StaffManagement from "../components/staffManagement"
 import { constant } from "../const";
 import SupportPage from "../components/support";
 
@@ -42,10 +45,13 @@ const WalletRouts = () => {
       <Route path={`/${constant?.adminRoute}/webhook`} element={<Webhook />} />
       <Route path={`/${constant?.adminRoute}/emailtemplate`} element={<EmailTemplateManagement />} />
       <Route path={`/${constant?.adminRoute}/pushnotification`} element={<PushNotification />} />
-      <Route path={`/${constant?.adminRoute}/emailtemplatemanagementnew`} element={<EmailTemplateManagementnew />} />
+      <Route path={`/${constant?.adminRoute}/emailcontent`} element={<EmailTemplateManagementnew />} />
+      <Route path={`/${constant?.adminRoute}/emailcampaign`} element={<EmailCampaign />} />
       <Route path={`/${constant?.adminRoute}/trendingcurrency`} element={<TrendingCurrency />} />
       <Route path={`/${constant?.adminRoute}/defaultcurrency`} element={<DefaultCurrency />} />
       <Route path={`/${constant?.adminRoute}/support`} element={<SupportPage />} />
+      <Route path={`/${constant?.adminRoute}/rolemanagement`} element={<RoleManagement />} />
+      <Route path={`/${constant?.adminRoute}/staffmanagement`} element={<StaffManagement />} />
 
     </Routes>
   );

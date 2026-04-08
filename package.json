@@ -1,5 +1,6 @@
 {
   "name": "admin-pan",
+    "homepage": "https://jokkoadmin.hashcodexperts.com",
   "version": "0.1.0",
   "private": true,
   "dependencies": {

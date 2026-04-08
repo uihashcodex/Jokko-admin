@@ -4,6 +4,9 @@ import Anticon from "../reuseable/Anticon";
 import { useState } from "react";
 import theme from "../config/theme.json";
 import { constant } from "../const";
+import { filterSidebar } from "../utils/filterSidebar";
+import logo from "../assets/image/logo.png";
+import logomb from "../assets/image/logo-sm.png";
 
 const { Sider } = Layout;
 const { useBreakpoint } = Grid;
@@ -14,9 +17,10 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
 
   const navigate = useNavigate();
   const location = useLocation();
-  console.log(location.pathname, 'pathname');
+  // console.log(location.pathname, 'pathname');
 
-  const currentPath = location.pathname.replace(`/${constant.adminRoute}`, "");
+  const currentPath = location.pathname;
+  console.log(currentPath, 'currentPath');
   const [mobileOpen, setMobileOpen] = useState(false);
 
   // ✅ Get Active Sidebar Based on Type
@@ -41,7 +45,20 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
     });
 
   // ✅ Safe Menu Items
-  const menuItems = buildMenuItems(activeSidebar?.menuItems || []);
+  // const menuItems = buildMenuItems(activeSidebar?.menuItems || []);
+
+  const user = JSON.parse(localStorage.getItem("user")) || {
+    permissions: ["ALL"]
+  };
+
+  // 👉 filter based on permission
+  const filteredSidebar = filterSidebar(
+    activeSidebar?.menuItems || [],
+    user.permissions
+  );
+
+  // 👉 then build menu
+  const menuItems = buildMenuItems(filteredSidebar);
 
   const handleLogout = () => {
     localStorage.clear(); // or removeItem("token")
@@ -55,6 +72,7 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
       <>
         <style>
           {`
+          
         .custom-sidebar-menu .ant-menu-item-selected {
           background-color: ${theme.sidebarSettings.activeBgColor} !important;
           color: ${theme.sidebarSettings.activeTextColor} !important;
@@ -94,7 +112,7 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
         >
           <div onClick={() => navigate("/")}>
             <img
-              src={theme.logo.image}
+              src={logo}
               alt="logo"
               style={{ height: theme.logo.height }}
             />
@@ -154,7 +172,7 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
 
           <Menu
             mode="inline"
-            className="custom-sidebar-menu-mobile"
+            className="custom-sidebar-menu"
             // selectedKeys={[location.pathname]}
             onClick={({ key }) => {
               navigate(`/${constant.adminRoute}/${key}`);
@@ -246,23 +264,29 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
           position: "fixed",
           height: "100vh",
           left: 0,
+          display: "flex",
+          flexDirection: "column",
         }}
+        className="side-bar"
       >
         {/* Logo Section */}
         <div
           style={{
             height: 60,
             display: "flex",
+            minHeight: 60,
             alignItems: "center",
             justifyContent: collapsed ? "center" : "space-between",
             padding: collapsed ? 0 : "0 16px",
             cursor: "pointer",
           }}
-          onClick={() => navigate("/")}
+        // onClick={() => navigate("/")}
         >
           <img
             // src={theme.logo.image}
-            src={collapsed ? theme.logo.collapsedImage : theme.logo.image}
+            // src={collapsed ? theme.logo.collapsedImage : theme.logo.image}
+            src={collapsed ? logomb : logo}
+
 
             alt="logo"
             style={{
@@ -295,31 +319,42 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
           </div>
         )}
 
-        <Menu
-          className="custom-sidebar-menu"
-          mode="inline"
-          // selectedKeys={[location.pathname?.replace(/^\/[^/]+/, "")]}
-          selectedKeys={[currentPath]}
-
+        <div
           style={{
-            background: theme.sidebarSettings.backgroundColor,
-            color: theme.sidebarSettings.textColor,
-            borderRight: "none"
+            flex: 1,
+            overflowY: "auto",
           }}
-          onClick={({ key }) => navigate(`/${constant?.adminRoute}/${key}`)}
-          items={menuItems}
-        />
+        >
+
+          <Menu
+            className="custom-sidebar-menu"
+            mode="inline"
+            // selectedKeys={[location.pathname?.replace(/^\/[^/]+/, "")]}
+            selectedKeys={[currentPath]}
+
+            style={{
+              background: theme.sidebarSettings.backgroundColor,
+              color: theme.sidebarSettings.textColor,
+              borderRight: "none"
+            }}
+            onClick={({ key }) => navigate(`/${constant?.adminRoute}/${key}`)}
+            items={menuItems}
+          />
+        </div>
         <div
           onClick={handleLogout}
           style={{
-            position: "absolute",
-            bottom: 20,
-            width: "100%",
-            textAlign: collapsed ? "center" : "left",
+            height: 60,
+            minHeight: 60,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: collapsed ? "center" : "flex-start",
             paddingLeft: collapsed ? 0 : 24,
             cursor: "pointer",
             color: "red",
             fontWeight: 500,
+            borderTop: "1px solid rgba(255,255,255,0.1)",
+            boxShadow: "0px -6px 30px -8px rgba(255, 255, 255, 0.32)"
           }}
         >
           <Anticon name="LogoutOutlined" />{" "}

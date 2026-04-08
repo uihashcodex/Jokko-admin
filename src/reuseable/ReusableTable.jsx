@@ -28,36 +28,36 @@ const ReusableTable = ({
 }) => {
 
   let updatedColumns = [...columns];
-console.log(data,"data");
+  console.log(data, "data");
 
 
-  if (actionType?.includes ("view")) {
-  updatedColumns.push({
-    title: "Action",
-    key: "action",
-    render: (_, record) => {
+  if (actionType?.includes("view")) {
+    updatedColumns.push({
+      title: "Action",
+      key: "action",
+      render: (_, record) => {
 
-      const items = [
-        { key: "transaction", label: "Transaction" },
-        { key: "wallet", label: "Wallet" },
-      ];
+        const items = [
+          { key: "transaction", label: "Transaction" },
+          { key: "wallet", label: "Wallet" },
+        ];
 
-      return (
-        <Dropdown
-          menu={{
-            items,
-            onClick: ({ key }) => onView?.(record, key),
-          }}
-          trigger={["click"]}
-        >
-          <Button>
-            Select <DownOutlined />
-          </Button>
-        </Dropdown>
-      );
-    },
-  });
-}
+        return (
+          <Dropdown
+            menu={{
+              items,
+              onClick: ({ key }) => onView?.(record, key),
+            }}
+            trigger={["click"]}
+          >
+            <Button>
+              Select <DownOutlined />
+            </Button>
+          </Dropdown>
+        );
+      },
+    });
+  }
   if (actionType?.includes("webhook")) {
     updatedColumns.push({
       title: "Webhook",
@@ -117,39 +117,39 @@ console.log(data,"data");
     });
   }
 
-  if (actionType?.includes ("action")) {
-  updatedColumns.push({
-    title: "Manage",
-    key: "manage",
-    render: (_, record) => {
+  if (actionType?.includes("action")) {
+    updatedColumns.push({
+      title: "Manage",
+      key: "manage",
+      render: (_, record) => {
 
-      const items = [
-        { key: "edit", label: "Edit" },
-        { key: "delete", label: "Delete" },
-      ];
+        const items = [
+          { key: "edit", label: "Edit" },
+          { key: "delete", label: "Delete" },
+        ];
 
-      return (
-        <Dropdown
-          menu={{
-            items,
-            onClick: ({ key }) => {
-              if (key === "edit") onEdit?.(record);
-              if (key === "delete") onDelete?.(record);
-            },
-          }}
-          trigger={["click"]}
-        >
-          <Button>
-            Manage <DownOutlined />
-          </Button>
-        </Dropdown>
-      );
-    },
-  });
-}
+        return (
+          <Dropdown
+            menu={{
+              items,
+              onClick: ({ key }) => {
+                if (key === "edit") onEdit?.(record);
+                if (key === "delete") onDelete?.(record);
+              },
+            }}
+            trigger={["click"]}
+          >
+            <Button>
+              Manage <DownOutlined />
+            </Button>
+          </Dropdown>
+        );
+      },
+    });
+  }
 
 
-  if (actionType?.includes ("update")) {
+  if (actionType?.includes("update")) {
     updatedColumns.push({
       title: "Update",
       key: "update",
@@ -162,7 +162,7 @@ console.log(data,"data");
   }
 
 
-  if (actionType?.includes ("viewMore")) {
+  if (actionType?.includes("viewMore")) {
     updatedColumns.push({
       title: "View",
       key: "view",
@@ -170,7 +170,7 @@ console.log(data,"data");
         <Button
           type="primary"
           onClick={() => onView?.(record)}
-          style={{ background:"#c9f07b",color:"#000" }}
+          style={{ background: "#c9f07b", color: "#000" }}
         >
           View
         </Button>
@@ -178,21 +178,21 @@ console.log(data,"data");
     });
   }
 
-if (actionType?.includes("Remove")) {
-  updatedColumns.push({
-    title: "Action",
-    key: "delete",
-    render: (_, record) => (
-      <Button
-        type="primary"
-        onClick={() => onDelete?.(record)}   // ✅ FIXED
-        style={{ background:"#eb2724c9",color:"#fff" }}
-      >
-        {actionRemove || "Delete"}
-      </Button>
-    ),
-  });
-}
+  if (actionType?.includes("Remove")) {
+    updatedColumns.push({
+      title: "Action",
+      key: "delete",
+      render: (_, record) => (
+        <Button
+          type="primary"
+          onClick={() => onDelete?.(record)}   // ✅ FIXED
+          style={{ background: "#eb2724c9", color: "#fff" }}
+        >
+          {actionRemove || "Delete"}
+        </Button>
+      ),
+    });
+  }
   return (
     <>
       {(title) && (
@@ -221,14 +221,15 @@ if (actionType?.includes("Remove")) {
           current: currentPage,
           pageSize: pageSize,
           total: total,
-          onChange: (page) => onPageChange?.(page), 
-          
-          hideOnSinglePage: true, }}
+          onChange: (page) => onPageChange?.(page),
+
+          hideOnSinglePage: true,
+        }}
         scroll={{ x: "max-content" }}
         className="custom-ant-table"
         locale={{
           emptyText: (
-            <Empty  className="empty-data"
+            <Empty className="empty-data"
               description={
                 <span style={{ color: "#c9f07b", fontWeight: 500 }}>
                   No Data Found
