@@ -71,9 +71,9 @@ const Assets = () => {
             label: "Contract Address",
             name: "contractAddress",
             span: 12,
-            rules: [
-                { required: true, message: "Contract Address is required" },
-            ],
+            // rules: [
+            //     { required: true, message: "Contract Address is required" },
+            // ],
         },
         {
             label: "Network Id",
