@@ -171,6 +171,7 @@ const Login = () => {
             // ✅ Case 2: Normal Login
             if (data?.success) {
                 localStorage.setItem("adminToken", data.result.token);
+                localStorage.setItem("admin", data.result.id)
                 navigate(`/${constant?.adminRoute}/dashboard`);
                 return;
             }
@@ -216,6 +217,7 @@ const Login = () => {
                     "adminToken",
                     response.data.result.token
                 );
+                     localStorage.setItem("admin", response.data.result.id)
 
                 message.success("Login successful");
                 navigate(`/${constant?.adminRoute}/dashboard`);
