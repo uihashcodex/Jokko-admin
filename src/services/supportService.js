@@ -2,7 +2,8 @@ import { constant } from "../const";
 import io from "socket.io-client";
 
 const API_BASE_URL = `${constant.backend_url}/support`;
-const BACKEND_URL = constant.backend_url.replace("/jokkoapi", "");
+const BACKEND_URL = constant.backend_url.replace("/jokkoapi", "/");
+console.log("BACKEND_URL:", BACKEND_URL);
 
 let socket = null;
 let isConnected = false;
@@ -14,6 +15,7 @@ export const initSocket = () => {
       auth: {
         token: localStorage.getItem("adminToken"),
       },
+      transports: ['websocket'],
       reconnection: true,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,

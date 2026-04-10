@@ -1,58 +1,108 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import ReusableTable from "../reuseable/ReusableTable";
 import TableHeader from "../reuseable/TableHeader";
 import ReusableModal from "../reuseable/ReusableModal";
 import PermissionSelector from "./PermissionSelector";
-import { Form } from "antd";
+import { Form, message } from "antd";
+import { constant } from "../const";
+import axios from "axios";
+import debounce from "lodash.debounce";
 
 const RoleManagement = () => {
-
   const [data, setData] = useState([]);
   const [open, setOpen] = useState(false);
-  const [form] = Form.useForm();
   const [viewPermissions, setViewPermissions] = useState([]);
   const [viewOpen, setViewOpen] = useState(false);
   const [editingKey, setEditingKey] = useState(null);
   const [initialValues, setInitialValues] = useState({});
+  const [loading, setLoading] = useState(false);
+
   const roleLabelMap = {
     superadmin: "Super Admin",
     admin: "Admin",
-    subadmin: "Sub Admin"
+    subadmin: "Sub Admin",
   };
 
-  // Table columns
+  useEffect(() => {
+    fetchRoles();
+  }, []);
+
+  const fetchRoles = async (search = "") => {
+    try {
+      setLoading(true);
+
+      const response = await axios.get(
+        `${constant.backend_url}/management/roles/list`,
+        {
+          params: { search },
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      console.log("Roles response:", response.data);
+
+      let rolesArray = [];
+
+      if (Array.isArray(response.data)) {
+        rolesArray = response.data;
+      } else if (response.data && Array.isArray(response.data.result)) {
+        rolesArray = response.data.result;
+      } else if (
+        response.data &&
+        response.data.data &&
+        Array.isArray(response.data.data)
+      ) {
+        rolesArray = response.data.data;
+      } else if (
+        response.data &&
+        response.data.roles &&
+        Array.isArray(response.data.roles)
+      ) {
+        rolesArray = response.data.roles;
+      }
+
+      const formattedData = rolesArray.map((role, index) => ({
+        key: role._id || role.id,
+        roleId: role._id || role.id,
+        sno: index + 1,
+        name: role.role_name || role.name || "",
+        permissions: Array.isArray(role.permissions) ? role.permissions : [],
+      }));
+
+      setData(formattedData);
+    } catch (error) {
+      console.error("Error fetching roles:", error);
+      setData([]);
+      message.error(error?.response?.data?.message || "Failed to fetch roles");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const debouncedSearch = useMemo(
+    () =>
+      debounce((value) => {
+        fetchRoles(value);
+      }, 600),
+    []
+  );
+
+  useEffect(() => {
+    return () => {
+      debouncedSearch.cancel();
+    };
+  }, [debouncedSearch]);
+
   const columns = [
     { title: "S.no", dataIndex: "sno" },
     {
       title: "Role Name",
       dataIndex: "name",
-      render: (val) => roleLabelMap[val] || val
+      render: (val) => roleLabelMap[val] || val,
     },
-    //     {
-    //   title: "Permissions",
-    //   dataIndex: "permissions",
-    //       render: (permissions) => {
-    //         if (!Array.isArray(permissions)) return null;
-
-    //         return (
-    //           <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-    //             {permissions.map((mod) => (
-    //               <span
-    //                 key={mod}
-    //                 style={{
-    //                   padding: "4px 10px",
-    //                   borderRadius: 20,
-    //                   border: "1px solid #ccc",
-    //                   fontSize: 12
-    //                 }}
-    //               >
-    //                 {mod}
-    //               </span>
-    //             ))}
-    //           </div>
-    //         );
-    //       }
-    // }
     {
       title: "Permissions",
       dataIndex: "permissions",
@@ -71,7 +121,7 @@ const RoleManagement = () => {
                   padding: "4px 10px",
                   borderRadius: 20,
                   border: "1px solid #ccc",
-                  fontSize: 12
+                  fontSize: 12,
                 }}
               >
                 {mod}
@@ -86,7 +136,7 @@ const RoleManagement = () => {
                   border: "1px solid #ccc",
                   fontSize: 12,
                   cursor: "pointer",
-                  color: "#1890ff"
+                  color: "#1890ff",
                 }}
                 onClick={() => {
                   setViewPermissions(permissions);
@@ -98,101 +148,134 @@ const RoleManagement = () => {
             )}
           </div>
         );
-      }
-    }
+      },
+    },
   ];
 
-  const ROLE_OPTIONS = [
-    { label: "Super Admin", value: "superadmin" },
-    { label: "Admin", value: "admin" },
-    { label: "Sub Admin", value: "subadmin" }
-  ];
+  const handleSubmit = async (values) => {
+    try {
+      const trimmedRoleName = values?.roleName?.trim();
+      const newPermissions = Array.isArray(values?.permissions)
+        ? values.permissions
+        : [];
 
-  
-  
-  const currentUserRole = "admin";
-
-  const allowedRoles = {
-    superadmin: ["admin", "subadmin"],
-    admin: ["subadmin"],
-    subadmin: []
-  };
-  // Submit role
-  // const handleSubmit = (values) => {
-  //   const newRole = {
-  //     key: Date.now(),
-  //     sno: data.length + 1,
-  //     name: values.roleName,
-  //     permissions: values.permissions || []    };
-
-  //   setData([...data, newRole]);
-  //   setOpen(false);
-  // };
-
-  const handleSubmit = (values) => {
-
-    // ❌ duplicate check
-    const exists = data.find(
-      (item) => item.name === values.roleName && item.key !== editingKey
-    );
-
-    if (exists) {
-      alert("Role already exists!");
-      return;
-    }
-
-    if (editingKey) {
-      // ✏️ update
-      const updated = data.map((item) =>
-        item.key === editingKey
-          ? { ...item, name: values.roleName, permissions: values.permissions || [] }
-          : item
+      const exists = data.find(
+        (item) =>
+          item.name?.toLowerCase() === trimmedRoleName?.toLowerCase() &&
+          item.key !== editingKey
       );
 
-      setData(updated);
-      setEditingKey(null);
-    } else {
-      // ➕ create
-      const newRole = {
-        key: Date.now(),
-        sno: data.length + 1,
-        name: values.roleName,
-        permissions: values.permissions || []
+      if (exists) {
+        message.error("Role already exists!");
+        return;
+      }
+
+      if (editingKey) {
+        const selectedRole = data.find(
+          (item) => (item.roleId || item.key) === editingKey
+        );
+
+        if (!selectedRole) {
+          message.error("Role not found");
+          return;
+        }
+
+        const oldRoleName = selectedRole.name?.trim() || "";
+        const oldPermissions = Array.isArray(selectedRole.permissions)
+          ? [...selectedRole.permissions].sort()
+          : [];
+
+        const sortedNewPermissions = [...newPermissions].sort();
+
+        const isSame =
+          oldRoleName.toLowerCase() === trimmedRoleName.toLowerCase() &&
+          JSON.stringify(oldPermissions) === JSON.stringify(sortedNewPermissions);
+
+        if (isSame) {
+          message.error("No changes detected");
+          return;
+        }
+      }
+
+      setLoading(true);
+
+      const payload = {
+        role_name: trimmedRoleName,
+        permissions: newPermissions,
       };
 
-      setData([...data, newRole]);
+      const url = editingKey
+        ? `${constant.backend_url}/management/roles/update`
+        : `${constant.backend_url}/management/roles/create`;
+
+      if (editingKey) {
+        payload.roleId = editingKey;
+      }
+
+      const response = await axios.post(url, payload, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      console.log("Role saved:", response.data);
+
+      if (response.data?.success) {
+        message.success(
+          editingKey
+            ? "Role updated successfully"
+            : "Role created successfully"
+        );
+        setOpen(false);
+        setEditingKey(null);
+        setInitialValues({});
+        fetchRoles();
+      } else {
+        message.error(response.data?.message || "Operation failed");
+      }
+    } catch (error) {
+      console.error(
+        "Error creating/updating role:",
+        error.response?.data || error.message
+      );
+      message.error(
+        error?.response?.data?.message ||
+          "Failed to create/update role. Please try again."
+      );
+    } finally {
+      setLoading(false);
     }
-
-    setOpen(false);
   };
-
-  
 
   return (
     <div>
       <TableHeader
         data={data}
         showCreateButton={true}
+        showStatusFilter={false}
+        onSearch={(value) => debouncedSearch(value)}
+         searchTooltip="Search by Role Name"
         onCreate={() => {
           setEditingKey(null);
           setInitialValues({});
           setOpen(true);
-
-          
-        }}      />
+        }}
+      />
 
       <ReusableTable
         columns={columns}
         data={data}
         actionType={["update"]}
         onUpdate={(record) => {
-          setEditingKey(record.key);
+          setEditingKey(record.roleId || record.key);
           setInitialValues({
             roleName: record.name,
-            permissions: record.permissions
+            permissions: record.permissions,
           });
           setOpen(true);
         }}
+        loading={loading}
       />
 
       <ReusableModal
@@ -204,31 +287,41 @@ const RoleManagement = () => {
         onSubmit={handleSubmit}
         title={editingKey ? "Update Role" : "Create Role"}
         initialValues={initialValues}
-        
+        loading={loading}
         fields={[
           {
             name: "roleName",
             label: "Role Name",
-            type: "select",   
-            placeholder: "Select role",
-            options: ROLE_OPTIONS,
-            rules: [{ required: true }]
-          }
+            type: "text",
+            placeholder: "Enter role name",
+            rules: [{ required: true, message: "Role Name is required" }],
+          },
         ]}
         PermissionsContent={
-          <Form.Item name="permissions" initialValue={[]}>
+          <Form.Item
+            name="permissions"
+            initialValue={[]}
+            rules={[
+              {
+                validator: (_, value) =>
+                  Array.isArray(value) && value.length > 0
+                    ? Promise.resolve()
+                    : Promise.reject(new Error("Select at least one permission")),
+              },
+            ]}
+          >
             <PermissionSelector />
           </Form.Item>
         }
       />
-       
+
       <ReusableModal
         open={viewOpen}
         onCancel={() => setViewOpen(false)}
         title="All Permissions"
         showFooter={false}
         description={" "}
-        fields={[]} 
+        fields={[]}
         extraContent={
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
             {viewPermissions.map((mod) => (
@@ -237,7 +330,7 @@ const RoleManagement = () => {
                 style={{
                   padding: "6px 12px",
                   borderRadius: 20,
-                  border: "1px solid #ccc"
+                  border: "1px solid #ccc",
                 }}
               >
                 {mod}

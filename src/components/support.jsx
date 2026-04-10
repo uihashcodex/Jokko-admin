@@ -453,7 +453,7 @@ const SupportPage = () => {
                                                 >
                                                     {msg.isSubject && (
                                                         <div style={{ fontSize: 11, marginBottom: 4, fontWeight: "bold" }}>
-                                                            TICKET SUBJECT
+                                                            TICKET RAISED
                                                         </div>
                                                     )}
                                                     <div>{msg.text}</div>
