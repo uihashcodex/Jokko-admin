@@ -71,8 +71,8 @@ const MODULES = [
     "Email Template",
     "Email Management",
     "Support",
-    "Role Management",
-    "Profile"
+    // "Role Management",
+    // "Profile"
 ];
 
 const PermissionSelector = ({ value = [], onChange }) => {

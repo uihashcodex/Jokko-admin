@@ -48,7 +48,7 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
   // const menuItems = buildMenuItems(activeSidebar?.menuItems || []);
 
   const user = JSON.parse(localStorage.getItem("user")) || {
-    permissions: ["ALL"]
+    permissions: []
   };
 
   // 👉 filter based on permission
