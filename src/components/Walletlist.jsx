@@ -122,8 +122,9 @@ const Walletlist = () => {
           evmaddress: item?.evmAddress,
           solanaaddress: item?.solAddress,
           xrpaddress: item?.xrpAddress,
-          createdAt: item?.createdAt ? item?.createdAt.split("T")[0] : "",
-          updatedAt: item?.updatedAt ? item?.updatedAt.split("T")[0] : "",
+          trxAddress: item?.trxAddress,
+          // createdAt: item?.createdAt ? item?.createdAt.split("T")[0] : "",
+          // updatedAt: item?.updatedAt ? item?.updatedAt.split("T")[0] : "",
           status: item?.walletStatus ? "Active" : "Inactive",
         }));
 
@@ -172,6 +173,7 @@ const Walletlist = () => {
     { name: "evmaddress", label: "EVM Address", type: "copy" },
     { name: "solanaaddress", label: "Solana Address", type: "copy" },
     { name: "xrpaddress", label: "XRP Address", type: "copy" },
+    { name: "trxAddress", label: "TRX Address", type: "copy" },
   ];
 
   // -----------------------------
@@ -266,8 +268,30 @@ const Walletlist = () => {
           </span>
         ) : "-"
     },
-    { title: "Created At", dataIndex: "createdAt", key: "createdAt" },
-    { title: "Updated At", dataIndex: "createdAt", key: "updatedAt" },
+
+
+
+    {
+      title: "TRX Address",
+      dataIndex: "trxAddress",
+      render: (trx, record) =>
+        trx ? (
+          <span
+            style={{ cursor: "pointer", color: "#c9f07b" }}
+            onClick={() => {
+              setSelectedWallet({
+                label: "TRX Address",
+                value: trx
+              });
+              setModalOpen(true);
+            }}
+          >
+            {trx.slice(0, 6)}...{trx.slice(-8)}
+          </span>
+        ) : "-"
+    },
+    // { title: "Created At", dataIndex: "createdAt", key: "createdAt" },
+    // { title: "Updated At", dataIndex: "createdAt", key: "updatedAt" },
 
     { title: "Status", dataIndex: "status" },
   ];

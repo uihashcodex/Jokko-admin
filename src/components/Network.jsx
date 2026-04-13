@@ -93,22 +93,22 @@ const Network = () => {
             label: "Chain ID",
             name: "chainId",
             span: 12,
-            rules: [
-                { required: true, message: "Chain ID is required" },
-            ],
+            // rules: [
+            //     { required: true, message: "Chain ID is required" },
+            // ],
 
         },
         {
             label: "Block Explorer URL",
             name: "blockExplorerUrl",
             span: 12,
-            rules: [
-                { required: true, message: "Block Explorer URL is required" },
-                {
-                    pattern: /^https?:\/\/.+/,
-                    message: "Enter valid Block Explorer URL",
-                },
-            ]
+            // rules: [
+            //     { required: true, message: "Block Explorer URL is required" },
+            //     {
+            //         pattern: /^https?:\/\/.+/,
+            //         message: "Enter valid Block Explorer URL",
+            //     },
+            // ]
         },
         {
             label: "Type",

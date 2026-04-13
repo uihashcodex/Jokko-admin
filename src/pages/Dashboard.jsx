@@ -186,8 +186,7 @@ const Dashboard = () => {
         <StatCard title="Account creation rate" value={dashboardData?.accountcreationrate || 0} />
         <StatCard title="Average balance per user" value={dashboardData?.averageuser || 0} />
         <StatCard title="Average number of swap per user" value={dashboardData?.averageswap || 0} />
-        <StatCard title="Unused Wallet Users" value={dashboardData?.unusedWalletUsers || 0} />
-        <StatCard title="Unused Wallet Percentage" value={dashboardData?.unusedWalletPercentage + " %" || 0} />
+        <StatCard title="Average amount swapped" value={dashboardData?.averageamtswap || 0} />
 
       </div>
 

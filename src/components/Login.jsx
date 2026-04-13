@@ -15,138 +15,7 @@ const Login = () => {
     const [showTwofa, setShowTwofa] = useState(false);
     const [loginData, setLoginData] = useState(null);
     const [twoFactorCode, setTwoFactorCode] = useState("");
-// const onFinish = async (values) => {
-//     try {
-//         const response = await axios.post(
-//             `${constant.backend_url}/admin/admin-login`,
-//             {
-//                 email: values.email,
-//                 password: values.password,
-//                 twoFactorCode: twoFactorCode || "",
-//             }
-//         );
 
-//         console.log("API Response:", response.data);
-
-     
-
-
-//         if (response.data?.success) {
-
-//             // ✅ Save token correctly
-//             localStorage.setItem(
-//                 "adminToken",
-//                 response.data.result.token
-//             );
-
-//             message.success(response.data.message);
-
-//             // ✅ Redirect
-//             navigate(`/${constant?.adminRoute}/dashboard`);
-
-//         }  // ✅ Case 2: 2FA Required
-//         if (response.data.require2FA) {
-//             setShowTwofa(true);
-//             message.info("Enter 2FA Code");
-//             return;
-//         }
-
-//     } catch (error) {
-//         message.error(
-//             error.response?.data?.message || "Login failed"
-//         );
-//     }
-// };
-
-    // const onFinish = async (values) => {
-    //     try {
-    //         const response = await axios.post(
-    //             `${constant.backend_url}/admin/admin-login`,
-    //             {
-    //                 email: values.email,
-    //                 password: values.password,
-    //                     twoFactorCode: twoFactorCode || "",
-    //             }
-    //         );
-
-    //         // ✅ Login success
-    //         // if (response.data.success) {
-    //         //     localStorage.setItem(
-    //         //         "adminToken",
-    //         //         response.data.result.token
-    //         //     );
-
-    //         //     message.success("Login successful");
-    //         //     navigate(`/${constant?.adminRoute}/dashboard`);
-    //         //     return;
-    //         // }
-        
-
-    //         if (response.data.success) {
-    //             localStorage.setItem("adminToken", response.data.result.token);
-
-    //             // Save 2FA status
-    //             localStorage.setItem(
-    //                 "twoFactorEnabled",
-    //                 response.data.result.twoFactorEnabled
-    //             );
-
-    //             navigate(`/${constant?.adminRoute}/dashboard`);
-    //         }
-
-    //     } 
-    //     catch (error) {
-    //         const data = error.response?.data;
-    //         const msg = data?.message || "";
-
-    //         console.log("Login Error Response:", data);
-
-    //         if (
-    //             msg.toLowerCase().includes("2fa") ||
-    //             msg.toLowerCase().includes("two factor") ||
-    //             msg.toLowerCase().includes("otp")
-    //         ) {
-    //             setLoginData(values);
-    //             setShowTwofa(true);
-    //             message.info("Enter 2FA Code");
-    //             return;
-    //         }
-
-    //         message.error(msg || "Login failed");
-    //     }
-    // };
-
-    // const onFinish = async (values) => {
-    //     try {
-    //         const response = await axios.post(
-    //             `${constant.backend_url}/admin/admin-login`,
-    //             {
-    //                 email: values.email,
-    //                 password: values.password,
-    //             }
-    //         );
-
-    //         // ✅ If login success (2FA disabled)
-    //         if (response.data.success) {
-    //             localStorage.setItem("adminToken", response.data.result.token);
-    //             navigate(`/${constant?.adminRoute}/dashboard`);
-    //             return;
-    //         }
-
-    //     } catch (error) {
-    //         const data = error.response?.data;
-
-    //         // ✅ If backend says 2FA required
-    //         if (data?.twoFactorRequired) {
-    //             setLoginData(values);
-    //             setShowTwofa(true);
-    //             message.info("Enter OTP");
-    //             return;
-    //         }
-
-    //         message.error(data?.message || "Login failed");
-    //     }
-    // };
 
     const onFinish = async (values) => {
         try {
@@ -171,6 +40,8 @@ const Login = () => {
             // ✅ Case 2: Normal Login
             if (data?.success) {
                 localStorage.setItem("adminToken", data.result.token);
+                localStorage.setItem("admin", data.result.id)
+                localStorage.setItem("user", JSON.stringify(data.result));
                 navigate(`/${constant?.adminRoute}/dashboard`);
                 return;
             }
@@ -216,6 +87,7 @@ const Login = () => {
                     "adminToken",
                     response.data.result.token
                 );
+                     localStorage.setItem("admin", response.data.result.id)
 
                 message.success("Login successful");
                 navigate(`/${constant?.adminRoute}/dashboard`);

@@ -30,6 +30,27 @@ const TransectionHistory = () => {
   const [loading, setLoading] = useState(false);
   const [networkOptions, setNetworkOptions] = useState([]);
   const [networkId, setNetworkId] = useState("");
+  const [chartData, setChartData] = useState([]);
+
+  const formatDateMonth = (dateStr) => {
+    const d = new Date(dateStr);
+    const day = d.getDate();
+    const month = d.toLocaleString("default", { month: "short" });
+    return `${day} ${month}`; // 7 Mar
+  };
+
+  const processChartData = () => {
+    const grouped = {};
+    transactionData.forEach(trans => {
+      const date = trans.createdAt;
+      if (date) {
+        if (!grouped[date]) grouped[date] = 0;
+        grouped[date]++;
+      }
+    });
+    const chart = Object.keys(grouped).sort().map(date => [date, grouped[date]]);
+    setChartData(chart);
+  };
 
   const TransactionFields = [
     {
@@ -104,6 +125,12 @@ const TransectionHistory = () => {
       setTransactionData(originalData);
     }
   }, [id]);
+
+  useEffect(() => {
+    if (id && transactionData.length > 0) {
+      processChartData();
+    }
+  }, [transactionData, id]);
 
 
 
@@ -329,7 +356,7 @@ const TransectionHistory = () => {
       </div>
 
             <div className="mt-5">
-        <ChartsSection dashboardData={dashboardData} showtransactionChart={true}
+        <ChartsSection dashboardData={ id ? { weeklyTransactions: chartData } : dashboardData } showtransactionChart={true}
       />
             </div>
             
