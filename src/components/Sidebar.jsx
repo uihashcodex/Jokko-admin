@@ -47,18 +47,17 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
   // ✅ Safe Menu Items
   // const menuItems = buildMenuItems(activeSidebar?.menuItems || []);
 
-  const user = JSON.parse(localStorage.getItem("user")) || {
-    permissions: []
-  };
+const user = JSON.parse(localStorage.getItem("user")) || {
+  permissions: []
+};
 
-  // 👉 filter based on permission
-  const filteredSidebar = filterSidebar(
-    activeSidebar?.menuItems || [],
-    user.permissions
-  );
+// if user.permissions includes "All", show all menu items, else filter based on permissions
+const filteredSidebar = filterSidebar(
+  activeSidebar?.menuItems || [],
+  user.permissions || ['All']
+);
 
-  // 👉 then build menu
-  const menuItems = buildMenuItems(filteredSidebar);
+const menuItems = buildMenuItems(filteredSidebar);
 
   const handleLogout = () => {
     localStorage.clear(); // or removeItem("token")
