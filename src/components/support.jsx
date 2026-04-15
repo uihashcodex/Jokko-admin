@@ -36,6 +36,124 @@ const SupportPage = () => {
     const messageHandlerRef = useRef(null);
 
 
+
+    // const [chatList, setChatList] = useState([
+    //     {
+    //         id: 1,
+    //         name: "Chandravadan Raut",
+    //         message: "Test",
+    //         time: "1mon ago",
+    //         status: "open"
+    //     },
+    //     {
+    //         id: 1,
+    //         name: "Chandravadan Raut",
+    //         message: "Test",
+    //         time: "1mon ago",
+    //         status: "open"
+    //     },
+    //     {
+    //         id: 1,
+    //         name: "Chandravadan Raut",
+    //         message: "Test",
+    //         time: "1mon ago",
+    //         status: "open"
+    //     },
+    //     {
+    //         id: 1,
+    //         name: "Chandravadan Raut",
+    //         message: "Test",
+    //         time: "1mon ago",
+    //         status: "open"
+    //     },
+    //     {
+    //         id: 1,
+    //         name: "Chandravadan Raut",
+    //         message: "Test",
+    //         time: "1mon ago",
+    //         status: "open"
+    //     },
+    //     {
+    //         id: 1,
+    //         name: "Chandravadan Raut",
+    //         message: "Test",
+    //         time: "1mon ago",
+    //         status: "open"
+    //     },
+    //     {
+    //         id: 1,
+    //         name: "Chandravadan Raut",
+    //         message: "Test",
+    //         time: "1mon ago",
+    //         status: "open"
+    //     },
+    //     {
+    //         id: 1,
+    //         name: "Chandravadan Raut",
+    //         message: "Test",
+    //         time: "1mon ago",
+    //         status: "open"
+    //     },
+    //     {
+    //         id: 1,
+    //         name: "Chandravadan Raut",
+    //         message: "Test",
+    //         time: "1mon ago",
+    //         status: "open"
+    //     },
+    //     {
+    //         id: 1,
+    //         name: "Chandravadan Raut",
+    //         message: "Test",
+    //         time: "1mon ago",
+    //         status: "open"
+    //     },
+    //     {
+    //         id: 1,
+    //         name: "Chandravadan Raut",
+    //         message: "Test",
+    //         time: "1mon ago",
+    //         status: "open"
+    //     },
+    //     {
+    //         id: 1,
+    //         name: "Chandravadan Raut",
+    //         message: "Test",
+    //         time: "1mon ago",
+    //         status: "open"
+    //     },
+    //     {
+    //         id: 1,
+    //         name: "Chandravadan Raut",
+    //         message: "Test",
+    //         time: "1mon ago",
+    //         status: "open"
+    //     },
+    //     {
+    //         id: 1,
+    //         name: "Chandravadan Raut",
+    //         message: "Test",
+    //         time: "1mon ago",
+    //         status: "open"
+    //     },
+        
+    //     {
+    //         id: 2,
+    //         name: "Ramesh",
+    //         message: "test",
+    //         time: "3mon ago",
+    //         status: "closed"
+    //     },
+    //     {
+    //         id: 3,
+    //         name: "Ramesh",
+    //         message: "test7",
+    //         time: "3mon ago",
+    //         status: "open"
+    //     }
+    // ]);
+
+
     // Fetch tickets when status changes
     useEffect(() => {
         setSelectedChat(null);
@@ -367,11 +485,15 @@ const SupportPage = () => {
     );
 
     return (
-        <Row gutter={16} style={{ height: "100vh" }}>
+        <Row
+            gutter={16}
+            className="support-page-layout"
+            style={{ height: "calc(100dvh - 48px)", maxHeight: "calc(100dvh - 48px)", overflow: "hidden" }}
+        >
 
             {/* Chat Window */}
             {(!isMobile || selectedChat) && (
-                <Col span={isMobile ? 24 : 14} style={{ display: "flex" }}>
+                <Col span={isMobile ? 24 : 14} style={{ display: "flex", minHeight: 0 }}>
                     <ReusableCard
                         title={
                             selectedChat ? (
@@ -394,28 +516,32 @@ const SupportPage = () => {
                                 </div>
                             ) : "Support Chat"
                         }
-                        className="w-full"
+                        className="w-full support-chat-card"
                     >
 
                         <div
+                            className="support-chat-shell"
                             style={{
                                 display: "flex",
                                 flexDirection: "column",
-                                height: "80vh"
+                                flex: 1,
+                                minHeight: 0,
                             }}
                         >
 
                             {/* Messages */}
-                            <Spin spinning={messageLoading}>
+                            <Spin spinning={messageLoading} wrapperClassName="support-message-spinner">
                                 <div
+                                    className="support-message-scroll"
                                     style={{
                                         flex: 1,
+                                        minHeight: 0,
                                         overflowY: "auto",
-                                        paddingRight: 10
+                                        paddingRight: 10,
                                     }}
                                 >
                                     {!selectedChat ? (
-                                        <div style={{ color: "#aaa", textAlign: "center", display:"flex",justifyContent:"center",alignItems:"center",minHeight:"80vh" }}>
+                                        <div style={{ color: "#aaa", textAlign: "center", display:"flex",justifyContent:"center",alignItems:"center",minHeight:"100%" }}>
                                             <div style={{ backgroundColor: "#5E5E5E33", color: "white", flex: 1,minHeight:"100px",borderRadius:"20px" }} 
                                             className="display-3 text-lg"
                                             >
@@ -475,7 +601,7 @@ const SupportPage = () => {
 
                             {/* Chat Input */}
                             {selectedChat && selectedChat.status === "open" && (
-                                <div style={{ display: "flex", flexDirection: "column", marginTop: 10, gap: 8 }}>
+                                <div className="support-chat-input" style={{ display: "flex", flexDirection: "column", marginTop: 10, gap: 8 }}>
                                     <div style={{ display: "flex", gap: 8 }}>
                                         <Input
                                             placeholder="Message..."
@@ -506,7 +632,7 @@ const SupportPage = () => {
                                 </div>
                             )}
                             {selectedChat && selectedChat.status === "closed" && (
-                                <div style={{ color: "#aaa", textAlign: "center", marginTop: 10 }}>
+                                <div className="support-chat-input" style={{ color: "#aaa", textAlign: "center", marginTop: 10 }}>
                                     This ticket is closed
                                 </div>
                             )}
@@ -518,9 +644,10 @@ const SupportPage = () => {
 
             {/* Chat List */}
             {(!isMobile || !selectedChat) && (
-                <Col span={isMobile ? 24 : 10} style={{ display: "flex" }}>
+                <Col span={isMobile ? 24 : 10} className="support-list-col" style={{ display: "flex" }}>
                     <ReusableCard
                         title="Chats"
+                        className="support-list-card"
                         extra={
                             <Segmented
                                 options={[
@@ -541,83 +668,84 @@ const SupportPage = () => {
                         }
                     >
 
-                        <Search
-                            placeholder="Search..."
-                            value={searchValue}
-                            onChange={(e) => setSearchValue(e.target.value)}
-                            style={{ marginBottom: 16 }}
-                            className="modal-search"
-                        />
-
-                        <Spin spinning={loading}>
-                            <List
-                                itemLayout="horizontal"
-                                dataSource={filteredChats.filter(chat =>
-                                    chat.name.toLowerCase().includes(searchValue.toLowerCase()) ||
-                                    chat.subject.toLowerCase().includes(searchValue.toLowerCase())
-                                )}
-                                className="support-meta"
-                                locale={{ emptyText: "No tickets found" }}
-
-                                renderItem={(item) => (
-                                    <List.Item
-                                        onClick={() => setSelectedChat(item)}
-                                        style={{
-                                            background: "transparent",
-                                            marginBottom: 10,
-                                            padding: "10px 12px",
-                                            borderRadius: 8,
-                                            cursor: "pointer",
-                                            border: selectedChat?.id === item.id ? "1px solid #C9F07B" : "1px solid #333",
-                                            boxShadow: "0px 0px 10px 0px rgba(214, 214, 214, 0.63)",
-                                            transition: "all 0.3s ease-in-out",
-                                        }}
-                                        className="support-list-item"
-                                    >
-                                        <List.Item.Meta
-                                            avatar={<Avatar>{item.name[0]}</Avatar>}
-                                            title={<span style={{ color: "white" }}>{item.name}</span>}
-                                            description={<span style={{ color: "white" }}>{item.subject}</span>}
-                                        />
-                                        <div style={{ display: "flex", alignItems: "center", gap: 10,flexDirection:"column" }}>
-                                            
-
-                                            {/* 3 DOT MENU */}
-                                            {item.status !== "closed" && (
-                                                <Dropdown
-                                                    trigger={["click"]}
-                                                    menu={{
-                                                        items: [
-                                                            {
-                                                                key: "close",
-                                                                label: (
-                                                                    <span style={{ color: "red" }}>
-                                                                        Close Ticket
-                                                                    </span>
-                                                                ),
-                                                                onClick: (e) => {
-                                                                    e.domEvent.stopPropagation();
-                                                                    handleCloseTicket(item.id);
-                                                                }
-                                                            }
-                                                        ]
-                                                    }}
-                                                >
-                                                    <MoreOutlined
-                                                        onClick={(e) => e.stopPropagation()}
-                                                        style={{ color: "#fff", fontSize: 18 }}
-                                                    />
-                                                </Dropdown>
-                                            )}
-
-                                            <span style={{ color: "#fff", fontSize: 12 }}>
-                                                {item.time}
-                                            </span>
-                                        </div>
-                                    </List.Item>
-                                )}
+                        <div className="support-list-shell">
+                            <Search
+                                placeholder="Search..."
+                                value={searchValue}
+                                onChange={(e) => setSearchValue(e.target.value)}
+                                className="modal-search support-list-search"
                             />
-                        </Spin>
+
+                            <Spin spinning={loading} wrapperClassName="support-list-spinner">
+                                <List
+                                    itemLayout="horizontal"
+                                    dataSource={filteredChats.filter(chat =>
+                                        chat.name.toLowerCase().includes(searchValue.toLowerCase()) ||
+                                        (chat.subject || chat.message || "").toLowerCase().includes(searchValue.toLowerCase())
+                                    )}
+                                    className="support-meta support-chat-list-scroll"
+                                    locale={{ emptyText: "No tickets found" }}
+
+                                    renderItem={(item) => (
+                                        <List.Item
+                                            onClick={() => setSelectedChat(item)}
+                                            style={{
+                                                background: "transparent",
+                                                margin: "10px",
+                                                padding: "10px 12px",
+                                                borderRadius: 8,
+                                                cursor: "pointer",
+                                                border: selectedChat?.id === item.id ? "1px solid #C9F07B" : "1px solid #333",
+                                                boxShadow: "0px 0px 10px 0px rgba(214, 214, 214, 0.63)",
+                                                transition: "all 0.3s ease-in-out",
+                                            }}
+                                            className="support-list-item"
+                                        >
+                                            <List.Item.Meta
+                                                avatar={<Avatar>{item.name[0]}</Avatar>}
+                                                title={<span style={{ color: "white" }}>{item.name}</span>}
+                                                description={<span style={{ color: "white" }}>{item.subject || item.message}</span>}
+                                            />
+                                            <div style={{ display: "flex", alignItems: "center", gap: 10,flexDirection:"column" }}>
+                                                
+
+                                                {/* 3 DOT MENU */}
+                                                {item.status !== "closed" && (
+                                                    <Dropdown
+                                                        trigger={["click"]}
+                                                        menu={{
+                                                            items: [
+                                                                {
+                                                                    key: "close",
+                                                                    label: (
+                                                                        <span style={{ color: "red" }}>
+                                                                            Close Ticket
+                                                                        </span>
+                                                                    ),
+                                                                    onClick: (e) => {
+                                                                        e.domEvent.stopPropagation();
+                                                                        handleCloseTicket(item.id);
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }}
+                                                    >
+                                                        <MoreOutlined
+                                                            onClick={(e) => e.stopPropagation()}
+                                                            style={{ color: "#fff", fontSize: 18 }}
+                                                        />
+                                                    </Dropdown>
+                                                )}
+
+                                                <span style={{ color: "#fff", fontSize: 12 }}>
+                                                    {item.time}
+                                                </span>
+                                            </div>
+                                        </List.Item>
+                                    )}
+                                />
+                            </Spin>
+                        </div>
 
                     </ReusableCard>
                 </Col>
