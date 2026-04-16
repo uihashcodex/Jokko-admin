@@ -1342,6 +1342,100 @@ tr {
     color: #fff;
 }
 
+.support-page-layout {
+    min-height: 0;
+    overflow: hidden;
+}
+
+.support-page-layout > .ant-col {
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.support-chat-card,
+.support-chat-card .ant-card-body {
+    min-height: 0;
+}
+
+.support-chat-card,
+.support-list-card {
+    height: 100%;
+    max-height: 100%;
+    overflow: hidden;
+}
+
+.support-chat-card .ant-card-body {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+.support-chat-shell,
+.support-message-spinner,
+.support-message-spinner .ant-spin-container {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.support-message-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.support-chat-input {
+    flex-shrink: 0;
+}
+
+.support-list-col {
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.support-list-card,
+.support-list-card .ant-card-body {
+    min-height: 0;
+}
+
+.support-list-card .ant-card-body {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+.support-list-card .ant-card-body > div:first-child,
+.support-list-search {
+    flex-shrink: 0;
+}
+
+.support-list-shell,
+.support-list-spinner,
+.support-list-spinner .ant-spin-container {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.support-list-search {
+    margin-bottom: 16px;
+}
+
+.support-chat-list-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 4px;
+}
+
 .modal-search .ant-input {
     background: transparent !important;
     color: #ffff;
@@ -1378,4 +1472,11 @@ padding: 20px;
     background-size: cover;
     background-position: center;
     height: 150px;
+}
+
+.ant-form-item-control-input-content input::placeholder{
+    color: #fff !important;
+}
+.eye-icon-wrap svg{
+    color: #fff !important;
 }
