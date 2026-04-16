@@ -61,6 +61,16 @@
           "icon": "TransactionOutlined",
           "label": "Transaction History"
         },
+         {
+          "key": "/coin-rabbbit-history",
+          "icon": "TransactionOutlined",
+          "label": "CoinRabbit History"
+        },
+           {
+          "key": "/onramper-history",
+          "icon": "TransactionOutlined",
+          "label": "Onramper History"
+        },
         {
           "key": "alchemy",
           "label": "Alchemy Details",

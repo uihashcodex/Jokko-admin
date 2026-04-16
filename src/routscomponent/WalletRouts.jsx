@@ -21,6 +21,11 @@ import RoleManagement from "../components/RoleManagement";
 import StaffManagement from "../components/staffManagement"
 import { constant } from "../const";
 import SupportPage from "../components/support";
+import CoinRabbitTrans from "../components/exchange/CoinRabbitTrans";
+import OnramperHistory from "../components/exchange/onramper";
+
+
+// import CoinRabbittranscations from "../components/exchange/CoinRabbittranscations";
 
 
 
@@ -38,6 +43,11 @@ const WalletRouts = () => {
       <Route path={`/${constant?.adminRoute}/wallet`} element={<Walletlist />} />
       <Route path={`/wallet/:id`} element={<Walletlist />} />
       <Route path={`/${constant?.adminRoute}/transaction`} element={<TransectionHistory />} />
+      <Route path={`/${constant?.adminRoute}/coin-rabbbit-history`} element={<CoinRabbitTrans />} />
+      <Route path={`/coin-rabbbit-history/:id`} element={<CoinRabbitTrans />} />
+      <Route path={`/${constant?.adminRoute}/onramper-history`} element={<OnramperHistory />} />
+      <Route path={`/onramper-history/:id`} element={<OnramperHistory />} />
+
       <Route path={`/transaction/:id`} element={<TransectionHistory />} />
       <Route path={`/${constant?.adminRoute}/addressgeneration`} element={<AddressGeneration />} />
       <Route path={`/${constant?.adminRoute}/profile`} element={<Profile />} />

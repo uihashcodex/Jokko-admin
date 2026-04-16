@@ -1,8 +1,12 @@
-import { Row, Col, Input, Tooltip, DatePicker,Grid } from "antd";
+import { Row, Col, Input, Tooltip, DatePicker, Grid } from "antd";
 import SelectField from "./SelectField";
 import ReButton from "./Button";
-import { useState, useEffect } from "react";
-import { CloseCircleFilled, CalendarOutlined, PlusOutlined, SwapRightOutlined } from "@ant-design/icons";
+import { useState } from "react";
+import {
+  CloseCircleFilled,
+  CalendarOutlined,
+  PlusOutlined,
+} from "@ant-design/icons";
 
 const { Search } = Input;
 
@@ -10,79 +14,61 @@ const TableHeader = ({
   data = [],
   networkOptions = [],
   onFilter,
-  onSearch, 
+  onSearch,
   onTypeChange,
   onVerifyChange,
   onNetChange,
+  onOnrampChange, // add this
   onNetworkChange,
   showStatusFilter = true,
   showPrivateFilter = false,
   showNetFilter = false,
-  showNetworkFilter=false,
+  showNetworkFilter = false,
   showCreateButton = true,
   showseletButton = false,
   showDateFilter = false,
-  showSearch=true,
+  showonrampFilter = false,
+  showSearch = true,
   onDateChange,
   searchTooltip,
   onSelect,
   onCreate,
-  placeHolder
+  placeHolder,
 }) => {
-
   const [searchText, setSearchText] = useState("");
   const [status, setStatus] = useState(undefined);
   const [privateType, setPrivateType] = useState(undefined);
   const [netType, setNetType] = useState(undefined);
+  const [rampType, setRampType] = useState(undefined);
   const [networkType, setNetworkType] = useState(undefined);
+
   const { RangePicker } = DatePicker;
-    const { useBreakpoint } = Grid;
+  const { useBreakpoint } = Grid;
   const screens = useBreakpoint();
 
   const [dateRange, setDateRange] = useState([]);
   const [mobileStep, setMobileStep] = useState("start");
   const [mobileOpen, setMobileOpen] = useState(false);
-// useEffect(() => {
-//   let temp = [...data];
-
-//   if (searchText) {
-//     temp = temp.filter(item =>
-//       Object.values(item)
-//         .join(" ")
-//         .toLowerCase()
-//         .includes(searchText.toLowerCase())
-//     );
-//   }
-
-//   if (status) {
-//     temp = temp.filter(item => item.status === status);
-//   }
-//   if (privateType) {
-//     temp = temp.filter(item => item.type === privateType);
-//   }
-
-
-//   onFilter && onFilter(temp);
-
-// }, [searchText, status, privateType, data]);
-
-  console.log(data, onFilter,"data1");
 
   return (
-    <Row gutter={[16, 16]} justify="end"  style={{ marginBottom: 16,padding:"0 10px" }}>
-      {showSearch &&
-      <Col xs={24} sm={12} md={8} lg={6}>
-        <Tooltip title={searchTooltip} placement="top" color="rgb(18 47 42)">
-
-        <Search
-          placeholder={placeHolder || "Search..."}
-          allowClear
-          onChange={(e) => onSearch?.(e.target.value)}
-          className="reusable-modal-search"
-        />
-        </Tooltip>
-      </Col>
-}
+    <Row gutter={[16, 16]} justify="end" style={{ marginBottom: 16, padding: "0 10px" }}>
+      {showSearch && (
+        <Col xs={24} sm={12} md={8} lg={6}>
+          <Tooltip title={searchTooltip} placement="top" color="rgb(18 47 42)">
+            <Search
+              placeholder={placeHolder || "Search..."}
+              allowClear
+              value={searchText}
+              onChange={(e) => {
+                const value = e.target.value;
+                setSearchText(value);
+                onSearch?.(value);
+              }}
+              className="reusable-modal-search"
+            />
+          </Tooltip>
+        </Col>
+      )}
 
       {showStatusFilter && (
         <Col xs={24} sm={12} md={6} lg={4}>
@@ -94,10 +80,9 @@ const TableHeader = ({
               setStatus(value);
               onVerifyChange?.(value);
             }}
-
             options={[
               { label: "Active", value: "active" },
-              { label: "Inactive", value: "inactive" }
+              { label: "Inactive", value: "inactive" },
             ]}
           />
         </Col>
@@ -108,13 +93,14 @@ const TableHeader = ({
           <SelectField
             placeholder="Select Type"
             value={privateType}
-            // onChange={setPrivateType}
             className="custom-select reheader-modal"
-            onChange={(value) => onTypeChange?.(value)}
-
+            onChange={(value) => {
+              setPrivateType(value);
+              onTypeChange?.(value);
+            }}
             options={[
               { label: "Individual", value: "individual" },
-              { label: "Professional", value: "professional" }
+              { label: "Professional", value: "professional" },
             ]}
           />
         </Col>
@@ -125,13 +111,33 @@ const TableHeader = ({
           <SelectField
             placeholder="Select Net Type"
             value={netType}
-            // onChange={setPrivateType}
             className="custom-select reheader-modal"
-            onChange={(value) => onNetChange?.(value)}
-
+            onChange={(value) => {
+              setNetType(value);
+              onNetChange?.(value);
+            }}
             options={[
               { label: "MainNet", value: "Mainnet" },
-              { label: "TestNet", value: "testnet" }
+              { label: "TestNet", value: "testnet" },
+            ]}
+          />
+        </Col>
+      )}
+
+      {showonrampFilter && (
+        <Col xs={24} sm={12} md={6} lg={4}>
+          <SelectField
+            placeholder="Select Provider Type"
+            value={rampType}
+            className="custom-select reheader-modal"
+            onChange={(value) => {
+              setRampType(value);
+              onOnrampChange?.(value); // fixed here
+            }}
+            options={[
+              { label: "TransFi", value: "transfi" },
+              { label: "Fonbnk", value: "fonbnk" },
+              { label: "OnRamper", value: "onramper" },
             ]}
           />
         </Col>
@@ -142,7 +148,6 @@ const TableHeader = ({
           <SelectField
             placeholder="Select Network Type"
             value={networkType}
-            // onChange={setPrivateType}
             className="custom-select reheader-modal"
             onChange={(value) => {
               setNetworkType(value);
@@ -152,25 +157,6 @@ const TableHeader = ({
           />
         </Col>
       )}
-      {/* {showDateFilter && (
-        <Col xs={24} sm={12} md={8} lg={6}>
-          <RangePicker
-            value={dateRange}
-            className="custom-select repicker-modal"
-            popupClassName="custom-date-theme"
-            style={{ width: "100%" }}
-            picker="date"
-            placement="bottomLeft"
-            showTime={false}
-            mode={screens.xs ? "date" : undefined}
-            onChange={(dates, dateStrings) => {
-              const safeDates = dates ?? [];
-              setDateRange(safeDates);
-              onDateChange?.(dateStrings ?? []);
-            }}
-          />
-        </Col>
-      )} */}
 
       {showDateFilter && (
         <Col xs={24} sm={12} md={8} lg={6}>
@@ -185,17 +171,7 @@ const TableHeader = ({
                 placeholder="Select Date Range"
                 value={dateRange?.[0] || null}
                 inputReadOnly
-                suffixIcon={dateRange?.length === 2 ? null : <CalendarOutlined />} format={() => {
-                  if (dateRange?.[0] && dateRange?.[1]) {
-                    return `${dateRange[0].format("YYYY-MM-DD")} "<CalendarOutlined />" ${dateRange[1].format(
-                      "YYYY-MM-DD"
-                    )}`;
-                  }
-                  if (dateRange?.[0]) {
-                    return `${dateRange[0].format("YYYY-MM-DD")} - ...`;
-                  }
-                  return "";
-                }}
+                suffixIcon={dateRange?.length === 2 ? null : <CalendarOutlined />}
                 onOpenChange={(open) => setMobileOpen(open)}
                 onChange={(date) => {
                   if (mobileStep === "start") {
@@ -258,7 +234,6 @@ const TableHeader = ({
         </Col>
       )}
 
-
       {showCreateButton && (
         <Col xs={24} sm={12} md={4} lg={4}>
           <ReButton
@@ -269,6 +244,7 @@ const TableHeader = ({
           />
         </Col>
       )}
+
       {showseletButton && (
         <Col xs={24} sm={12} md={4} lg={4}>
           <ReButton

@@ -40,6 +40,8 @@ const ReusableTable = ({
         const items = [
           { key: "transaction", label: "Transaction" },
           { key: "wallet", label: "Wallet" },
+          { key: "coinrabbit", label: "CoinRabbit" },
+          { key: "onramper", label: "OnRamper" },
         ];
 
         return (
