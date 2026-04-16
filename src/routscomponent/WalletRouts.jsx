@@ -1,6 +1,7 @@
 import { Routes, Route } from "react-router-dom";
 
 import Dashboard from "../pages/Dashboard";
+import BuySellFiatAsset from "../pages/BuySellFiatAsset";
 import Viewdetail from "../components/Viewdetail";
 import Assets from "../components/Assets";
 import Network from "../components/Network";
@@ -37,6 +38,7 @@ const WalletRouts = () => {
     <Routes>
       <Route path={`/${constant?.adminRoute}/dashboard`} element={<Dashboard />} />
       <Route path={`/${constant?.adminRoute}/assets`} element={<Assets />} />
+      <Route path={`/${constant?.adminRoute}/buy-sell-fiat-asset`} element={<BuySellFiatAsset />} />
       <Route path={`/${constant?.adminRoute}/network`} element={<Network />} />
       <Route path={`/${constant?.adminRoute}/viewdetails`} element={<Viewdetail />} />
       <Route path={`/${constant?.adminRoute}/viewuser/:id`} element={<Viewuser />} />

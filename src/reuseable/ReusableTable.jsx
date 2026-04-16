@@ -19,6 +19,7 @@ const ReusableTable = ({
   onEdit,
   onBlock,
   onUnblock,
+  onStatusChange,
   onDelete,
   title,
   extra,
@@ -112,6 +113,37 @@ const ReusableTable = ({
             options={[
               { value: "block", label: "Block" },
               { value: "unblock", label: "Unblock" },
+            ]}
+          />
+        );
+      },
+    });
+  }
+
+  if (actionType?.includes("status")) {
+    updatedColumns.push({
+      title: "Status",
+      key: "statusAction",
+      render: (_, record) => {
+
+        const isActive = record.verifyStatus === "active";
+
+        return (
+          <Select
+            value={isActive ? "active" : "inactive"}
+            style={{ width: 120 }}
+            onChange={(value) => {
+              if (value === "active" && !isActive) {
+                onStatusChange?.(record, "active");
+              }
+
+              if (value === "inactive" && isActive) {
+                onStatusChange?.(record, "inactive");
+              }
+            }}
+            options={[
+              { value: "active", label: "Active" },
+              { value: "inactive", label: "Inactive" },
             ]}
           />
         );

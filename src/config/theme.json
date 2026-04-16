@@ -41,6 +41,7 @@
           "icon": "GoldOutlined",
           "label": "Assets"
         },
+      
         {
           "key": "/network",
           "icon": "ClusterOutlined",
@@ -88,6 +89,11 @@
           "icon": "RiseOutlined",
           "label": "Trending Currency"
         },
+          {
+            "key": "/buy-sell-fiat-asset",
+            "icon": "SwapOutlined",
+            "label": "Buy/Sell Fiat Asset"
+          },
                {
           "key": "/pushnotification",
           "icon": "PushpinOutlined",

@@ -1480,3 +1480,13 @@ padding: 20px;
 .eye-icon-wrap svg{
     color: #fff !important;
 }
+.mobile-sidebarselector .ant-menu-submenu .ant-menu-submenu-title .anticon{
+    color: #fff !important;
+}
+.mobile-sidebarselector .ant-menu-submenu .ant-menu-submenu-title .ant-menu-title-content{
+    color: #fff !important;
+}
+
+.mobile-sidebarselector .ant-menu-submenu .ant-menu-submenu-title  .ant-menu-submenu-arrow{
+ color: #fff !important;
+}

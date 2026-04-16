@@ -171,7 +171,7 @@ const menuItems = buildMenuItems(filteredSidebar);
 
           <Menu
             mode="inline"
-            className="custom-sidebar-menu"
+            className="custom-sidebar-menu mobile-sidebarselector"
             // selectedKeys={[location.pathname]}
             onClick={({ key }) => {
               navigate(`/${constant.adminRoute}/${key}`);
