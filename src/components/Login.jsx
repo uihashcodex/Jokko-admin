@@ -15,17 +15,30 @@ const Login = () => {
     const [showTwofa, setShowTwofa] = useState(false);
     const [loginData, setLoginData] = useState(null);
     const [twoFactorCode, setTwoFactorCode] = useState("");
-
-
+    const [loginLoading, setLoginLoading] = useState(false);
+    const [otpLoading, setOtpLoading] = useState(false);
+    const delay = (ms) => new Promise((res) => setTimeout(res, ms));
     const onFinish = async (values) => {
+        if (loginLoading) return;
+        setLoginLoading(true);
+
+        const start = Date.now();
+
+
         try {
             const response = await axios.post(
                 `${constant.backend_url}/admin/admin-login`,
                 {
                     email: values.email,
                     password: values.password,
-                }
+                },
             );
+            const elapsed = Date.now() - start;
+            if (elapsed < 800) {
+                await delay(800 - elapsed);
+            }
+
+
 
             const data = response.data;
 
@@ -49,9 +62,20 @@ const Login = () => {
             message.error(data?.message || "Login failed");
 
         } catch (error) {
-            message.error(
-                error.response?.data?.message || "Login failed"
-            );
+            // message.error(
+            //     error.response?.data?.message || "Login failed"
+            // );
+            const elapsed = Date.now() - start;
+            if (elapsed < 800) {
+                await delay(800 - elapsed);
+            }
+            message.error({
+                content: error.response ?.data?.message || "Login failed",
+                key: "loginError"
+            });
+        }
+        finally {
+            setLoginLoading(false); // ✅ important
         }
     };
 
@@ -71,6 +95,10 @@ const Login = () => {
             message.error("Enter 6 digit OTP");
             return;
         }
+        if (otpLoading) return;
+        setOtpLoading(true);
+        const start = Date.now();
+
 
         try {
             const response = await axios.post(
@@ -79,8 +107,15 @@ const Login = () => {
                     email: loginData.email,
                     password: loginData.password,
                     twoFactorCode: twoFactorCode,
-                }
+                },
             );
+
+
+
+            const elapsed = Date.now() - start;
+            if (elapsed < 800) {
+                await delay(800 - elapsed);
+            }
 
             if (response.data.success) {
                 localStorage.setItem(
@@ -94,9 +129,20 @@ const Login = () => {
             }
 
         } catch (error) {
-            message.error(
-                error.response?.data?.message || "Invalid OTP"
-            );
+            // message.error(
+            //     error.response?.data?.message || "Invalid OTP"
+            // );
+            const elapsed = Date.now() - start;
+            if (elapsed < 800) {
+                await delay(800 - elapsed);
+            }
+            message.error({
+                content: error.response?.data?.message || "Invalid OTP",
+                key: "otpError"
+            });
+        }
+        finally {
+            setOtpLoading(false); // ✅ important
         }
     };
 
@@ -173,6 +219,8 @@ const Login = () => {
                                 type="primary"
                                 htmlType="submit"
                                 size="large"
+                                loading={loginLoading}   // ✅ loader here
+                                disabled={loginLoading}
                                 className="w-full rounded-lg font-semibold   bg-gradient-to-r from-blue-500 to-indigo-600 
            border-none 
            hover:from-indigo-600 hover:to-blue-500 
@@ -182,7 +230,7 @@ const Login = () => {
                                     color: `${theme.sidebarSettings.activeTextColor}`
                                 }}
                             >
-                                Login
+                                {loginLoading ? "Logging in..." : "Login"}
                             </Button>
                         </Form.Item>
                     </Form>
@@ -199,12 +247,15 @@ const Login = () => {
                             length={6}
                             onChange={(value) => setTwoFactorCode(value)}
                         />
-                        <button
+                        <Button
+                            type="primary"
                             className="bg-blue-500 text-white px-4 py-2 rounded-md"
+                            loading={otpLoading}   // ✅ loader here
+                            disabled={otpLoading}
                             onClick={handleOtpSubmit}
                         >
                             Verify & Login
-                        </button>
+                        </Button>
                     </div>
 
                 )}

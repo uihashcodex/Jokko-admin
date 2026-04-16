@@ -4,6 +4,7 @@ import { hasAccess } from "./permissionCheck";
 const MODULE_MAP = {
     "/dashboard": "Dashboard",
     "/assets": "Assets",
+    // "/buy-sell-fiat-asset": "Assets",
     "/network": "Network",
     "/viewdetails": "User Details",
     "/wallet": "Wallet",
