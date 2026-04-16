@@ -262,6 +262,12 @@ const Viewdetail = () => {
           if (section === "transaction") {
             navigate(`/transaction/${record.key}`, { state: record });
           }
+           if (section === "coinrabbit") {
+            navigate(`/coin-rabbbit-history/${record.key}`, { state: record });
+          }
+           if (section === "onramper") {
+            navigate(`/onramper-history/${record.key}`, { state: record });
+          }
         }}
         onBlock={(record) => blockUser(record)}
         onUnblock={(record) => blockUser(record)}
