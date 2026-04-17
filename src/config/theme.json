@@ -70,20 +70,9 @@
            {
           "key": "/onramper-history",
           "icon": "TransactionOutlined",
-          "label": "Onramper History"
+          "label": "Providers"
         },
-        {
-          "key": "alchemy",
-          "label": "Alchemy Details",
-          "icon": "ApiOutlined",
-          "children": [
-            {
-              "key": "webhook",
-              "label": "Webhook",
-              "icon": "LinkOutlined"
-            }
-          ]
-        },
+       
         {
           "key": "/trendingcurrency",
           "icon": "RiseOutlined",
