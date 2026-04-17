@@ -8,6 +8,7 @@ import { message } from "antd";
 import { useState } from "react";
 import { Flex, Input, Typography } from 'antd';
 import theme from '../config/theme';
+import { getFirstAllowedRoute } from "../utils/permissionCheck";
 
 const { Title } = Typography;
 const Login = () => {
@@ -55,8 +56,18 @@ const Login = () => {
                 localStorage.setItem("adminToken", data.result.token);
                 localStorage.setItem("admin", data.result.id)
                 localStorage.setItem("user", JSON.stringify(data.result));
-                navigate(`/${constant?.adminRoute}/dashboard`);
-                return;
+                  const firstRoute = getFirstAllowedRoute(data?.result?.permissions || []);
+
+  if (!firstRoute) {
+    message.error("No page access assigned for this user");
+    return;
+  }
+    navigate(`/${constant?.adminRoute}${firstRoute}`);
+  return;
+                // navigate(`/${constant?.adminRoute}/dashboard`);
+                // return;
+
+                
             }
 
             message.error(data?.message || "Login failed");
@@ -125,8 +136,18 @@ const Login = () => {
                 localStorage.setItem("admin", response.data.result.id)
 
                 message.success("Login successful");
-                navigate(`/${constant?.adminRoute}/dashboard`);
-            }
+localStorage.setItem("user", JSON.stringify(response.data.result));
+
+const firstRoute = getFirstAllowedRoute(response?.data?.result?.permissions || []);
+
+
+
+if (!firstRoute) {
+  message.error("No page access assigned for this user");
+  return;
+}
+
+navigate(`/${constant?.adminRoute}${firstRoute}`);            }
 
         } catch (error) {
             // message.error(

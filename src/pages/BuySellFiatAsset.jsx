@@ -1,117 +1,21 @@
 import { useEffect, useMemo, useState } from "react";
 import ReusableTable from "../reuseable/ReusableTable";
 import TableHeader from "../reuseable/TableHeader";
-import {  message } from 'antd';
+import { message } from "antd";
+import axios from "axios";
+import debounce from "lodash.debounce";
+import { constant } from "../const";
 
-const DUMMY_FIAT_ASSETS = [
-  {
-    id: 1,
-    tokenName: "Albania Lek",
-    tokenSymbol: "Lek",
-    code: "ALL",
-    type: "Buy",
-    verifyStatus: "active",
-  },
-  {
-    id: 2,
-    tokenName: "US Dollar",
-    tokenSymbol: "USD",
-    code: "USD",
-    type: "Sell",
-    verifyStatus: "inactive",
-  },
-  {
-    id: 3,
-    tokenName: "Euro",
-    tokenSymbol: "EUR",
-    code: "EUR",
-    type: "Buy",
-    verifyStatus: "active",
-  },
-  {
-    id: 4,
-    tokenName: "British Pound",
-    tokenSymbol: "GBP",
-    code: "GBP",
-    type: "Sell",
-    verifyStatus: "active",
-  },
-  {
-    id: 5,
-    tokenName: "Indian Rupee",
-    tokenSymbol: "INR",
-    code: "INR",
-    type: "Buy",
-    verifyStatus: "inactive",
-  },
-  {
-    id: 6,
-    tokenName: "Canadian Dollar",
-    tokenSymbol: "CAD",
-    code: "CAD",
-    type: "Sell",
-    verifyStatus: "active",
-  },
-  {
-    id: 7,
-    tokenName: "Australian Dollar",
-    tokenSymbol: "AUD",
-    code: "AUD",
-    type: "Buy",
-    verifyStatus: "active",
-  },
-  {
-    id: 8,
-    tokenName: "Swiss Franc",
-    tokenSymbol: "CHF",
-    code: "CHF",
-    type: "Sell",
-    verifyStatus: "inactive",
-  },
-  {
-    id: 9,
-    tokenName: "Japanese Yen",
-    tokenSymbol: "JPY",
-    code: "JPY",
-    type: "Buy",
-    verifyStatus: "active",
-  },
-  {
-    id: 10,
-    tokenName: "Singapore Dollar",
-    tokenSymbol: "SGD",
-    code: "SGD",
-    type: "Sell",
-    verifyStatus: "active",
-  },
-  {
-    id: 11,
-    tokenName: "UAE Dirham",
-    tokenSymbol: "AED",
-    code: "AED",
-    type: "Buy",
-    verifyStatus: "inactive",
-  },
-  {
-    id: 12,
-    tokenName: "Saudi Riyal",
-    tokenSymbol: "SAR",
-    code: "SAR",
-    type: "Sell",
-    verifyStatus: "active",
-  },
-];
+const PAGE_SIZE = 10;
 
 const columns = [
   { title: "S.no", dataIndex: "sno", key: "sno" },
   { title: "Token Name", dataIndex: "tokenName", key: "tokenName" },
   { title: "Token Symbol", dataIndex: "tokenSymbol", key: "tokenSymbol" },
   { title: "Code", dataIndex: "code", key: "code" },
-  { title: "Type", dataIndex: "type", key: "type" },
+  // { title: "Type", dataIndex: "type", key: "type" },
   { title: "Status", dataIndex: "verifyStatus", key: "verifyStatus" },
 ];
-
-const PAGE_SIZE = 10;
 
 const BuySellFiatAsset = () => {
   const [originalData, setOriginalData] = useState([]);
@@ -123,7 +27,7 @@ const BuySellFiatAsset = () => {
   const [filters, setFilters] = useState({
     search: "",
     type: "",
-    verifyStatus: "",
+    status: "",
   });
 
   const typeOptions = useMemo(
@@ -135,67 +39,133 @@ const BuySellFiatAsset = () => {
   );
 
   const updateFilter = (key, value) => {
+    setPage(1);
     setFilters((prev) => ({
       ...prev,
       [key]: value || "",
     }));
-    setPage(1);
+  };
+
+  const getBuySellFiatAssets = async () => {
+    const startTime = Date.now();
+
+    try {
+      setLoading(true);
+
+      const cleanFilters = Object.fromEntries(
+        Object.entries(filters).filter(([_, v]) => v !== "")
+      );
+
+      const response = await axios.post(
+        `${constant.backend_url}/admin/buysell-fiatAsset`,
+        {
+          ...cleanFilters,
+          page,
+          limit: PAGE_SIZE,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+          },
+          validateStatus: () => true,
+        }
+      );
+
+      if (response.data?.success) {
+        // supports either result مباشرة array or result.docs
+        const docs = Array.isArray(response.data?.result)
+          ? response.data.result
+          : response.data?.result?.docs || [];
+
+        const totalCount =
+          response.data?.total ||
+          response.data?.result?.totalDocs ||
+          response.data?.result?.total ||
+          docs.length;
+
+        const formattedData = docs.map((item, index) => ({
+          id: item?._id || item?.id || index,
+          sno: (page - 1) * PAGE_SIZE + index + 1,
+          tokenName:
+            item?.tokenName ||
+            item?.name ||
+            item?.fiatName ||
+            item?.currencyName ||
+            "-",
+          tokenSymbol:
+            item?.tokenSymbol ||
+            item?.symbol ||
+            item?.fiatSymbol ||
+            item?.currencySymbol ||
+            "-",
+          code: item?.code || item?.currencyCode || item?.fiatCode || "-",
+          type: item?.type || "-",
+          verifyStatus:
+            typeof item?.verifyStatus === "boolean"
+              ? item.verifyStatus
+                ? "active"
+                : "inactive"
+              : item?.verifyStatus || item?.status || "-",
+        }));
+
+        setOriginalData(formattedData);
+        setTotal(totalCount);
+      } else {
+        setOriginalData([]);
+        setTotal(0);
+        messageApi.error(response.data?.message || "Failed to fetch fiat assets");
+      }
+    } catch (error) {
+      console.log("getBuySellFiatAssets error:", error);
+      setOriginalData([]);
+      setTotal(0);
+      messageApi.error(
+        error?.response?.data?.message || "Something went wrong"
+      );
+    } finally {
+      const elapsed = Date.now() - startTime;
+      const minTime = 500;
+
+      setTimeout(() => {
+        setLoading(false);
+      }, Math.max(minTime - elapsed, 0));
+    }
   };
 
   useEffect(() => {
-    const delay = 500 + Math.floor(Math.random() * 301);
-
-    setLoading(true);
-
-    const timer = setTimeout(() => {
-      const searchValue = filters.search.trim().toLowerCase();
-
-      const filteredData = DUMMY_FIAT_ASSETS.filter((item) => {
-        const matchesSearch =
-          !searchValue ||
-          item.tokenName.toLowerCase().includes(searchValue) ||
-          item.tokenSymbol.toLowerCase().includes(searchValue) ||
-          item.code.toLowerCase().includes(searchValue);
-
-        const matchesStatus =
-          !filters.verifyStatus || item.verifyStatus === filters.verifyStatus;
-
-        const matchesType = !filters.type || item.type === filters.type;
-
-        return matchesSearch && matchesStatus && matchesType;
-      });
-
-      const paginatedData = filteredData.slice(
-        (page - 1) * PAGE_SIZE,
-        page * PAGE_SIZE
-      );
-
-      setTotal(filteredData.length);
-      setOriginalData(
-        paginatedData.map((item, index) => ({
-          ...item,
-          sno: (page - 1) * PAGE_SIZE + index + 1,
-        }))
-      );
-      setLoading(false);
-    }, delay);
-
-    return () => clearTimeout(timer);
+    getBuySellFiatAssets();
   }, [page, filters]);
 
-  const handleStatusChange = (record, newStatus) => {
-    message.success(
-      `${record.tokenName} changed to ${newStatus}`
-    );
+  const debouncedSearch = useMemo(
+    () =>
+      debounce((value) => {
+        updateFilter("search", value);
+      }, 800),
+    []
+  );
 
-    // UI update (dummy)
-    setOriginalData((prev) =>
-      prev.map((item) =>
-        item.id === record.id
-          ? { ...item, verifyStatus: newStatus }
-          : item
-      )
-    );
+  useEffect(() => {
+    return () => {
+      debouncedSearch.cancel();
+    };
+  }, [debouncedSearch]);
+
+  const handleStatusChange = async (record, newStatus) => {
+    try {
+      // only UI message for now
+      // if you have update status API, call it here
+      setOriginalData((prev) =>
+        prev.map((item) =>
+          item.id === record.id ? { ...item, verifyStatus: newStatus } : item
+        )
+      );
+
+      messageApi.success(`${record.tokenName} changed to ${newStatus}`);
+    } catch (error) {
+      console.log(error);
+      messageApi.error("Failed to update status");
+    }
   };
 
   return (
@@ -224,7 +194,7 @@ const BuySellFiatAsset = () => {
           showStatusFilter={true}
           showSearch={true}
           networkOptions={typeOptions}
-          onSearch={(value) => updateFilter("search", value)}
+          onSearch={(value) => debouncedSearch(value)}
           onVerifyChange={(value) => updateFilter("verifyStatus", value)}
           onTypeChange={(value) => updateFilter("type", value)}
           onNetworkChange={(value) => updateFilter("type", value)}
@@ -242,7 +212,6 @@ const BuySellFiatAsset = () => {
           loading={loading}
           actionType={["status"]}
           onStatusChange={handleStatusChange}
-
         />
       </>
     </div>

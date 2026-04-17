@@ -203,7 +203,7 @@ const OnramperHistory = () => {
         )}
 
         <h2 className="text-2xl font-semibold white">
-          {id ? "OnRamper Details" : "OnRamper History"}
+          {id ? "Provider Details" : "Provider History"}
         </h2>
       </div>
 
