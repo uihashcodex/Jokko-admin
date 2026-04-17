@@ -89,11 +89,33 @@
           "icon": "RiseOutlined",
           "label": "Trending Currency"
         },
-          {
-            "key": "/buy-sell-fiat-asset",
-            "icon": "SwapOutlined",
-            "label": "Buy/Sell Fiat Asset"
-          },
+        {
+          "key": "buysell",
+          "icon": "ShoppingCartOutlined",
+          "label": "Buy/Sell",
+          "children": [
+            {
+              "key": "/buy-sell-fiat-asset",
+              "icon": "DollarOutlined",
+              "label": "Fiat Asset"
+            },
+            {
+              "key": "/buy-sell-crypto",
+              "icon": "DollarOutlined",
+              "label": "Crypto"
+            },
+            {
+              "key": "/buy-sell-networks",
+              "icon": "ClusterOutlined",
+              "label": "Networks"
+            },
+            {
+              "key": "/coinrabbit-crypto",
+              "icon": "SwapOutlined",
+              "label": "CoinRabbit Crypto"
+            }
+          ]
+        },
                {
           "key": "/pushnotification",
           "icon": "PushpinOutlined",
@@ -135,6 +157,11 @@
               "label": "Staff Management"
             }
           ]
+        },
+        {
+          "key": "/broadcast",
+          "icon": "NotificationOutlined",
+          "label": "Broadcast"
         },
         {
           "key": "/support",

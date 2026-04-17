@@ -2,6 +2,9 @@ import { Routes, Route } from "react-router-dom";
 
 import Dashboard from "../pages/Dashboard";
 import BuySellFiatAsset from "../pages/BuySellFiatAsset";
+import BuySellCrypto from "../pages/BuySellCrypto";
+import BuySellNetworks from "../pages/BuySellNetworks";
+import CoinRabbitCrypto from "../pages/CoinRabbitCrypto";
 import Viewdetail from "../components/Viewdetail";
 import Assets from "../components/Assets";
 import Network from "../components/Network";
@@ -16,6 +19,7 @@ import EmailTemplateManagement from "../components/EmailTemplateManagement";
 import PushNotification from "../components/pushnotification";
 import EmailTemplateManagementnew from "../components/EmailTemplateManagementnew";
 import EmailCampaign from "../components/EmailCampaign";
+import Broadcast from "../components/Broadcast";
 import TrendingCurrency from "../components/TrendingCurrency";
 import DefaultCurrency from "../components/DefaultCurrency";
 import RoleManagement from "../components/RoleManagement";
@@ -39,6 +43,9 @@ const WalletRouts = () => {
       <Route path={`/${constant?.adminRoute}/dashboard`} element={<Dashboard />} />
       <Route path={`/${constant?.adminRoute}/assets`} element={<Assets />} />
       <Route path={`/${constant?.adminRoute}/buy-sell-fiat-asset`} element={<BuySellFiatAsset />} />
+      <Route path={`/${constant?.adminRoute}/buy-sell-crypto`} element={<BuySellCrypto />} />
+      <Route path={`/${constant?.adminRoute}/buy-sell-networks`} element={<BuySellNetworks />} />
+      <Route path={`/${constant?.adminRoute}/coinrabbit-crypto`} element={<CoinRabbitCrypto />} />
       <Route path={`/${constant?.adminRoute}/network`} element={<Network />} />
       <Route path={`/${constant?.adminRoute}/viewdetails`} element={<Viewdetail />} />
       <Route path={`/${constant?.adminRoute}/viewuser/:id`} element={<Viewuser />} />
@@ -59,6 +66,7 @@ const WalletRouts = () => {
       <Route path={`/${constant?.adminRoute}/pushnotification`} element={<PushNotification />} />
       <Route path={`/${constant?.adminRoute}/emailcontent`} element={<EmailTemplateManagementnew />} />
       <Route path={`/${constant?.adminRoute}/emailcampaign`} element={<EmailCampaign />} />
+      <Route path={`/${constant?.adminRoute}/broadcast`} element={<Broadcast />} />
       <Route path={`/${constant?.adminRoute}/trendingcurrency`} element={<TrendingCurrency />} />
       <Route path={`/${constant?.adminRoute}/defaultcurrency`} element={<DefaultCurrency />} />
       <Route path={`/${constant?.adminRoute}/support`} element={<SupportPage />} />
