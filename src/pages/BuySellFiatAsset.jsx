@@ -198,8 +198,8 @@ const BuySellFiatAsset = () => {
           onVerifyChange={(value) => updateFilter("verifyStatus", value)}
           onTypeChange={(value) => updateFilter("type", value)}
           onNetworkChange={(value) => updateFilter("type", value)}
-          searchTooltip="Search by Token Name, Token Symbol, Code"
-          placeHolder="Search by token name, symbol or code"
+          searchTooltip="Search by Token Name, Token Symbol"
+          placeHolder="Search by token name, symbol"
         />
 
         <ReusableTable

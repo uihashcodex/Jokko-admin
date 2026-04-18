@@ -8,9 +8,9 @@ import { constant } from "../const";
 const columns = [
   { title: "S.no",         dataIndex: "sno",          key: "sno"          },
   { title: "Network Name", dataIndex: "tokenName",    key: "tokenName"    },
-  { title: "Symbol",       dataIndex: "tokenSymbol",  key: "tokenSymbol"  },
-  { title: "Code",         dataIndex: "code",         key: "code"         },
-  { title: "Type",         dataIndex: "type",         key: "type"         },
+  { title: "Network Symbol",       dataIndex: "networkSymbol",  key: "networkSymbol"  },
+  // { title: "Code",         dataIndex: "code",         key: "code"         },
+  // { title: "Type",         dataIndex: "type",         key: "type"         },
   { title: "Status",       dataIndex: "verifyStatus", key: "verifyStatus" },
 ];
 
@@ -52,9 +52,9 @@ const BuySellNetworks = () => {
         const formatted = docs.map((item) => ({
           id:           item._id,
           tokenName:    item.networkName  || item.tokenName  || item.name   || "-",
-          tokenSymbol:  item.tokenSymbol  || item.symbol     || "-",
-          code:         item.code         || item.tokenSymbol || "-",
-          type:         item.type         || "-",
+          networkSymbol:  item.networkSymbol  || item.networkSymbol     || "-",
+          // code:         item.code         || item.tokenSymbol || "-",
+          // type:         item.type         || "-",
           verifyStatus: item.verifyStatus === true ? "active" : "inactive",
         }));
         setAllData(formatted);
@@ -127,8 +127,8 @@ const BuySellNetworks = () => {
         onVerifyChange={(value) => updateFilter("verifyStatus", value)}
         onTypeChange={(value) => updateFilter("type", value)}
         onNetworkChange={(value) => updateFilter("type", value)}
-        searchTooltip="Search by Network Name, Symbol, Code"
-        placeHolder="Search by network name, symbol or code"
+        searchTooltip="Search by Network Name, Symbol"
+        placeHolder="Search by network name, symbol"
       />
 
       <ReusableTable
