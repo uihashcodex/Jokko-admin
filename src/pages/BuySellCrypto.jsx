@@ -10,7 +10,7 @@ const columns = [
   { title: "Token Name",   dataIndex: "tokenName",    key: "tokenName"    },
   { title: "Token Symbol", dataIndex: "tokenSymbol",  key: "tokenSymbol"  },
   { title: "Code",         dataIndex: "code",         key: "code"         },
-  { title: "Type",         dataIndex: "type",         key: "type"         },
+  // { title: "Type",         dataIndex: "type",         key: "type"         },
   { title: "Status",       dataIndex: "verifyStatus", key: "verifyStatus" },
 ];
 

@@ -206,9 +206,9 @@ navigate(`/${constant?.adminRoute}${firstRoute}`);            }
                         autoComplete="off"
                     >
                         <Form.Item
-                            label={<span className="text-white font-semibold">Username</span>}
+                            label={<span className="text-white font-semibold">Email</span>}
                             name="email"
-                            rules={[{ required: true, message: "Please input your username!" }]}
+                            rules={[{ required: true, message: "Please Enter your Email" }]}
                         >
                             <InputField
                                 prefix={<UserOutlined />}
@@ -219,7 +219,7 @@ navigate(`/${constant?.adminRoute}${firstRoute}`);            }
                         <Form.Item
                             label={<span className="text-white font-semibold">Password</span>}
                             name="password"
-                            rules={[{ required: true, message: "Please input your password!" }]}
+                            rules={[{ required: true, message: "Please Enter your password" }]}
                         >
                             <InputField
                                 type="password"

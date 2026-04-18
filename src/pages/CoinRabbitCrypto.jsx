@@ -7,10 +7,10 @@ import { constant } from "../const";
 
 const columns = [
   { title: "S.no",         dataIndex: "sno",          key: "sno"          },
-  { title: "Token Name",   dataIndex: "tokenName",    key: "tokenName"    },
-  { title: "Token Symbol", dataIndex: "tokenSymbol",  key: "tokenSymbol"  },
+  { title: "Network",   dataIndex: "tokenName",    key: "tokenName"    },
+  // { title: "Token Symbol", dataIndex: "tokenSymbol",  key: "tokenSymbol"  },
   { title: "Code",         dataIndex: "code",         key: "code"         },
-  { title: "Type",         dataIndex: "type",         key: "type"         },
+  // { title: "Type",         dataIndex: "type",         key: "type"         },
   { title: "Status",       dataIndex: "verifyStatus", key: "verifyStatus" },
 ];
 
@@ -127,8 +127,8 @@ const CoinRabbitCrypto = () => {
         onVerifyChange={(value) => updateFilter("verifyStatus", value)}
         onTypeChange={(value) => updateFilter("type", value)}
         onNetworkChange={(value) => updateFilter("type", value)}
-        searchTooltip="Search by Token Name, Token Symbol, Code"
-        placeHolder="Search by token name, symbol or code"
+        searchTooltip="Search by Network, Code"
+        placeHolder="Search by Network, Code"
       />
 
       <ReusableTable
