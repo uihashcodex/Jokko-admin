@@ -109,7 +109,7 @@ const TableHeader = ({
       {showNetFilter && (
         <Col xs={24} sm={12} md={6} lg={4}>
           <SelectField
-            placeholder="Select Net Type"
+            placeholder="Select Mode Status"
             value={netType}
             className="custom-select reheader-modal"
             onChange={(value) => {

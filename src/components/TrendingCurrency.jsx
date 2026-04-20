@@ -452,7 +452,7 @@ const TrendingCurrency = () => {
                 showCreateButton={false}
                 showStatusFilter={false}
 
-                searchTooltip="Search by Token Name, Token Symbol, contract address,NetWork Name"
+                searchTooltip="Search by Token Name, Token Symbol, NetWork Name, Mode"
             />
 
             <ReusableTable
