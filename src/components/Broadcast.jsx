@@ -46,84 +46,114 @@ const Broadcast = () => {
   }, [page]);
 
   // ── fetch ─────────────────────────────────────────────────────────────────
-  const fetchBroadcasts = async () => {
-    setTableLoading(true);
-    try {
-      const { data } = await axios.get(
-        `${constant.backend_url}/admin/get-broadcast`,
-        { headers: authHeader }
-      );
-      if (data.success) {
-        const rows = (data.result || data.data || []).map((item, i) => ({
-          ...item,
-          id: item._id,
-          sno: i + 1,
-        }));
-        setBroadcasts(rows);
-        setTotal(rows.length);
-      } else {
-        message.error(data.message || "Failed to load broadcasts.");
-      }
-    } catch {
-      message.error("Failed to fetch broadcasts.");
-    } finally {
-      setTableLoading(false);
+const fetchBroadcasts = async () => {
+  setTableLoading(true);
+  try {
+    const { data } = await axios.get(
+      `${constant.backend_url}/admin/get-broadcast`,
+      { headers: authHeader }
+    );
+
+    if (data.success) {
+      const rows = (data.result || data.data || []).map((item, i) => ({
+        ...item,
+        id: item._id,
+        sno: i + 1,
+      }));
+
+      console.log("Broadcast rows:", rows);
+
+      setBroadcasts(rows);
+      setTotal(rows.length);
+    } else {
+      message.error(data.message || "Failed to load broadcasts.");
     }
-  };
+  } catch (error) {
+    console.error("fetchBroadcasts error:", error);
+    message.error("Failed to fetch broadcasts.");
+  } finally {
+    setTableLoading(false);
+  }
+};
 
   // ── create ────────────────────────────────────────────────────────────────
-  const handleCreate = async (values) => {
-    setCreateLoading(true);
-    try {
-      const formData = new FormData();
-      formData.append("title", values.title);
-      formData.append("description", values.description);
-      if (createIconFile) formData.append("icon", createIconFile);
+const handleCreate = async (values) => {
+  if (!createIconFile) {
+    message.error("Icon image is required");
+    return;
+  }
 
-      const { data } = await axios.post(
-        `${constant.backend_url}/admin/create-broadcast`,
-        formData,
-        { headers: { ...authHeader, "Content-Type": "multipart/form-data" } }
-      );
-      if (data.success) {
-        message.success(data.message || "Broadcast created!");
-        setCreateOpen(false);
-        createForm.resetFields();
-        setCreateIconFile(null);
-        setCreatePreview(null);
-        fetchBroadcasts();
-      } else {
-        message.error(data.message || "Failed to create broadcast.");
+  setCreateLoading(true);
+
+  try {
+    const formData = new FormData();
+    formData.append("title", values.title);
+    formData.append("description", values.description);
+    formData.append("icon", createIconFile); 
+
+    const { data } = await axios.post(
+      `${constant.backend_url}/admin/add-broadcast`,
+      formData,
+      {
+        headers: {
+          ...authHeader,
+          "Content-Type": "multipart/form-data",
+        },
       }
-    } catch {
-      message.error("Failed to create broadcast.");
-    } finally {
-      setCreateLoading(false);
-    }
-  };
+    );
 
+    if (data.success) {
+      message.success(data.message || "Broadcast created!");
+      
+      // reset
+      setCreateOpen(false);
+      createForm.resetFields();
+      setCreateIconFile(null);
+      setCreatePreview(null);
+
+      fetchBroadcasts();
+    } else {
+      message.error(data.message || "Failed to create broadcast.");
+    }
+
+  } catch (error) {
+    // 🔥 BACKEND ERROR MESSAGE SHOW
+    const errMsg =
+      error?.response?.data?.message ||
+      error?.response?.data?.error ||
+      "Something went wrong";
+
+    message.error(errMsg);
+  } finally {
+    setCreateLoading(false);
+  }
+};
   // ── update ────────────────────────────────────────────────────────────────
-  const openUpdate = (record) => {
-    setSelectedRow(record);
-    setUpdatePreview(record.icon || null);
-    setUpdateIconFile(null);
-    updateForm.setFieldsValue({
-      title: record.title,
-      description: record.description,
-    });
-    setUpdateOpen(true);
-  };
+const openUpdate = (record) => {
+  setSelectedRow(record);
+  setUpdatePreview(getImageUrl(record.icon) || null);
+  setUpdateIconFile(null);
+  updateForm.setFieldsValue({
+    broadcastId: record._id,
+    title: record.title,
+    description: record.description,
+  });
+  setUpdateOpen(true);
+};
+
+  console.log("openUpdateopenUpdate", openUpdate)
 
   const handleUpdate = async (values) => {
     setUpdateLoading(true);
     try {
       const formData = new FormData();
+      formData.append("broadcastId",selectedRow._id)
       formData.append("title", values.title);
       formData.append("description", values.description);
       if (updateIconFile) formData.append("icon", updateIconFile);
 
-      const { data } = await axios.put(
-        `${constant.backend_url}/admin/update-broadcast/${selectedRow.id}`,
+      const { data } = await axios.post(
+        `${constant.backend_url}/admin/update-broadcast`,
         formData,
         { headers: { ...authHeader, "Content-Type": "multipart/form-data" } }
       );
@@ -144,13 +174,20 @@ const Broadcast = () => {
     }
   };
 
+  console.log("handleUpdate", handleUpdate)
+
   // ── delete ────────────────────────────────────────────────────────────────
   const handleDelete = async () => {
     setDeleteLoading(true);
     try {
-      const { data } = await axios.delete(
-        `${constant.backend_url}/admin/delete-broadcast/${deleteRecord.id}`,
-        { headers: authHeader }
+      const { data } = await axios.post(
+        `${constant.backend_url}/admin/delete-broadcast`,
+         {
+               broadcastId: deleteRecord.id,
+          },
+        { headers: authHeader,
+        
+         }
       );
       if (data.success) {
         message.success(data.message || "Broadcast deleted!");
@@ -168,84 +205,121 @@ const Broadcast = () => {
   };
 
   // ── icon upload helper ────────────────────────────────────────────────────
-  const makeUploadProps = (setFile, setPreview) => ({
-    beforeUpload: (file) => {
-      const isImage = file.type.startsWith("image/");
-      if (!isImage) { message.error("Please upload an image file."); return Upload.LIST_IGNORE; }
-      setFile(file);
-      setPreview(URL.createObjectURL(file));
-      return false;
-    },
-    maxCount: 1,
-    showUploadList: false,
-  });
+const makeUploadProps = (setFile, setPreview) => ({
+  beforeUpload: (file) => {
+    const isImage = file.type && file.type.startsWith("image/");
+    if (!isImage) {
+      message.error("Please upload an image file.");
+      return Upload.LIST_IGNORE;
+    }
 
+    setFile(file);
+    setPreview(URL.createObjectURL(file));
+    return false;
+  },
+  maxCount: 1,
+  showUploadList: false,
+});
+
+const getImageUrl = (icon) => {
+  if (!icon) return "";
+
+  let imageUrl = String(icon).trim();
+  imageUrl = imageUrl.replace("/testapi", "/jokkoapi");
+
+  console.log(imageUrl, "fsdfsdfsd")
+
+  if (imageUrl.startsWith("http")) {
+    return imageUrl;
+  }
+
+  return `${constant.image_url}${imageUrl.startsWith("/") ? "" : "/"}${imageUrl}`;
+};
+
+  
   // ── table columns ─────────────────────────────────────────────────────────
-  const columns = [
-    { title: "S.No", dataIndex: "sno", width: 60 },
-    {
-      title: "Icon",
-      dataIndex: "icon",
-      render: (v) =>
-        v ? (
-          <Image
-            src={v}
-            width={40}
-            height={40}
-            style={{ borderRadius: 8, objectFit: "cover" }}
-            fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
-          />
-        ) : (
-          <div style={styles.iconPlaceholder}>
-            <NotificationOutlined style={{ color: "#c9f07b", fontSize: 18 }} />
-          </div>
-        ),
-    },
-    { title: "Title", dataIndex: "title" },
-    {
-      title: "Description",
-      dataIndex: "description",
-      render: (v) => v ? (v.length > 60 ? v.slice(0, 60) + "…" : v) : "-",
-    },
-    {
-      title: "Status",
-      dataIndex: "status",
-      render: (v) =>
-        <Tag color={v === "active" ? "green" : "default"}>
-          {v ? v.charAt(0).toUpperCase() + v.slice(1) : "Active"}
-        </Tag>,
-    },
-    {
-      title: "Created At",
-      dataIndex: "createdAt",
-      render: (v) => v ? v.split("T")[0] : "-",
-    },
-    {
-      title: "Actions",
-      key: "actions",
-      fixed: "right",
-      render: (_, record) => (
-        <div style={{ display: "flex", gap: 8 }}>
-          <Button
-            size="small"
-            icon={<EditOutlined />}
-            onClick={() => openUpdate(record)}
-            style={btnStyles.update}
-          >
-            Update
-          </Button>
-          <Button
-            size="small"
-            icon={<DeleteOutlined />}
-            onClick={() => { setDeleteRecord(record); setDeleteOpen(true); }}
-            style={btnStyles.delete}
-          >
-            Delete
-          </Button>
-        </div>
-      ),
-    },
-  ];
+const columns = [
+  { title: "S.No", dataIndex: "sno", width: 60 },
+{
+  title: "Icon",
+  dataIndex: "icon",
+  width: 100,
+  render: (v) => {
+    const imageUrl = getImageUrl(v);
+
+    return imageUrl ? (
+      <Image
+        src={imageUrl}
+        width={40}
+        height={40}
+        style={{ borderRadius: 8, objectFit: "cover" }}
+        fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+      />
+    ) : (
+      <div style={styles.iconPlaceholder}>
+        <NotificationOutlined style={{ color: "#c9f07b", fontSize: 18 }} />
+      </div>
+    );
+  },
+},
+  { title: "Title", dataIndex: "title" },
+  {
+    title: "Description",
+    dataIndex: "description",
+    render: (v) => (v ? (v.length > 60 ? `${v.slice(0, 60)}…` : v) : "-"),
+  },
+  {
+    title: "Status",
+    dataIndex: "verifyStatus",
+    render: (v) => (
+      <Tag color={v ? "green" : "red"}>
+        {v ? "Active" : "In Active"}
+      </Tag>
+    ),
+  },
+  {
+    title: "Created At",
+    dataIndex: "createdAt",
+    render: (v) => (v ? v.split("T")[0] : "-"),
+  },
+  {
+    title: "Actions",
+    key: "actions",
+    fixed: "right",
+    render: (_, record) => (
+      <div style={{ display: "flex", gap: 8 }}>
+        <Button
+          size="small"
+          icon={<EditOutlined />}
+          onClick={() => openUpdate(record)}
+          style={btnStyles.update}
+        >
+          Update
+        </Button>
+        <Button
+          size="small"
+          icon={<DeleteOutlined />}
+          onClick={() => {
+            setDeleteRecord(record);
+            setDeleteOpen(true);
+          }}
+          style={btnStyles.delete}
+        >
+          Delete
+        </Button>
+      </div>
+    ),
+  },
+];
+
+
+const clearPreview = (setFile, preview, setPreview) => {
+  if (preview && preview.startsWith("blob:")) {
+    URL.revokeObjectURL(preview);
+  }
+  setFile(null);
+  setPreview(null);
+};
 
   // ── shared form body (used in both create & update modals) ────────────────
   const BroadcastForm = ({ form, onFinish, loading, iconFile, setIconFile, preview, setPreview, submitLabel = "Submit" }) => (
@@ -270,32 +344,39 @@ const Broadcast = () => {
           style={{ resize: "none" }}
         />
       </Form.Item>
+<Form.Item label={<span style={modalStyles.label}>Icon / Image</span>}>
+  <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+    <Upload {...makeUploadProps(setIconFile, setPreview)}>
+      <Button icon={<UploadOutlined />} style={modalStyles.uploadBtn}>
+        {iconFile ? "Change Icon" : "Upload Icon"}
+      </Button>
+    </Upload>
 
-      <Form.Item label={<span style={modalStyles.label}>Icon / Image</span>}>
-        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <Upload {...makeUploadProps(setIconFile, setPreview)}>
-            <Button icon={<UploadOutlined />} style={modalStyles.uploadBtn}>
-              {iconFile ? "Change Icon" : "Upload Icon"}
-            </Button>
-          </Upload>
-          {preview && (
-            <Image
-              src={preview}
-              width={56}
-              height={56}
-              style={{ borderRadius: 10, objectFit: "cover", border: "1px solid rgba(201,240,123,0.3)" }}
-            />
-          )}
-        </div>
-      </Form.Item>
+    {preview && (
+      <Image
+        src={preview}
+        width={56}
+        height={56}
+        style={{
+          borderRadius: 10,
+          objectFit: "cover",
+          border: "1px solid rgba(201,240,123,0.3)",
+        }}
+      />
+    )}
+  </div>
+</Form.Item>
 
       <div style={modalStyles.btnRow}>
-        <Button
-          onClick={() => { form.resetFields(); setIconFile(null); setPreview(null); }}
-          style={modalStyles.cancelBtn}
-        >
-          Clear
-        </Button>
+ <Button
+  onClick={() => {
+    form.resetFields();
+    clearPreview(setIconFile, preview, setPreview);
+  }}
+  style={modalStyles.cancelBtn}
+>
+  Clear
+</Button>
         <Button
           htmlType="submit"
           loading={loading}
