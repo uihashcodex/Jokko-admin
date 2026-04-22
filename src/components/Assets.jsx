@@ -29,7 +29,7 @@ const Assets = () => {
         { title: "Network Name", dataIndex: "networkName", key: "networkName" },
         { title: "Created At", dataIndex: "createdAt", key: "createdAt" },
         { title: "Updated At", dataIndex: "createdAt", key: "updatedAt" },
-        { title: "Default Network", dataIndex: "isDefaultNetwork", key: "isDefaultNetwork" },
+        { title: "Default Currency", dataIndex: "isDefaultNetwork", key: "isDefaultNetwork" },
         { title: "Status", dataIndex: "status", key: "status" },
     ];
 

@@ -99,7 +99,7 @@ const StaffManagement = () => {
       const searchText = filters.search.toLowerCase();
 
       temp = temp.filter((item) =>
-        [item.name, item.username, item.email, item.phone, item.role]
+        [item.name, item.username, item.email, item.phone, item.roleType]
           .filter(Boolean)
           .some((field) => String(field).toLowerCase().includes(searchText))
       );
@@ -152,7 +152,7 @@ const StaffManagement = () => {
     { title: "Phone", dataIndex: "phone" },
     {
       title: "Role",
-      dataIndex: "role",
+      dataIndex: "roleType",
       render: (val) => val || "-",
     },
     {
@@ -191,13 +191,13 @@ const StaffManagement = () => {
         label: "Phone",
         type: "text",
       },
-      {
-        name: "role",
-        label: "Role",
-        type: "select",
-        options: ROLE_OPTIONS,
-        rules: [{ required: true, message: "Role is required" }],
-      },
+    {
+  name: "roleType",
+  label: "Role Type",
+  type: "select",
+  options: ROLE_OPTIONS,
+  rules: [{ required: true, message: "Role Type is required" }],
+},
     ];
 
     if (!editing) {
@@ -253,7 +253,7 @@ const StaffManagement = () => {
           (updateData.username || "") === (selectedStaff.username || "") &&
           (updateData.email || "") === (selectedStaff.email || "") &&
           (updateData.phone || "") === (selectedStaff.phone || "") &&
-          (updateData.role || "") === (selectedStaff.role || "") &&
+          (updateData.role || "") === (selectedStaff.roleType || "") &&
           (updateData.status || "") === (selectedStaff.status || "") &&
           !resetPassword;
 
@@ -276,6 +276,7 @@ const StaffManagement = () => {
         const createData = {
           ...rest,
           password,
+          role: "sub_admin",
         };
 
         const response = await createStaff(createData);
