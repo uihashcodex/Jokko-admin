@@ -271,9 +271,10 @@ if (actionType?.includes("view")) {
           onChange: (page) => onPageChange?.(page),
 
           hideOnSinglePage: true,
+                showSizeChanger: false,
         }}
         scroll={{ x: "max-content" }}
-        className="custom-ant-table"
+        className="custom-ant-table tbl"
         locale={{
           emptyText: (
             <Empty className="empty-data"

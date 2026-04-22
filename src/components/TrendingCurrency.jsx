@@ -17,6 +17,7 @@ const TrendingCurrency = () => {
     const [networkOptions, setNetworkOptions] = useState([]);
     const [loading, setLoading] = useState(false);
     const [deletemodal, setDeletemodal] = useState(false);
+    const [totalUsers, setTotalUsers] = useState(0);
     const [deleteRecord, setDeleteRecord] = useState(null);
     const columns = [
         { title: "S.no", dataIndex: "sno", key: "sno" },
@@ -27,7 +28,7 @@ const TrendingCurrency = () => {
         { title: "Mode", dataIndex: "modeStatus", key: "modeStatus" },
         { title: "Network Name", dataIndex: "networkName", key: "networkName" },
         { title: "Created At", dataIndex: "createdAt", key: "createdAt" },
-        { title: "Updated At", dataIndex: "createdAt", key: "updatedAt" },
+        // { title: "Updated At", dataIndex: "createdAt", key: "updatedAt" },
         { title: "Trending Currency", dataIndex: "isTrending", key: "isTrending" },
         // { title: "Status", dataIndex: "status", key: "status" },
     ];
@@ -148,69 +149,77 @@ const TrendingCurrency = () => {
         }
     };
 
-    const getToken = async () => {
-        const startTime = Date.now();
+const getToken = async () => {
+    const startTime = Date.now();
 
-        try {
-            setLoading(true);
+    try {
+        setLoading(true);
 
-            const cleanFilters = Object.fromEntries(
-                Object.entries(filters).filter(([_, v]) => v !== "")
-            );
+        const cleanFilters = Object.fromEntries(
+            Object.entries(filters).filter(([_, v]) => v !== "")
+        );
 
-            const response = await axios.post(
-                `${constant.backend_url}/assets/get-all-tokens`,
-                {
-                    ...cleanFilters,
-                    page: page,
-                    limit: 10
+        const response = await axios.post(
+            `${constant.backend_url}/assets/get-all-tokens`,
+            {
+                ...cleanFilters,
+                page: page,
+                limit: 10
+            },
+            {
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
                 },
-                {
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
-                    },
-                }
-            );
-
-            if (response.data?.success) {
-                const docs = response.data.result || [];
-
-                const formattedData = docs.map((item, index) => ({
-                    id: item?._id,
-                    sno: index + 1,
-                    tokenName: item?.tokenName || "-",
-                    tokenSymbol: item?.tokenSymbol,
-                    contractAddress: item?.contractAddress || "-",
-                    tokenDecimals: item?.decimals || "-",
-                    status: item?.verifyStatus ? "active" : "inactive",
-                    network_id: item?.network?._id || "-",
-                    createdAt: item?.createdAt ? item.createdAt.split("T")[0] : "-",
-                    updatedAt: item?.updatedAt ? item.updatedAt.split("T")[0] : "-",
-                    networkName: item?.network?.networkName || "-",
-                    modeStatus: item?.modeStatus || "-",
-                    isTrending: item?.isTrending === true
-                        ? <Switch checked={true} onChange={() => { handleIsTrendingChange(item?._id) }} />
-                        : <Switch checked={false} onChange={() => { handleIsTrendingChange(item?._id) }} />,
-                }));
-
-                setOriginalData(formattedData);
-                setFilteredData(formattedData);
             }
+        );
 
-        } catch (error) {
-            console.log(error);
-            setOriginalData([]);
-            setFilteredData([]);
-        } finally {
-            const elapsed = Date.now() - startTime;
-            const minTime = 500;
+        if (response.data?.success) {
+            const docs = response.data.result || [];
 
-            setTimeout(() => {
-                setLoading(false);
-            }, Math.max(minTime - elapsed, 0));
+            setTotalUsers(response.data.total || 0); 
+
+            const formattedData = docs.map((item, index) => ({
+                id: item?._id,
+                key: item?._id,
+                sno: (page - 1) * 10 + index + 1,
+                tokenName: item?.tokenName || "-",
+                tokenSymbol: item?.tokenSymbol,
+                contractAddress: item?.contractAddress || "-",
+                tokenDecimals: item?.decimals || "-",
+                status: item?.verifyStatus ? "active" : "inactive",
+                network_id: item?.network?._id || "-",
+                createdAt: item?.createdAt ? item.createdAt.split("T")[0] : "-",
+                // updatedAt: item?.updatedAt ? item.updatedAt.split("T")[0] : "-",
+                networkName: item?.network?.networkName || "-",
+                modeStatus: item?.modeStatus || "-",
+                isTrending: (
+                    <Switch
+                        checked={item?.isTrending === true}
+                        disabled={!item?.verifyStatus}
+                        onChange={() => handleIsTrendingChange(item?._id)}
+                    />
+                ),
+            }));
+
+            setOriginalData(formattedData);
+            setFilteredData(formattedData);
         }
-    };
+
+    } catch (error) {
+        console.log(error);
+        setOriginalData([]);
+        setFilteredData([]);
+        setTotalUsers(0);
+    } finally {
+        const elapsed = Date.now() - startTime;
+        const minTime = 500;
+
+        setTimeout(() => {
+            setLoading(false);
+        }, Math.max(minTime - elapsed, 0));
+    }
+};
     useEffect(() => {
         getToken();
     }, [page, filters]);
@@ -376,6 +385,8 @@ const TrendingCurrency = () => {
 
     useEffect(() => {
         getNetwork();
+        // console.log(btoa("vijay"),"abinaya");
+        
     }, []);
 
     useEffect(() => {
@@ -455,18 +466,21 @@ const TrendingCurrency = () => {
                 searchTooltip="Search by Token Name, Token Symbol, NetWork Name, Mode"
             />
 
-            <ReusableTable
-                columns={columns}
-                data={filteredData}
-                onUpdate={handleUpdate}
-                pageSize={10}
-                loading={loading}
-                actionType={[]}
-                onDelete={(record) => {
-                    setDeleteRecord(record);
-                    setDeletemodal(true);
-                }}
-            />
+              <ReusableTable
+    columns={columns}
+    data={filteredData}
+    onUpdate={handleUpdate}
+    pageSize={10}
+    loading={loading}
+    actionType={["update", "Remove"]}
+    total={totalUsers}
+    currentPage={page}
+    onPageChange={(newPage) => setPage(newPage)}
+    onDelete={(record) => {
+        setDeleteRecord(record);
+        setDeletemodal(true);
+    }}
+/>
 
             <ReusableModal
                 key={networkOptions.length}

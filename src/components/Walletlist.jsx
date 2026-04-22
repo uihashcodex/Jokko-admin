@@ -58,6 +58,7 @@ const Walletlist = () => {
           evmaddress: item?.evmAddress,
           solanaaddress: item?.solAddress,
           xrpaddress: item?.xrpAddress,
+          trxAddress:item?.trxAddress,
           createdAt: item?.createdAt ? item?.createdAt.split("T")[0] : "",
           updatedAt: item?.updatedAt ? item?.updatedAt.split("T")[0] : "",
           status: item?.walletStatus ? "Active" : "Inactive",
@@ -85,7 +86,9 @@ const Walletlist = () => {
     toDate: ""
   });
 
-  const getAllWallets = async () => {
+  const getAllWallets = async (id) => {
+
+    console.log("FididD", id)
 
     try {
       setLoading(true);
@@ -101,7 +104,8 @@ const Walletlist = () => {
           params: {
             ...cleanFilters,
             page: page,
-            limit: 10
+            limit: 10,
+            userId:id
           },
           headers: {
             Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
@@ -147,11 +151,11 @@ const Walletlist = () => {
 
   useEffect(() => {
 
-    if (id) {
-      getWallets();
-    } else {
-      getAllWallets();
-    }
+    // if (id) {
+    //   getWallets();
+    // } else {
+      getAllWallets(id);
+    // }
 
   }, [page, filters]);
 
@@ -296,7 +300,8 @@ const Walletlist = () => {
     { title: "Status", dataIndex: "status" },
   ];
 
-  const tableData = id ? walletData : filteredTableData;
+  // const tableData = id ? walletData : filteredTableData;
+  const tableData = filteredTableData;
 
     const handleBlockWallet = async (record) => {
     try {

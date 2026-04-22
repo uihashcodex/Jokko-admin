@@ -19,7 +19,7 @@ const columns = [
   { title: "Phone", dataIndex: "phone", key: "phone" },
   { title: "Status", dataIndex: "status", key: "status" },
   { title: "Type", dataIndex: "type", key: "type" },
-  { title: "Country", dataIndex: "contry", key: "contry" },
+  { title: "Country", dataIndex: "country", key: "country" },
   {
     title: "Unique ID", dataIndex: "uniqueid", key: "uniqueid",
     render: (frm) => {

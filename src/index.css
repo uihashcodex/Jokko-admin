@@ -1490,3 +1490,7 @@ padding: 20px;
 .mobile-sidebarselector .ant-menu-submenu .ant-menu-submenu-title  .ant-menu-submenu-arrow{
  color: #fff !important;
 }
+
+.custom-ant-table.tbl .ant-pagination-item-ellipsis{
+color: #fff !important;
+}

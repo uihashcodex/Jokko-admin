@@ -27,10 +27,11 @@ const Assets = () => {
         { title: "Token Decimals", dataIndex: "tokenDecimals", key: "tokenDecimals" },
         { title: "Contract Address", dataIndex: "contractAddress", key: "contractAddress" },
         { title: "Network Name", dataIndex: "networkName", key: "networkName" },
-        { title: "Created At", dataIndex: "createdAt", key: "createdAt" },
-        { title: "Updated At", dataIndex: "createdAt", key: "updatedAt" },
+  
+        // { title: "Updated At", dataIndex: "createdAt", key: "updatedAt" },
         { title: "Default Currency", dataIndex: "isDefaultNetwork", key: "isDefaultNetwork" },
         { title: "Status", dataIndex: "status", key: "status" },
+              { title: "Created At", dataIndex: "createdAt", key: "createdAt" },
     ];
 
 
@@ -150,6 +151,8 @@ const Assets = () => {
         }
     }
 
+ 
+
     const getToken = async () => {
         const startTime = Date.now();
 
@@ -181,8 +184,9 @@ const Assets = () => {
                 setTotalUsers(response.data.total);
 
                 const formattedData = docs.map((item, index) => ({
-                    id: item?._id,
-                    sno: index + 1,
+                     id: item?._id,
+    key: item?._id,
+    sno: (page - 1) * 10 + index + 1,
                     tokenName: item?.tokenName || "-",
                     tokenSymbol: item?.tokenSymbol,
                     contractAddress: item?.contractAddress || "-",
@@ -192,8 +196,13 @@ const Assets = () => {
                     createdAt: item?.createdAt ? item.createdAt.split("T")[0] : "-",
                     updatedAt: item?.updatedAt ? item.updatedAt.split("T")[0] : "-",
                     networkName: item?.network?.networkName || "-",
-                    isDefaultNetwork: item?.isDefault === true ? <Switch checked={true} onChange={() => { handleDefaultNetworkChange(item?._id) }} /> : <Switch checked={false} onChange={() => { handleDefaultNetworkChange(item?._id) }} />,
-                }));
+isDefaultNetwork: (
+  <Switch
+    checked={item?.isDefault === true}
+    disabled={!item?.verifyStatus} 
+    onChange={() => handleDefaultNetworkChange(item?._id)}
+  />
+),                }));
 
                 setOriginalData(formattedData);
                 setFilteredData(formattedData);
@@ -454,18 +463,21 @@ const Assets = () => {
 
             />
 
-            <ReusableTable
-                columns={columns}
-                data={filteredData}
-                onUpdate={handleUpdate}
-                pageSize={10}
-                loading={loading}
-                actionType={["update", "Remove"]}
-                onDelete={(record) => {
-                    setDeleteRecord(record);
-                    setDeletemodal(true);
-                }}
-            />
+         <ReusableTable
+    columns={columns}
+    data={filteredData}
+    onUpdate={handleUpdate}
+    pageSize={10}
+    loading={loading}
+    actionType={["update", "Remove"]}
+    total={totalUsers}
+    currentPage={page}
+    onPageChange={(newPage) => setPage(newPage)}
+    onDelete={(record) => {
+        setDeleteRecord(record);
+        setDeletemodal(true);
+    }}
+/>
 
             <ReusableModal
                 key={networkOptions.length}
