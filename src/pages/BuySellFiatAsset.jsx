@@ -13,7 +13,6 @@ const columns = [
   { title: "Token Name", dataIndex: "tokenName", key: "tokenName" },
   { title: "Token Symbol", dataIndex: "tokenSymbol", key: "tokenSymbol" },
   { title: "Code", dataIndex: "code", key: "code" },
-  // { title: "Type", dataIndex: "type", key: "type" },
   { title: "Status", dataIndex: "verifyStatus", key: "verifyStatus" },
 ];
 
@@ -27,7 +26,7 @@ const BuySellFiatAsset = () => {
   const [filters, setFilters] = useState({
     search: "",
     type: "",
-    status: "",
+    status: "", // ✅ changed from verifyStatus to status
   });
 
   const typeOptions = useMemo(
@@ -44,6 +43,7 @@ const BuySellFiatAsset = () => {
       ...prev,
       [key]: value || "",
     }));
+
   };
 
   const getBuySellFiatAssets = async () => {
@@ -73,7 +73,6 @@ const BuySellFiatAsset = () => {
       );
 
       if (response.data?.success) {
-        // supports either result مباشرة array or result.docs
         const docs = Array.isArray(response.data?.result)
           ? response.data.result
           : response.data?.result?.docs || [];
@@ -153,18 +152,43 @@ const BuySellFiatAsset = () => {
 
   const handleStatusChange = async (record, newStatus) => {
     try {
-      // only UI message for now
-      // if you have update status API, call it here
-      setOriginalData((prev) =>
-        prev.map((item) =>
-          item.id === record.id ? { ...item, verifyStatus: newStatus } : item
-        )
+      setLoading(true);
+
+      const response = await axios.post(
+        `${constant.backend_url}/admin/buysell-updatefiatAsset`,
+        {
+          token_id: record.id,
+          verifyStatus: newStatus === "active" ,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+          },
+          validateStatus: () => true,
+        }
       );
 
-      messageApi.success(`${record.tokenName} changed to ${newStatus}`);
+      if (response.data?.success) {
+        setOriginalData((prev) =>
+          prev.map((item) =>
+            item.id === record.id
+              ? { ...item, verifyStatus: newStatus }
+              : item
+          )
+        );
+
+        messageApi.success(`${record.tokenName} changed to ${newStatus}`);
+      } else {
+        messageApi.error(response.data?.message || "Failed to update status");
+      }
     } catch (error) {
-      console.log(error);
-      messageApi.error("Failed to update status");
+      console.log("status update error:", error);
+      messageApi.error(
+        error?.response?.data?.message || "Failed to update status"
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -195,11 +219,19 @@ const BuySellFiatAsset = () => {
           showSearch={true}
           networkOptions={typeOptions}
           onSearch={(value) => debouncedSearch(value)}
-          onVerifyChange={(value) => updateFilter("verifyStatus", value)}
-          onTypeChange={(value) => updateFilter("type", value)}
+onVerifyChange={(value) =>
+  updateFilter(
+    "status",
+    value === "active"
+      ? "true"
+      : value === "inactive"
+      ? "false"
+      : ""
+  )
+}          onTypeChange={(value) => updateFilter("type", value)}
           onNetworkChange={(value) => updateFilter("type", value)}
-          searchTooltip="Search by Token Name, Token Symbol"
-          placeHolder="Search by token name, symbol"
+          searchTooltip="Search by Token Name"
+          placeHolder="Search by token name"
         />
 
         <ReusableTable

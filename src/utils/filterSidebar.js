@@ -1,46 +1,51 @@
 import { hasAccess } from "./permissionCheck";
 
-// key → module mapping
 const MODULE_MAP = {
-    "/dashboard": "Dashboard",
-    "/assets": "Assets",
-    // "/buy-sell-fiat-asset": "Assets",
-    "/network": "Network",
-    "/viewdetails": "User Details",
-    "/wallet": "Wallet",
-    "/transaction": "Transaction",
-    "webhook": "Webhook",
-    "/trendingcurrency": "Trending Currency",
-    "/defaultcurrency": "Default Currency",
-    "/pushnotification": "Push Notification",
-    "/emailtemplate": "Email Template",
-    "/emailtemplatemanagementnew": "Email Management",
-    "/support": "Support",
-    "/rolemanagement":"Role Management",
-    "/profile": "Profile"
+  "/dashboard": "Dashboard",
+  "/assets": "Assets",
+  "/network": "Network",
+  "/viewdetails": "User Details",
+  "/wallet": "Wallet",
+  "/transaction": "Transaction",
+  "/trendingcurrency": "Trending Currency",
+  "/defaultcurrency": "Default Currency",
+  "/pushnotification": "Push Notification",
+  "/emailtemplate": "Email Template",
+  "/emailcontent": "Email Management",
+  "/emailcampaign": "Email Campaign",
+  "/support": "Support",
+  "/profile": "Profile",
+  "/rolemanagement": "Role Management",
+  "/staffmanagement": "Staff Management",
+  "/broadcast": "Broadcast",
+  "/onramper-history": "Providers",
+  "/coin-rabbbit-history": "CoinRabbit History",
+  "/buy-sell-fiat-asset": "Fiat Assets",
+  "/buy-sell-crypto": "Buy/Sell Crypto",
+  "/buy-sell-networks": "Buy/Sell Network",
+  "/coinrabbit-crypto": "Buy/Sell CoinRabbit"
 };
 
-export const filterSidebar = (menuItems, userPermissions) => {
-    return menuItems
-        ?.map((item) => {
+export const filterSidebar = (menuItems = [], userPermissions = []) => {
+  return menuItems
+    ?.map((item) => {
+      if (item.children) {
+        const filteredChildren = item.children.filter((child) =>
+          hasAccess(userPermissions, MODULE_MAP[child.key])
+        );
 
-            if (item.children) {
-                const filteredChildren = item.children.filter((child) =>
-                    hasAccess(userPermissions, MODULE_MAP[child.key])
-                );
+        if (filteredChildren.length > 0) {
+          return { ...item, children: filteredChildren };
+        }
 
-                if (filteredChildren.length > 0) {
-                    return { ...item, children: filteredChildren };
-                }
+        return null;
+      }
 
-                return null;
-            }
+      if (hasAccess(userPermissions, MODULE_MAP[item.key])) {
+        return item;
+      }
 
-            if (hasAccess(userPermissions, MODULE_MAP[item.key])) {
-                return item;
-            }
-
-            return null;
-        })
-        .filter(Boolean);
+      return null;
+    })
+    .filter(Boolean);
 };

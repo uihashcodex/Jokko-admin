@@ -6,6 +6,7 @@ import axios from "axios";
 import { constant } from "../const";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { hasAccess } from "../utils/permissionCheck";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -145,7 +146,8 @@ const Dashboard = () => {
   ];
 
 
-
+const user = JSON.parse(localStorage.getItem("user")) || {};
+const userPermissions = user?.permissions || [];
 
 
 
@@ -207,14 +209,17 @@ const Dashboard = () => {
                   pagination={false}
                 />
                 <div className="text-right mt-2">
-                  <button
-                    className="px-4 py-2 bg-blue-600 text-white rounded"
-                    onClick={() =>
-                      navigate(`/${constant.adminRoute}/viewdetails`)
-                    }
-                  >
-                    View More
-                  </button>
+
+           {hasAccess(userPermissions, "User Details") && (
+  <div className="text-right mt-2">
+    <button
+      className="px-4 py-2 bg-blue-600 text-white rounded"
+      onClick={() => navigate(`/${constant.adminRoute}/viewdetails`)}
+    >
+      View More
+    </button>
+  </div>
+)}
                 </div>
               </div>
             </div>
@@ -233,14 +238,19 @@ const Dashboard = () => {
               pagination={false}
             />
             <div className="text-right mt-2">
-              <button
-                className="px-4 py-2 bg-blue-600 text-white rounded"
-                onClick={() =>
-                  navigate(`/${constant.adminRoute}/transaction`)
-                }
-              >
-                View More
-              </button>
+
+
+              
+             {hasAccess(userPermissions, "Transaction") && (
+  <div className="text-right mt-2">
+    <button
+      className="px-4 py-2 bg-blue-600 text-white rounded"
+      onClick={() => navigate(`/${constant.adminRoute}/transaction`)}
+    >
+      View More
+    </button>
+  </div>
+)}
             </div>
           </div>
         </div>

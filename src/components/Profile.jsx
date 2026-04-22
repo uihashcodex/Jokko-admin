@@ -280,7 +280,6 @@ const Profile = () => {
 
             <div className="space-y-2 text-sm">
               <p><strong>Name :</strong> {profileData?.name || "-"}</p>
-              <p><strong>User Name :</strong> {profileData?.unique_id || "-"}</p>
               <p><strong>Email :</strong>{profileData?.email || "-"}</p>
               <p><strong>Mobile :</strong> {profileData?.phone || "-"}</p>
             </div>

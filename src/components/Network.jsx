@@ -268,9 +268,9 @@ const Network = () => {
 
                 const payload = {
                     network_id: selectedRecord.id,
-                    networkName: values.networkname,
+                    networkName: values.networkName,
                     chainId: values.chainId,
-                    networkSymbol: values.networksymbol,
+                    networkSymbol: values.networkSymbol,
                     rpcUrl: values.rpcUrl,
                     blockExplorerUrl: values.blockExplorerUrl,
                     type: values.type,
@@ -279,9 +279,9 @@ const Network = () => {
                 };
 
                const isSame =
-                    payload.networkName === selectedRecord.networkname &&
+                    payload.networkName === selectedRecord.networkName &&
                     payload.chainId === selectedRecord.chainId &&
-                    payload.networkSymbol === selectedRecord.networksymbol &&
+                    payload.networkSymbol === selectedRecord.networkSymbol &&
                     payload.rpcUrl === selectedRecord.rpcUrl &&
                     payload.blockExplorerUrl === selectedRecord.blockExplorerUrl &&
                     payload.type === selectedRecord.type &&

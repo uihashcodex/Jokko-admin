@@ -1,17 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button, Switch } from "antd";
 import ReusableTable from "../reuseable/ReusableTable";
 import ReusableDrawer from "../reuseable/ReusableDreawer";
 import TableHeader from "../reuseable/TableHeader";
 import ReusableModal from "../reuseable/ReusableModal";
 import axios from "axios";
-import theme from '../config/theme';
+import debounce from "lodash.debounce";
+import theme from "../config/theme";
 import { constant } from "../const";
-import { message } from 'antd';
-
+import { message } from "antd";
 
 const EmailTemplateManagementnew = () => {
-
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -23,15 +22,17 @@ const EmailTemplateManagementnew = () => {
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
-  const [selectedDesign, setSelectedDesign] = useState("template1"); // local (used for update)
-  const [globalDesign, setGlobalDesign] = useState("template1"); // default
+  const [selectedDesign, setSelectedDesign] = useState("template1");
+  const [globalDesign, setGlobalDesign] = useState("template1");
   const [designModalOpen, setDesignModalOpen] = useState(false);
   const [pendingDesign, setPendingDesign] = useState(null);
   const [liveBody, setLiveBody] = useState("");
   const [liveSubject, setLiveSubject] = useState("");
   const [isActive, setIsActive] = useState(false);
 
-  // ---- CREATE DRAWER state ----
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+
   const [createDrawerOpen, setCreateDrawerOpen] = useState(false);
   const [liveCreateBody, setLiveCreateBody] = useState("");
   const [liveCreateSubject, setLiveCreateSubject] = useState("");
@@ -39,22 +40,22 @@ const EmailTemplateManagementnew = () => {
   const [isCreateActive, setIsCreateActive] = useState(true);
   const [createDesignModalOpen, setCreateDesignModalOpen] = useState(false);
   const [pendingCreateDesign, setPendingCreateDesign] = useState(null);
-  // ---------------- TABLE COLUMNS ----------------
+
+  const [designTemplates, setDesignTemplates] = useState([]);
 
   const columns = [
     { title: "Event Key", dataIndex: "event_key" },
     { title: "Subject", dataIndex: "subject" },
     {
-      title: "Body", dataIndex: "body", render: (to) => {
-        if (!to) return "-";
-        return `${to.slice(0, 20)}...`;
-      }
+      title: "Body",
+      dataIndex: "body",
+      render: (body) => {
+        if (!body) return "-";
+        return `${body.slice(0, 20)}...`;
+      },
     },
-    { title: "Status", dataIndex: "status", }
+    { title: "Status", dataIndex: "status" },
   ];
-
-  // ---------------- MODAL FIELDS ----------------
-
 
   const modules = {
     toolbar: [
@@ -63,8 +64,8 @@ const EmailTemplateManagementnew = () => {
       [{ list: "ordered" }, { list: "bullet" }],
       [{ align: [] }],
       ["link"],
-      ["clean"]
-    ]
+      ["clean"],
+    ],
   };
 
   const formats = [
@@ -76,380 +77,65 @@ const EmailTemplateManagementnew = () => {
     "list",
     "bullet",
     "link",
-    "indent",     // ✅ REQUIRED for list
-    "direction",  // ✅ optional
+    "indent",
+    "direction",
   ];
-
-  const fields = [
-    {
-      label: "Event Key",
-      name: "event_key",
-      type: "text"
-    },
-    {
-      name: "subject",
-      label: "Email Subject",
-      type: "text",
-      rules: [{ required: true, message: "Subject is required" }],
-      onChange: (e) => setLiveSubject(e.target.value) // ✅
-
-    },
-    {
-      name: "body",
-      label: "Email Body",
-      type: "editor",
-      // type: "textarea",
-      span: 24,
-      modules: modules,
-      formats: formats,
-      onChange: (val) => setLiveBody(val) // ✅ CORRECT
-
-    },
-
-
-
-    // {
-    //   label: "Active",
-    //   name: "is_active",
-    //   type: "switch"
-    // }
-  ];
-
 
   const createFields = [
     {
       label: "Event Key",
       name: "event_key",
-      type: "text"
+      type: "text",
     },
     {
       name: "subject",
       label: "Email Subject",
       type: "text",
       rules: [{ required: true, message: "Subject is required" }],
-      onChange: (e) => setLiveCreateSubject(e.target.value)
+      onChange: (e) => setLiveCreateSubject(e.target.value),
     },
     {
       name: "body",
       label: "Email Body",
-      type: "editor", // ✅ EDITOR for CREATE (matches update)
+      type: "editor",
       span: 24,
-      modules: modules,
-      formats: formats,
-      onChange: (val) => setLiveCreateBody(val)
-    }
+      modules,
+      formats,
+      onChange: (val) => setLiveCreateBody(val),
+    },
   ];
 
   const updateFields = [
     {
       label: "Event Key",
       name: "event_key",
-      type: "text"
+      type: "text",
     },
     {
       name: "subject",
       label: "Email Subject",
       type: "text",
       rules: [{ required: true, message: "Subject is required" }],
-      onChange: (e) => setLiveSubject(e.target.value)
+      onChange: (e) => setLiveSubject(e.target.value),
     },
     {
       name: "body",
       label: "Email Body",
-      type: "editor", // ✅ EDITOR for UPDATE
+      type: "editor",
       span: 24,
-      modules: modules,
-      formats: formats,
-      onChange: (val) => setLiveBody(val)
-    }
+      modules,
+      formats,
+      onChange: (val) => setLiveBody(val),
+    },
   ];
-
 
   useEffect(() => {
     const saved = localStorage.getItem("defaultTemplate");
     if (saved) {
       setGlobalDesign(saved);
-      setSelectedDesign(saved); // default apply
+      setSelectedDesign(saved);
     }
   }, []);
-
-  // const templates = {
-  //   template1: `
-  // <div style="font-family:Arial, sans-serif;">
-  // <div style="padding:20px 10px;">
-
-  // <div style="max-width:600px;width:100%;margin:0 auto;background:#122f2a;color:#fff;border-radius:6px;overflow:hidden">
-
-  // <div style="height:6px;background:#c9f07b"></div>
-
-  // <div style="text-align:center;padding:20px">
-  // <img src="/img/logo.png" style="width:60px;margin-bottom:8px"/>
-
-  // <h2 style="margin:5px 0;">{{subject}}</h2>
-  // </div>
-
-  // <div style="padding:20px;font-size:13px;line-height:1.5;">
-  // {{content}}
-  // <p style="margin-top:10px">Thank You,<br/>Jokko Wallet</p>
-  // </div>
-  // <div style="text-align:center;background:#c9f07b;font-size:12px;padding:8px;color:#000;">
-  // © 2026 Jokko Wallet
-  // </div>
-  // </div>
-  // </div>
-  // </div>
-  // `,
-
-  //   template2: `
-
-  //         <div style="font-family:Arial, sans-serif;background:#f4f4f4;padding:20px 0">
-  //           <div style="max-width:600px;width:100%;margin:0 auto;">
-
-
-  //     <div style="background:#c9f07b;height:120px;text-align:center">
-  //       <div style="padding-top:35px">
-  //       </div>
-  //     </div>
-
-  //     <div style="
-  //         background:white;
-  //         margin:-60px auto 0;
-  //         padding:40px;
-  //         border-radius:4px;
-  //         box-shadow:0 2px 8px rgba(0,0,0,0.1);
-  //         text-align:center;
-  //         max-width:500px;
-  //       ">
-  //       <div style="display:flex,justify-content:flex-start,margin-bottom:20px">
-  //       <img src="/img/logo.png" style="width:100px;margin-bottom:10px"/>
-  // </div>
-  //       <h2 style="margin-bottom:15px;color:#333">{{subject}}</h2>
-
-
-  //       <div style="text-align:left;color:#666;font-size:14px;line-height:1.6">
-  //         {{content}}
-  //       </div>
-
-
-
-  //     </div>
-
-  //     <div style="text-align:center;color:#888;font-size:12px;margin-top:25px">
-  //       Dashboard · Billing · Help <br/><br/>
-  //       If these emails get annoying, feel free to 
-  //       <a href="#" style="color:#888">unsubscribe</a>.<br/><br/>
-  //       Jokko Wallet
-  //     </div>
-
-  //   </div>
-
-  // </div>
-  // `,
-  //   template3: `
-  // <div style="font-family:Arial, sans-serif;">
-  // <div style="padding:20px 10px;">
-
-  //   <div style="
-  //     max-width:600px;width:100%;margin:0 auto;
-  //       background:white;
-  //       border-radius:20px;
-  //       border:1px solid #ddd;
-  //       padding:20px;
-  //       text-align:center;
-  //   ">
-
-  //     <div style="margin-bottom:20px" class="flex justify-center">
-  //       <img src="/img/logo-sm.png"
-  //            style="width:70px;height:70px;border-radius:12px"/>
-  //     </div>
-
-  //     <h2 style="font-size:28px;margin-bottom:10px;color:#222">
-  //      {{subject}}
-  //     </h2>
-
-
-
-  //     <div style="color:#666;font-size:15px;line-height:1.6;margin-top:20px;text-align:left">
-  //       {{content}}
-  //     </div>
-
-
-
-  //     <div style="
-  //         background:#f2f2f2;
-  //         border-radius:12px;
-  //         padding:20px;
-  //         margin-top:30px;
-  //         font-size:14px;
-  //         color:#777;
-  //     ">
-  // Copyright © 2026 | Jokko Wallet
-  //     </div>
-
-  //   </div>
-  //   </div>
-
-  // </div>
-  // `,
-  //   template4: `
-  // <div style="font-family:Arial, sans-serif;">
-  // <div style="padding:20px 10px;">
-
-  //   <div style="max-width:600px;width:100%;margin:0 auto;background:white;border:1px solid #ddd">
-
-  //     <div style="
-  //         background:#095246;
-  //         color:white;
-  //         text-align:center;
-  //         padding:30px 20px;
-  //         font-size:22px;
-  //         font-weight:600;
-  //       ">
-  // {{subject}}    </div>
-
-  //     <div style="padding:35px;color:#444;font-size:15px;line-height:1.7">
-  // <div class="flex justify-center">
-  //       <img src="/img/logo.png" style="width:100px;margin-bottom:10px"/>
-  // </div>
-  //       <p>Hello {{name}},</p>
-
-
-
-  //       <div>
-  //         {{content}}
-  //       </div>
-
-
-  //     </div>
-
-  //     <div style="
-  //         background:#2f2f2f;
-  //         color:#ccc;
-  //         text-align:center;
-  //         padding:20px;
-  //         font-size:13px;
-  //       ">
-  //       Copyright © 2024 | Jokko Wallet
-  //     </div>
-
-  //   </div>
-  //   </div>
-
-  // </div>
-  // `,
-  //   template5: `
-  // <div style="margin:0;font-family:Arial, sans-serif;">
-
-  // <div style="padding:20px 10px;">
-
-  //     <div style="
-  // max-width:600px;width:100%;margin:0 auto;
-  //   background:#ffffff;
-  //   border-radius:6px;
-  //   overflow:hidden;
-  //   border:1px solid #eee;
-  // ">
-  //             <div style="
-  //                 background:#1a1a1a;
-  //                 text-align:center;
-  //                 padding:10px;
-  //                 color:#fff;
-  //                 font-size:12px;
-  //               ">
-  //             </div>
-  //             <!-- Logo -->
-  //             <div style="padding:15px 20px;">
-  //       <img src="/img/logo-sm.png" style="width:40px"/>
-  //             </div>
-
-  //             <!-- Title -->
-  //             <div style="padding:0 20px;">
-  //                 <h2 style="margin:0;font-size:20px;color:#111;">
-  //                     {{subject}}
-  //                 </h2>
-  //             </div>
-
-
-
-
-  //             <div style="color:#555;font-size:15px;line-height:1.6;padding:0 20px;margin-top: 20px;">
-  //                 {{content}}
-  //             </div>
-  //             <!-- Footer Content -->
-  //             <div style="padding:10px 20px;color:#555;font-size:12px;">
-  //                 <p><b>Regards</b><br />Team Jokko wallet</p>
-  //             </div>
-
-  //             <!-- Bottom Footer -->
-  //             <div style="
-  //         background:#1a1a1a;
-  //         text-align:center;
-  //         padding:10px;
-  //         color:#fff;
-  //         font-size:12px;
-  //       ">
-  //                 <p>Want updates through more platforms?</p>
-
-  //                 <div style="margin:15px 0">
-  //                     <span style="margin:0 8px">Twitter</span>
-  //                     <span style="margin:0 8px">Facebook</span>
-  //                     <span style="margin:0 8px">YouTube</span>
-  //                     <span style="margin:0 8px">Instagram</span>
-  //                 </div>
-
-
-  //                 <p>
-  //                     Unsubscribe • Privacy policy • Contact us
-  //                 </p>
-  //             </div>
-
-  //         </div>
-
-  //     </div>
-
-  // </div>
-  // `,
-  //   template6: `
-
-  // <div style="font-family:Arial, sans-serif;">
-  // <div style="padding:20px 10px;">
-
-  //    <div style="max-width:600px;width:100%;margin:0 auto;background:white;border-radius:8px;overflow:hidden;margin-top:10px;margin-bottom:10px">
-
-  //     <!-- header -->
-  //      <div style="padding:15px 20px;">
-  //       <img src="/img/logo-sm.png" style="width:40px"/>
-  //             </div>
-
-  //     <!-- content -->
-  //     <div style="padding:40px">
-
-  //       <h1 style="color:#000;font-size:28px;margin-bottom:20px">
-  //         {{subject}}
-  //       </h1>
-
-  //       <div style="color:#555;font-size:16px;line-height:1.6;margin-bottom:25px">
-  //         {{content}}
-  //       </div>
-
-  //     </div>
-  //   <!-- footer -->
-  //   <div style="text-align:center;color:#888;font-size:12px;margin-top:5px;background:#f2f2f2;padding-top:10px">
-  //     © 2022 Jokko Wallet Inc. All Rights Reserved
-  //   </div>
-  //   </div>
-  //   </div>
-  // </div>
-  // `,
-
-  // };
-
-
-
-  // ---------------- GET EMAIL TEMPLATES ----------------
-
-
-  const [designTemplates, setDesignTemplates] = useState([]);
 
   const fetchDesignTemplates = async () => {
     try {
@@ -464,10 +150,13 @@ const EmailTemplateManagementnew = () => {
       );
 
       if (res.data?.success) {
-        setDesignTemplates(res.data.result);
+        setDesignTemplates(res.data.result || []);
+      } else {
+        setDesignTemplates([]);
       }
     } catch (err) {
       console.error(err);
+      setDesignTemplates([]);
     }
   };
 
@@ -475,36 +164,69 @@ const EmailTemplateManagementnew = () => {
     fetchDesignTemplates();
   }, []);
 
-
   useEffect(() => {
     if (designTemplates.length > 0) {
-      const defaultTemp = designTemplates.find(t => t.isDefault);
-
+      const defaultTemp = designTemplates.find((t) => t.isDefault);
       if (defaultTemp) {
         setGlobalDesign(defaultTemp.template_name);
       }
     }
   }, [designTemplates]);
 
-  const getEmailTemplates = async () => {
+  const debouncedSearch = useMemo(
+    () =>
+      debounce((value) => {
+        setPage(1);
+        setSearch(value || "");
+      }, 800),
+    []
+  );
 
+  useEffect(() => {
+    return () => {
+      debouncedSearch.cancel();
+    };
+  }, [debouncedSearch]);
+
+  const handleStatusFilter = (value) => {
+    setPage(1);
+
+    if (value === "active") {
+      setStatusFilter("true");
+    } else if (value === "inactive") {
+      setStatusFilter("false");
+    } else {
+      setStatusFilter("");
+    }
+  };
+
+  const getEmailTemplates = async () => {
     const startTime = Date.now();
 
     try {
-
       setLoading(true);
+
+      const params = {
+        search,
+        page,
+        limit: 10,
+      };
+
+      if (statusFilter !== "") {
+        params.is_active = statusFilter;
+      }
 
       const response = await axios.get(
         `${constant.backend_url}/admin/get-emailcontent`,
         {
+          params,
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("adminToken")}`
-          }
+            Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+          },
         }
       );
 
       if (response.data?.success) {
-
         const docs = response.data.result || [];
 
         const formattedData = docs.map((item) => ({
@@ -515,20 +237,20 @@ const EmailTemplateManagementnew = () => {
           design: item.template_name,
           is_active: item.is_active,
           template_name: item.template_name,
-          status: item.is_active ? "Active" : "Inactive"
+          status: item.is_active ? "Active" : "Inactive",
         }));
 
         setOriginalData(formattedData);
-        setTotal(formattedData.length);
+        setTotal(response.data.total || formattedData.length);
+      } else {
+        setOriginalData([]);
+        setTotal(0);
       }
-
     } catch (error) {
-
       console.log(error);
       setOriginalData([]);
-
+      setTotal(0);
     } finally {
-
       const elapsed = Date.now() - startTime;
       const minTime = 500;
 
@@ -540,24 +262,14 @@ const EmailTemplateManagementnew = () => {
 
   useEffect(() => {
     getEmailTemplates();
-  }, []);
-
-  // ---------------- UPDATE CLICK ----------------
-
-  // const handleUpdate = (record) => {
-  //   setSelectedRow(record);
-  //   setDrawerOpen(true);
-  // };
+  }, [search, statusFilter, page]);
 
   const handleUpdate = (record) => {
     setSelectedRow(record);
     setSelectedDesign(record.design ? record.design : globalDesign);
-    setIsActive(record.is_active ?? false); // ✅
+    setIsActive(record.is_active ?? false);
     setDrawerOpen(true);
   };
-
-  // ---------------- UPDATE SUBMIT ----------------
-
 
   const handleCreate = async (values) => {
     try {
@@ -570,7 +282,7 @@ const EmailTemplateManagementnew = () => {
           subject: values.subject,
           body: values.body,
           template_name: createDesign || globalDesign,
-          is_active: isCreateActive
+          is_active: isCreateActive,
         },
         {
           headers: {
@@ -588,7 +300,6 @@ const EmailTemplateManagementnew = () => {
       } else {
         message.warning(res.data.message || "Create failed");
       }
-
     } catch (error) {
       console.log(error);
       message.error("Something went wrong");
@@ -598,28 +309,26 @@ const EmailTemplateManagementnew = () => {
   };
 
   const handleSubmit = async (values) => {
-
     const startTime = Date.now();
 
     try {
-
       setLoading(true);
 
       if (selectedRow) {
-
-
         const payload = {
           event_key: selectedRow.event_key,
           subject: values.subject,
           body: values.body,
           template_name: selectedDesign,
-          is_active: isActive
+          is_active: isActive,
         };
+
         const isSame =
           payload.subject === selectedRow.subject &&
           payload.body === selectedRow.body &&
           payload.is_active === selectedRow.is_active &&
-          selectedDesign === selectedRow.template_name
+          selectedDesign === selectedRow.template_name;
+
         if (isSame) {
           message.error("No changes detected");
           return;
@@ -633,28 +342,23 @@ const EmailTemplateManagementnew = () => {
           subject: values?.subject,
           body: values?.body,
           template_name: selectedDesign,
-          is_active: isActive
+          is_active: isActive,
         },
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("adminToken")}`
-          }
+            Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+          },
         }
       );
 
       if (response.data?.success) {
-
         message.success(response.data.message);
         getEmailTemplates();
         setDrawerOpen(false);
       }
-
     } catch (error) {
-
       console.log(error);
-
     } finally {
-
       const elapsed = Date.now() - startTime;
       const minTime = 500;
 
@@ -662,9 +366,6 @@ const EmailTemplateManagementnew = () => {
         setLoading(false);
       }, Math.max(minTime - elapsed, 0));
     }
-
-
-
   };
 
   useEffect(() => {
@@ -674,7 +375,6 @@ const EmailTemplateManagementnew = () => {
     }
   }, [drawerOpen, selectedRow]);
 
-  // Reset create drawer state when it opens
   useEffect(() => {
     if (createDrawerOpen) {
       setLiveCreateBody("");
@@ -682,9 +382,7 @@ const EmailTemplateManagementnew = () => {
       setCreateDesign(globalDesign);
       setIsCreateActive(true);
     }
-  }, [createDrawerOpen]);
-
-
+  }, [createDrawerOpen, globalDesign]);
 
   const formatBody = (raw) =>
     (raw || "")
@@ -702,22 +400,24 @@ const EmailTemplateManagementnew = () => {
   const formattedContent = formatBody(liveBody || selectedRow?.body || "");
   const formattedCreateContent = formatBody(liveCreateBody);
 
-  // --- UPDATE preview ---
   const activeDesign = selectedDesign || globalDesign;
-  const selectedTemplateObj = designTemplates.find((t) => t.template_name === activeDesign);
+  const selectedTemplateObj = designTemplates.find(
+    (t) => t.template_name === activeDesign
+  );
+
   const previewHtml =
     selectedTemplateObj?.html
       ?.replace(/{{subject}}/g, liveSubject || selectedRow?.subject || "Email Subject")
-      ?.replace(/{{content}}/g, formattedContent)
-    || "<p>No template found</p>";
+      ?.replace(/{{content}}/g, formattedContent) || "<p>No template found</p>";
 
-  // --- CREATE preview ---
-  const createTemplateObj = designTemplates.find((t) => t.template_name === (createDesign || globalDesign));
+  const createTemplateObj = designTemplates.find(
+    (t) => t.template_name === (createDesign || globalDesign)
+  );
+
   const createPreviewHtml =
     createTemplateObj?.html
       ?.replace(/{{subject}}/g, liveCreateSubject || "Email Subject")
-      ?.replace(/{{content}}/g, formattedCreateContent)
-    || "<p>No template found</p>";
+      ?.replace(/{{content}}/g, formattedCreateContent) || "<p>No template found</p>";
 
   const handleDelete = async () => {
     try {
@@ -726,7 +426,7 @@ const EmailTemplateManagementnew = () => {
       const res = await axios.post(
         `${constant.backend_url}/admin/delete-emailcontent`,
         {
-          event_key: deleteRecord?.event_key, // ✅ IMPORTANT
+          event_key: deleteRecord?.event_key,
         },
         {
           headers: {
@@ -742,7 +442,6 @@ const EmailTemplateManagementnew = () => {
       } else {
         message.warning(res.data.message || "Delete failed");
       }
-
     } catch (error) {
       console.log(error);
       message.error("Something went wrong");
@@ -753,10 +452,15 @@ const EmailTemplateManagementnew = () => {
 
   return (
     <div>
-
       <TableHeader
         data={originalData}
         showCreateButton={true}
+        showSearch={true}
+        showStatusFilter={true}
+        onSearch={(value) => debouncedSearch(value)}
+        onVerifyChange={handleStatusFilter}
+        searchTooltip="Search by event key, subject, template name"
+        placeHolder="Search by event key, subject, template name"
         onCreate={() => setCreateDrawerOpen(true)}
       />
 
@@ -788,26 +492,24 @@ const EmailTemplateManagementnew = () => {
           <div className="mt-6">
             <h3 className="text-white mb-2">Template Preview</h3>
 
-            {/* ✅ LIVE TEMPLATE PREVIEW */}
             <div
               style={{
-                background: "transprent", // match email bg
+                background: "transparent",
                 borderRadius: "10px",
                 padding: "20px",
                 marginBottom: "15px",
                 display: "flex",
-                justifyContent: "center"
+                justifyContent: "center",
               }}
             >
               <div
                 style={{
-                  width: "600px", // 🔥 FIXED WIDTH
-                  background: "#fff"
+                  width: "600px",
+                  background: "#fff",
                 }}
                 dangerouslySetInnerHTML={{
                   __html: previewHtml || "",
                 }}
-
               />
             </div>
 
@@ -823,13 +525,8 @@ const EmailTemplateManagementnew = () => {
 
             <div className="mt-6">
               <label className="text-white mr-3">Active</label>
-
-              <Switch
-                checked={isActive}
-                onChange={(val) => setIsActive(val)}
-              />
+              <Switch checked={isActive} onChange={(val) => setIsActive(val)} />
             </div>
-
           </div>
         }
       />
@@ -846,7 +543,7 @@ const EmailTemplateManagementnew = () => {
                 background: "#fff",
                 padding: "20px",
                 maxHeight: "70vh",
-                overflow: "auto"
+                overflow: "auto",
               }}
               dangerouslySetInnerHTML={{ __html: previewHtml }}
             />
@@ -861,15 +558,11 @@ const EmailTemplateManagementnew = () => {
         showFooter={false}
         description={" "}
         extraContent={
-
           <>
-
             <div className="flex gap-3 flex-wrap justify-center">
-
               {designTemplates
                 .filter((t) => t.template_name !== selectedDesign)
                 .map((template) => (
-
                   <div
                     key={template._id}
                     className="template-card upload-templatecard"
@@ -881,15 +574,9 @@ const EmailTemplateManagementnew = () => {
                           : "2px solid transparent",
                       borderRadius: "12px",
                       cursor: "pointer",
-                      transition: "0.2s"
+                      transition: "0.2s",
                     }}
                   >
-                    {/* <div
-                      dangerouslySetInnerHTML={{
-                        __html: template.html,
-                      }}
-                    /> */}
-
                     <div
                       style={{
                         width: "220px",
@@ -898,7 +585,7 @@ const EmailTemplateManagementnew = () => {
                         borderRadius: "12px",
                         border: "1px solid #ddd",
                         background: "#fff",
-                        position: "relative"
+                        position: "relative",
                       }}
                     >
                       <div
@@ -908,7 +595,7 @@ const EmailTemplateManagementnew = () => {
                           left: 0,
                           transform: "scale(0.4)",
                           transformOrigin: "top left",
-                          width: "600px"
+                          width: "600px",
                         }}
                         dangerouslySetInnerHTML={{
                           __html: template.html,
@@ -919,7 +606,6 @@ const EmailTemplateManagementnew = () => {
                   </div>
                 ))}
 
-              {/* confirm section */}
               {pendingDesign && (
                 <div className="mt-4 text-center w-full">
                   <p className="white">Use this template?</p>
@@ -933,9 +619,9 @@ const EmailTemplateManagementnew = () => {
                         setSelectedDesign(pendingDesign);
                         setDesignModalOpen(false);
                         setPendingDesign(null);
-                        setSelectedRow(prev => ({
+                        setSelectedRow((prev) => ({
                           ...prev,
-                          design: pendingDesign
+                          design: pendingDesign,
                         }));
                       }}
                       style={{ background: theme.sidebarSettings.activeBgColor }}
@@ -950,7 +636,6 @@ const EmailTemplateManagementnew = () => {
         }
       />
 
-      {/* ---- CREATE EMAIL DRAWER (same design as Update) ---- */}
       <ReusableDrawer
         open={createDrawerOpen}
         onClose={() => setCreateDrawerOpen(false)}
@@ -963,7 +648,6 @@ const EmailTemplateManagementnew = () => {
           <div className="mt-6">
             <h3 className="text-white mb-2">Template Preview</h3>
 
-            {/* LIVE PREVIEW */}
             <div
               style={{
                 background: "transparent",
@@ -971,7 +655,7 @@ const EmailTemplateManagementnew = () => {
                 padding: "20px",
                 marginBottom: "15px",
                 display: "flex",
-                justifyContent: "center"
+                justifyContent: "center",
               }}
             >
               <div
@@ -1000,7 +684,6 @@ const EmailTemplateManagementnew = () => {
         }
       />
 
-      {/* ---- CREATE TEMPLATE PICKER MODAL ---- */}
       <ReusableModal
         open={createDesignModalOpen}
         onCancel={() => setCreateDesignModalOpen(false)}
@@ -1024,7 +707,7 @@ const EmailTemplateManagementnew = () => {
                           : "2px solid transparent",
                       borderRadius: "12px",
                       cursor: "pointer",
-                      transition: "0.2s"
+                      transition: "0.2s",
                     }}
                   >
                     <div
@@ -1035,7 +718,7 @@ const EmailTemplateManagementnew = () => {
                         borderRadius: "12px",
                         border: "1px solid #ddd",
                         background: "#fff",
-                        position: "relative"
+                        position: "relative",
                       }}
                     >
                       <div
@@ -1045,7 +728,7 @@ const EmailTemplateManagementnew = () => {
                           left: 0,
                           transform: "scale(0.4)",
                           transformOrigin: "top left",
-                          width: "600px"
+                          width: "600px",
                         }}
                         dangerouslySetInnerHTML={{ __html: template.html }}
                       />
@@ -1078,7 +761,6 @@ const EmailTemplateManagementnew = () => {
         }
       />
 
-
       <ReusableModal
         open={deletemodal}
         onCancel={() => setDeletemodal(false)}
@@ -1087,7 +769,6 @@ const EmailTemplateManagementnew = () => {
         showFooter={false}
         extraContent={
           <div className="text-center">
-
             <p className="text-gray-300 text-base">
               Are you sure you want to delete this network?
             </p>
@@ -1107,11 +788,9 @@ const EmailTemplateManagementnew = () => {
                 Yes
               </button>
             </div>
-
           </div>
         }
       />
-
     </div>
   );
 };

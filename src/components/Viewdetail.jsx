@@ -11,6 +11,7 @@ import { useMemo } from "react";
 import theme from '../config/theme';
 import ChartsSection from "../components/ChartsSection";
 import StatCard from "../components/StatCard";
+import { hasAccess } from "../utils/permissionCheck";
 
 const columns = [
   { title: "Name", dataIndex: "name", key: "name" },
@@ -27,9 +28,13 @@ const columns = [
     }
   },
   { title: "Created At", dataIndex: "createdAt", key: "createdAt" },
-  { title: "Updated At", dataIndex: "createdAt", key: "updatedAt" },
+  // { title: "Updated At", dataIndex: "createdAt", key: "updatedAt" },
 
 ];
+
+
+const user = JSON.parse(localStorage.getItem("user")) || {};
+const userPermissions = user?.permissions || [];
 
 
 const Viewdetail = () => {

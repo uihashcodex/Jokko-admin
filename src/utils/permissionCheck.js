@@ -1,14 +1,3 @@
-// utils/permissionCheck.js
-
-// export const hasAccess = (userPermissions, module) => {
-//     if (userPermissions?.includes("ALL")) return true;
-
-//     return userPermissions?.includes(module);
-// };
-
-
-// utils/permissionCheck.js
-
 export const PERMISSION_ROUTE_MAP = {
   Dashboard: "/dashboard",
   Assets: "/assets",
@@ -16,14 +5,22 @@ export const PERMISSION_ROUTE_MAP = {
   "User Details": "/viewdetails",
   Wallet: "/wallet",
   Transaction: "/transaction",
-  Webhook: "/webhook",
   "Trending Currency": "/trendingcurrency",
-  "Default Currency": "/defaultcurrency",
   "Push Notification": "/pushnotification",
   "Email Template": "/emailtemplate",
   "Email Management": "/emailcontent",
+  "Email Campaign": "/emailcampaign",
   Support: "/support",
   Profile: "/profile",
+  "Role Management": "/rolemanagement",
+  "Staff Management": "/staffmanagement",
+  Broadcast: "/broadcast",
+  Providers: "/onramper-history",
+  "CoinRabbit History": "/coin-rabbbit-history",
+  "Fiat Assets": "/buy-sell-fiat-asset",
+  "Buy/Sell Crypto": "/buy-sell-crypto",
+  "Buy/Sell Network": "/buy-sell-networks",
+  "Buy/Sell CoinRabbit": "/coinrabbit-crypto"
 };
 
 export const hasAccess = (userPermissions = [], module) => {
@@ -35,8 +32,6 @@ export const getFirstAllowedRoute = (userPermissions = []) => {
   if (!Array.isArray(userPermissions) || userPermissions.length === 0) {
     return null;
   }
-
-  console.log("DSFSD", userPermissions)
 
   if (userPermissions.includes("ALL")) {
     return "/dashboard";

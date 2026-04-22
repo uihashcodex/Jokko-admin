@@ -2,6 +2,8 @@ import { Table, Dropdown, Button } from "antd";
 import { DownOutlined } from "@ant-design/icons";
 import Select from "./SelectField";
 import { Empty } from "antd";
+import { hasAccess } from "../utils/permissionCheck";
+
 // import { Select } from "antd";
 
 
@@ -32,35 +34,46 @@ const ReusableTable = ({
   console.log(data, "data");
 
 
-  if (actionType?.includes("view")) {
-    updatedColumns.push({
-      title: "Action",
-      key: "action",
-      render: (_, record) => {
+  const user = JSON.parse(localStorage.getItem("user")) || {};
+const permissions = user?.permissions || [];
 
-        const items = [
-          { key: "transaction", label: "Transaction" },
-          { key: "wallet", label: "Wallet" },
-          { key: "coinrabbit", label: "CoinRabbit" },
-          { key: "onramper", label: "OnRamper" },
-        ];
+if (actionType?.includes("view")) {
+  updatedColumns.push({
+    title: "Action",
+    key: "action",
+    render: (_, record) => {
+      const user = JSON.parse(localStorage.getItem("user")) || {};
+      const permissions = user?.permissions || [];
 
-        return (
-          <Dropdown
-            menu={{
-              items,
-              onClick: ({ key }) => onView?.(record, key),
-            }}
-            trigger={["click"]}
-          >
-            <Button>
-              Select <DownOutlined />
-            </Button>
-          </Dropdown>
-        );
-      },
-    });
-  }
+      const allItems = [
+        { key: "transaction", label: "Transaction", permission: "Transaction" },
+        { key: "wallet", label: "Wallet", permission: "Wallet" },
+        { key: "coinrabbit", label: "CoinRabbit", permission: "Buy/Sell CoinRabbit" },
+        { key: "onramper", label: "OnRamper", permission: "Providers" },
+      ];
+
+      const items = allItems.filter((item) =>
+        hasAccess(permissions, item.permission)
+      );
+
+      return (
+        <Dropdown
+          menu={{
+            items: items.length > 0 ? items : [{ key: "no-access", label: "No Access", disabled: true }],
+            onClick: ({ key }) => {
+              if (key !== "no-access") onView?.(record, key);
+            },
+          }}
+          trigger={["click"]}
+        >
+          <Button>
+            Select <DownOutlined />
+          </Button>
+        </Dropdown>
+      );
+    },
+  });
+}
   if (actionType?.includes("webhook")) {
     updatedColumns.push({
       title: "Webhook",
