@@ -12,6 +12,7 @@ import theme from '../config/theme';
 import ChartsSection from "../components/ChartsSection";
 import StatCard from "../components/StatCard";
 import { hasAccess } from "../utils/permissionCheck";
+import ReusableModal from "../reuseable/ReusableModal";
 
 const columns = [
      { title: "S.no", dataIndex: "sno", key: "sno" },
@@ -46,6 +47,9 @@ const Viewdetail = () => {
   const [open, setOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [totalUsers, setTotalUsers] = useState(0);
+    const [deleteRecord, setDeleteRecord] = useState(null);
+    const [deletemodal, setDeletemodal] = useState(false);
+
   const handleCreate = () => {
     setOpen(true);
     setSelectedRecord(null);
@@ -165,6 +169,37 @@ const Viewdetail = () => {
 
 
 
+      const handleDelete = async (userId) => {
+        try {
+            setLoading(true);
+
+            const res = await axios.post(
+                `${constant.backend_url}/admin/delete-userdetails`,
+                {
+                    userId
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+                    },
+                }
+            );
+
+            if (res.data?.success) {
+                message.success("Users Deleted successfully");
+                setDeletemodal(false);
+                fetUsers();
+            } else {
+                message.warning(res.data.message || "Delete failed");
+            }
+
+        } catch (error) {
+            console.log(error);
+            message.error("Something went wrong");
+        } finally {
+            setLoading(false);
+        }
+    };
 
   
 
@@ -261,7 +296,7 @@ const Viewdetail = () => {
         onPageChange={(p) => setPage(p)}
         loading={loading} 
         rowKey="key"
-        actionType={["view", "block"]}
+        actionType={["view", "block", "Remove"]}
         onView={(record, section) => {
           if (section === "wallet") {
             navigate(`/wallet/${record.key}`, { state: record });
@@ -277,9 +312,51 @@ const Viewdetail = () => {
             navigate(`/onramper-history/${record.key}`, { state: record });
           }
         }}
+
         onBlock={(record) => blockUser(record)}
         onUnblock={(record) => blockUser(record)}
+         onDelete={(record) => {
+        setDeleteRecord(record);
+        setDeletemodal(true);
+    }}
       />
+
+    <ReusableModal
+  open={deletemodal}
+  onCancel={() => setDeletemodal(false)}
+  title="Delete User"
+  description={"Are you sure you want to delete this user?"}
+  showFooter={false}
+  extraContent={
+    <div className="text-center">
+
+      <p className="text-gray-300 text-base">
+        Are you sure you want to delete this user?
+      </p>
+
+      <div className="flex justify-between gap-4 mt-6">
+
+        {/* ❌ NO BUTTON FIX */}
+        <button
+          className="px-6 py-2 rounded primaty-bg text-black"
+          onClick={() => setDeletemodal(false)}
+        >
+          No
+        </button>
+
+        {/* ❌ YES BUTTON FIX */}
+        <button
+          className="px-6 py-2 rounded bg-red-600 text-white"
+          onClick={() => handleDelete(deleteRecord?.key)}
+        >
+          Yes
+        </button>
+
+      </div>
+
+    </div>
+  }
+/>
     </div>
   );
 };

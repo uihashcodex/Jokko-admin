@@ -4,6 +4,8 @@ import TableHeader from "../reuseable/TableHeader";
 import { message } from "antd";
 import axios from "axios";
 import { constant } from "../const";
+import ReusableModal from "../reuseable/ReusableModal";
+
 
 const PAGE_SIZE = 10;
 
@@ -13,6 +15,9 @@ const BuySellNetworks = () => {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();
+
+      const [deletemodal, setDeletemodal] = useState(false);
+    const [deleteRecord, setDeleteRecord] = useState(null);
 
   const [filters, setFilters] = useState({
     search: "",
@@ -123,6 +128,42 @@ const BuySellNetworks = () => {
     }
   };
 
+
+
+
+        const handleDelete = async (userId) => {
+        try {
+            setLoading(true);
+
+            const res = await axios.post(
+                `${constant.backend_url}/admin/delete-network`,
+                {
+                    userId
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+                    },
+                }
+            );
+
+            if (res.data?.success) {
+                message.success("Buy/Sell Network Deleted successfully");
+                setDeletemodal(false);
+                fetchNetworks();
+            } else {
+                message.warning(res.data.message || "Delete failed");
+            }
+
+        } catch (error) {
+            console.log(error);
+            message.error("Something went wrong");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+
   return (
     <div style={{ display: "flex", justifyContent: "center", flexDirection: "column", width: "100%" }}>
       {contextHolder}
@@ -152,9 +193,50 @@ const BuySellNetworks = () => {
         currentPage={page}
         onPageChange={(p) => setPage(p)}
         loading={loading}
-        actionType={["status"]}
+        actionType={["status","Remove"]}
+               onDelete={(record) => {
+        setDeleteRecord(record);
+        setDeletemodal(true);
+    }}
         onStatusChange={handleStatusChange}
       />
+
+
+                          <ReusableModal
+  open={deletemodal}
+  onCancel={() => setDeletemodal(false)}
+  title="Delete Buy/sell Network?"
+  description={"Are you sure you want to delete this Buy/sell Network?"}
+  showFooter={false}
+  extraContent={
+    <div className="text-center">
+
+      <p className="text-gray-300 text-base">
+        Are you sure you want to delete this Buy/sell Network?
+      </p>
+
+      <div className="flex justify-between gap-4 mt-6">
+
+        {/* ❌ NO BUTTON FIX */}
+        <button
+          className="px-6 py-2 rounded primaty-bg text-black"
+          onClick={() => setDeletemodal(false)}
+        >
+          No
+        </button>
+
+        {/* ❌ YES BUTTON FIX */}
+        <button
+          className="px-6 py-2 rounded bg-red-600 text-white"
+onClick={() => handleDelete(deleteRecord?.id)}        >
+          Yes
+        </button>
+
+      </div>
+
+    </div>
+  }
+/>
     </div>
   );
 };

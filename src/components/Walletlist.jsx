@@ -37,6 +37,10 @@ const Walletlist = () => {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
 
+
+
+      const [deletemodal, setDeletemodal] = useState(false);
+    const [deleteRecord, setDeleteRecord] = useState(null);
   // -----------------------------
   // USER WALLET DETAILS (HISTORY)
   // -----------------------------
@@ -162,6 +166,40 @@ const Walletlist = () => {
 
 
 
+
+
+        const handleDelete = async (userId) => {
+        try {
+            setLoading(true);
+
+            const res = await axios.post(
+                `${constant.backend_url}/admin/delete-userswallets`,
+                {
+                    userId
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+                    },
+                }
+            );
+
+            if (res.data?.success) {
+                message.success("Wallet Deleted successfully");
+                setDeletemodal(false);
+                getAllWallets();
+            } else {
+                message.warning(res.data.message || "Delete failed");
+            }
+
+        } catch (error) {
+            console.log(error);
+            message.error("Something went wrong");
+        } finally {
+            setLoading(false);
+        }
+    };
+
   const updateFilter = (key, value) => {
     if (key === "status") {
       value = value === "active" ? true : value === "inactive" ? false : "";
@@ -185,6 +223,7 @@ const Walletlist = () => {
   // TABLE COLUMNS
   // -----------------------------
   const columns = [
+    { title: "S.no", dataIndex: "sno" },
     { title: "Wallet Name", dataIndex: "walletname" },
     { title: "User Name", dataIndex: "firstname" },
 
@@ -405,11 +444,55 @@ const Walletlist = () => {
         total={total}
         currentPage={page}
         onPageChange={(p) => setPage(p)}  
-        actionType={["block"]}
+        actionType={["block","Remove"]}
         onBlock={(record) => handleBlockWallet(record)}  
+              onDelete={(record) => {
+        setDeleteRecord(record);
+        setDeletemodal(true);
+    }}
         loading={loading} 
 
       />
+
+
+
+
+            <ReusableModal
+  open={deletemodal}
+  onCancel={() => setDeletemodal(false)}
+  title="Delete Wallet"
+  description={"Are you sure you want to delete this Wallet?"}
+  showFooter={false}
+  extraContent={
+    <div className="text-center">
+
+      <p className="text-gray-300 text-base">
+        Are you sure you want to delete this Wallet?
+      </p>
+
+      <div className="flex justify-between gap-4 mt-6">
+
+        {/* ❌ NO BUTTON FIX */}
+        <button
+          className="px-6 py-2 rounded primaty-bg text-black"
+          onClick={() => setDeletemodal(false)}
+        >
+          No
+        </button>
+
+        {/* ❌ YES BUTTON FIX */}
+        <button
+          className="px-6 py-2 rounded bg-red-600 text-white"
+          onClick={() => handleDelete(deleteRecord?.key)}
+        >
+          Yes
+        </button>
+
+      </div>
+
+    </div>
+  }
+/>
 
       {/* MODAL */}
       <ReusableModal

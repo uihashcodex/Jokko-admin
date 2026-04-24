@@ -5,6 +5,9 @@ import { message } from "antd";
 import axios from "axios";
 import debounce from "lodash.debounce";
 import { constant } from "../const";
+import ReusableModal from "../reuseable/ReusableModal";
+
+
 
 const PAGE_SIZE = 10;
 
@@ -22,6 +25,10 @@ const BuySellFiatAsset = () => {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();
+
+
+      const [deletemodal, setDeletemodal] = useState(false);
+    const [deleteRecord, setDeleteRecord] = useState(null);
 
   const [filters, setFilters] = useState({
     search: "",
@@ -192,6 +199,41 @@ const BuySellFiatAsset = () => {
     }
   };
 
+
+
+
+        const handleDelete = async (userId) => {
+        try {
+            setLoading(true);
+
+            const res = await axios.post(
+                `${constant.backend_url}/admin/delete-fiatAsset`,
+                {
+                    userId
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+                    },
+                }
+            );
+
+            if (res.data?.success) {
+                message.success("Wallet Deleted successfully");
+                setDeletemodal(false);
+                getBuySellFiatAssets();
+            } else {
+                message.warning(res.data.message || "Delete failed");
+            }
+
+        } catch (error) {
+            console.log(error);
+            message.error("Something went wrong");
+        } finally {
+            setLoading(false);
+        }
+    };
+
   return (
     <div
       style={{
@@ -242,9 +284,50 @@ onVerifyChange={(value) =>
           currentPage={page}
           onPageChange={(currentPage) => setPage(currentPage)}
           loading={loading}
-          actionType={["status"]}
+          actionType={["status","Remove"]}
           onStatusChange={handleStatusChange}
+            onDelete={(record) => {
+        setDeleteRecord(record);
+        setDeletemodal(true);
+    }}
         />
+
+
+                    <ReusableModal
+  open={deletemodal}
+  onCancel={() => setDeletemodal(false)}
+  title="Delete Fiat Asset?"
+  description={"Are you sure you want to delete this Fiat Asset?"}
+  showFooter={false}
+  extraContent={
+    <div className="text-center">
+
+      <p className="text-gray-300 text-base">
+        Are you sure you want to delete this Fiat Asset?
+      </p>
+
+      <div className="flex justify-between gap-4 mt-6">
+
+        {/* ❌ NO BUTTON FIX */}
+        <button
+          className="px-6 py-2 rounded primaty-bg text-black"
+          onClick={() => setDeletemodal(false)}
+        >
+          No
+        </button>
+
+        {/* ❌ YES BUTTON FIX */}
+        <button
+          className="px-6 py-2 rounded bg-red-600 text-white"
+onClick={() => handleDelete(deleteRecord?.id)}        >
+          Yes
+        </button>
+
+      </div>
+
+    </div>
+  }
+/>
       </>
     </div>
   );

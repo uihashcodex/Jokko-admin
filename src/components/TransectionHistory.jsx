@@ -183,8 +183,9 @@ useEffect(() => {
         setTotalUsers(res.data.total);
 
         // const transres = res.data.result.map((item) => ({
-        const transres = users.map((item) => ({
+        const transres = users.map((item, index) => ({
           key: item?._id,
+            sno: (page - 1) * PAGE_SIZE + index + 1,
           transactionHash: item?.transactionHash || "-",
           firstname: item?.firstname || "-",
           networkName: item?.networkName || "-",
@@ -257,6 +258,7 @@ useEffect(() => {
 
 
   const columns = [
+    { title: "S.no", dataIndex: "sno" },
     {
       title: "Transaction Hash", dataIndex: "transactionHash",
       render: (trans) => {
