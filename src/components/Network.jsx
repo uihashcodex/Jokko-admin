@@ -21,7 +21,7 @@ const Network = () => {
     const [deletemodal, setDeletemodal] = useState(false);
     const [dashboardData, setDashboardData] = useState({});
 
-    // const [filteredData, setFilteredData] = useState(originalData);
+    const [filteredData, setFilteredData] = useState(originalData);
     const [open, setOpen] = useState(false);
     const [selectedRecord, setSelectedRecord] = useState(null);
     const [totalUsers, setTotalUsers] = useState(0);

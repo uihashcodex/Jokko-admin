@@ -14,12 +14,13 @@ import StatCard from "../components/StatCard";
 import { hasAccess } from "../utils/permissionCheck";
 
 const columns = [
+     { title: "S.no", dataIndex: "sno", key: "sno" },
   { title: "Name", dataIndex: "name", key: "name" },
   { title: "Email", dataIndex: "email", key: "email" },
   { title: "Phone", dataIndex: "phone", key: "phone" },
   { title: "Status", dataIndex: "status", key: "status" },
   { title: "Type", dataIndex: "type", key: "type" },
-  { title: "Country", dataIndex: "contry", key: "contry" },
+  { title: "Country", dataIndex: "country", key: "country" },
   {
     title: "Unique ID", dataIndex: "uniqueid", key: "uniqueid",
     render: (frm) => {
@@ -82,16 +83,17 @@ const Viewdetail = () => {
         const users = res.data.result || [];
         setTotalUsers(res.data.total);
         const tableData = users.map((user, index) => ({
+
           key: user?._id,
-          sno: index + 1,
-          name: `${user?.firstname || ""} ${user?.lastname || ""}`.trim() || "-",
+ sno: (page - 1) * 10 + index + 1,          
+ name: `${user?.firstname || ""} ${user?.lastname || ""}`.trim() || "-",
           email: user?.email || "-",
           phone: user?.phone || "-",
           status: user?.blockstatus ? "Inactive" : "active",
           type: user?.type || "-",
           country: user?.country || "-",
           createdAt: user?.createdAt ? user.createdAt.split("T")[0] : "-",
-          updatedAt: user?.updatedAt ? user.updatedAt.split("T")[0] : "-",
+          // updatedAt: user?.updatedAt ? user.updatedAt.split("T")[0] : "-",
           uniqueid: user?.unique_id || "-"
         }));
 
@@ -164,6 +166,7 @@ const Viewdetail = () => {
 
 
 
+  
 
   const debouncedSearch = useMemo(
     () =>

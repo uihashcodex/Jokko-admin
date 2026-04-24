@@ -24,6 +24,11 @@ const StaffManagement = () => {
   const [submitting, setSubmitting] = useState(false);
   const [roleOptions, setRoleOptions] = useState([]);
 
+
+  const [page, setPage] = useState(1);
+const [total, setTotal] = useState(0);
+const PAGE_SIZE = 10;
+
   const [filters, setFilters] = useState({
     search: "",
     status: "",
@@ -32,7 +37,7 @@ const StaffManagement = () => {
   useEffect(() => {
     fetchStaffList();
     fetchRoleOptions();
-  }, []);
+  }, [page, filters]);
 
   useEffect(() => {
     applyFilters();
@@ -41,18 +46,22 @@ const StaffManagement = () => {
   const fetchStaffList = async () => {
     try {
       setLoading(true);
-      const response = await getStaffList();
-
+const response = await getStaffList({
+  page,
+  limit: PAGE_SIZE,
+  search: filters.search,
+  status: filters.status,
+});
       if (response?.success && response?.result) {
         const staffData = response.result.map((staff, index) => ({
           key: staff?._id,
-          sno: index + 1,
-          ...staff,
+sno: (page - 1) * PAGE_SIZE + index + 1,          ...staff,
         }));
 
         setOriginalData(staffData);
         setData(staffData);
         setFilteredData(staffData);
+        setTotal(response.total || 0);
       } else {
         message.error(response?.message || "Failed to fetch staff list");
       }
@@ -319,16 +328,22 @@ const StaffManagement = () => {
           searchTooltip="Search by Name, Username, Email, Phone, or Role"
         />
 
-        <ReusableTable
-          columns={columns}
-          data={filteredData}
-          actionType="update"
-          onUpdate={(record) => {
-            setEditing(record.key);
-            setInitialValues(record);
-            setOpen(true);
-          }}
-        />
+   <ReusableTable
+  columns={columns}
+  data={filteredData}
+  rowKey="key"
+  pageSize={PAGE_SIZE}
+  total={total}
+  currentPage={page}
+  onPageChange={(p) => setPage(p)}
+  loading={loading}
+  actionType="update"
+  onUpdate={(record) => {
+    setEditing(record.key);
+    setInitialValues(record);
+    setOpen(true);
+  }}
+/>
 
         <ReusableModal
           open={open}

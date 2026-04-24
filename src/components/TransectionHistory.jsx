@@ -69,62 +69,77 @@ const TransectionHistory = () => {
     },
   ];
 
-  const getTransation = async () => {
-    try {
-      const res = await axios.post(
-        `${constant.backend_url}/admin/getAllUsersWalletTransactions`,
-        { user_id: id },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
-          },
-        }
-      );
+  const PAGE_SIZE = 10;
 
-      if (!res.data?.success) {
-        setTransactionData([]);
-        setTotalUsers(0);
-        message.warning(res.data?.message || "No transactions found");
-        return;
+
+  const [filters, setFilters] = useState({
+    search: "",
+    network_id: "",
+    fromDate: "",
+    toDate: ""
+  });
+
+ const getTransation = async () => {
+  try {
+    setLoading(true);
+
+    const res = await axios.post(
+      `${constant.backend_url}/admin/getAllUsersWalletTransactions?page=${page}&limit=${PAGE_SIZE}`,
+      {
+        user_id: id,
+        search: filters.search,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+        },
       }
+    );
 
-      if (res.data?.success) {
-        const trandata = res.data.data.docs || [];
+    if (res.data?.success) {
+      const trandata = res.data.result || [];
 
+      const trans = trandata.map((item, index) => ({
+        key: item._id,
+        id: item._id,
+        sno: (page - 1) * PAGE_SIZE + index + 1,
+        transactionHash: item?.transactionHash || "-",
+        firstname: item?.firstname || "-",
+        networkName: item?.network_id?.networkName || "-",
+        amount: item?.amount
+          ? `${Number(item.amount).toFixed(4)} ${item?.tokenSymbol || ""}`
+          : "-",
+        from: item?.from || "-",
+        to: item?.to || "-",
+        tokenSymbol: item?.tokenSymbol || "-",
+        createdAt: item?.createdAt ? item.createdAt.split("T")[0] : "",
+        updatedAt: item?.updatedAt ? item.updatedAt.split("T")[0] : "",
+        status: item?.status || "-",
+        transType: item?.transType || "-",
+      }));
 
-        const trans = trandata.map((item) => ({
-          key: item?._id,
-          transactionHash: item?.transactionHash || "-",
-          networkName: item?.network_id?.networkName || "-",
-          amount: item?.amount || "-",
-          from: item?.from || "-",
-          to: item?.to || "-",
-          tokenSymbol: item?.tokenSymbol || "-",
-          createdAt: item?.createdAt ? item?.createdAt.split("T")[0] : "",
-          updatedAt: item?.updatedAt ? item?.updatedAt.split("T")[0] : "", 
-          status: item?.status || "-",
-        }));
-
-
-
-        setTransactionData(trans);
-        setTotalUsers(trandata.length);
-
-      }
-
-    } catch (error) {
-      console.error(error);
+      setTransactionData(trans);
+      setTotalUsers(res.data.total || 0);
     }
-  };
-
-  useEffect(() => {
-    if (id) {
-      getTransation();
-    } else {
-      setTransactionData(originalData);
+  } catch (error) {
+    if (error?.response?.status === 401) {
+      localStorage.removeItem("adminToken");
+      window.location.href = "/login";
+      return;
     }
-  }, [id]);
+
+    console.error(error);
+  } finally {
+    setLoading(false);
+  }
+};
+
+useEffect(() => {
+  if (id) {
+    getTransation();
+  }
+}, [id, page, filters.search]);
 
   useEffect(() => {
     if (id && transactionData.length > 0) {
@@ -136,13 +151,6 @@ const TransectionHistory = () => {
 
 
 
-
-  const [filters, setFilters] = useState({
-    search: "",
-    network_id: "",
-    fromDate: "",
-    toDate: ""
-  });
 
 
   const getAllTransaction = async () => { 
@@ -276,7 +284,7 @@ const TransectionHistory = () => {
     },
     { title: "Token Symbol", dataIndex: "tokenSymbol" },
     { title: "Created At", dataIndex: "createdAt", key: "createdAt" },
-    { title: "Updated At", dataIndex: "createdAt", key: "updatedAt" },
+    // { title: "Updated At", dataIndex: "createdAt", key: "updatedAt" },
     // { title: "Status", dataIndex: "status" },
   ];
 
@@ -386,22 +394,21 @@ const TransectionHistory = () => {
         />
       )}
 
-      <ReusableTable
-        columns={columns}
-        // data={id ? transactionData : filteredTableData}
-        data={filteredData}
-        rowKey="key"
-        pageSize={10}
-        total={totalUsers}
-        currentPage={page}
-        onPageChange={(p) => setPage(p)}
-        loading={loading}
-        actionType={["viewMore"]}
-        onView={(record) => {
-          setSelectedTrans(record);
-          setModalOpen(true);
-        }}
-      />
+    <ReusableTable
+  columns={columns}
+  data={id ? transactionData : filteredTableData}
+  rowKey="key"
+  pageSize={PAGE_SIZE}
+  total={totalUsers}
+  currentPage={page}
+  onPageChange={(p) => setPage(p)}
+  loading={loading}
+  actionType={["viewMore"]}
+  onView={(record) => {
+    setSelectedTrans(record);
+    setModalOpen(true);
+  }}
+/>
 
       {/* <ReusableModal
         open={modalOpen}

@@ -58,8 +58,9 @@ const Walletlist = () => {
           evmaddress: item?.evmAddress,
           solanaaddress: item?.solAddress,
           xrpaddress: item?.xrpAddress,
+          trxAddress:item?.trxAddress,
           createdAt: item?.createdAt ? item?.createdAt.split("T")[0] : "",
-          updatedAt: item?.updatedAt ? item?.updatedAt.split("T")[0] : "",
+          // updatedAt: item?.updatedAt ? item?.updatedAt.split("T")[0] : "",
           status: item?.walletStatus ? "Active" : "Inactive",
                 }));
 
@@ -85,7 +86,11 @@ const Walletlist = () => {
     toDate: ""
   });
 
-  const getAllWallets = async () => {
+  const PAGE_SIZE = 10;
+
+  const getAllWallets = async (id, item,index) => {
+
+    console.log("FididD", id)
 
     try {
       setLoading(true);
@@ -101,7 +106,8 @@ const Walletlist = () => {
           params: {
             ...cleanFilters,
             page: page,
-            limit: 10
+            limit: 10,
+            userId:id
           },
           headers: {
             Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
@@ -114,19 +120,18 @@ const Walletlist = () => {
         setTotalUsers(res.data.total);
 
         // const walletres = res.data.result.map((item) => ({
-        const walletres = walletss.map((item) => ({
-          key: item?._id,
-          walletname: item?.walletName,
-          firstname: item?.firstname || "-",
-          btcaddress: item?.btcAddress,
-          evmaddress: item?.evmAddress,
-          solanaaddress: item?.solAddress,
-          xrpaddress: item?.xrpAddress,
-          trxAddress: item?.trxAddress,
-          // createdAt: item?.createdAt ? item?.createdAt.split("T")[0] : "",
-          // updatedAt: item?.updatedAt ? item?.updatedAt.split("T")[0] : "",
-          status: item?.walletStatus ? "Active" : "Inactive",
-        }));
+  const walletres = walletss.map((item, index) => ({
+  key: item?._id,
+  sno: (page - 1) * PAGE_SIZE + index + 1,
+  walletname: item?.walletName,
+  firstname: item?.firstname || "-",
+  btcaddress: item?.btcAddress,
+  evmaddress: item?.evmAddress,
+  solanaaddress: item?.solAddress,
+  xrpaddress: item?.xrpAddress,
+  trxAddress: item?.trxAddress,
+  status: item?.walletStatus ? "Active" : "Inactive",
+}));
 
         setFilteredTableData(walletres);
         setTotal(res.data.total || 0);
@@ -147,11 +152,11 @@ const Walletlist = () => {
 
   useEffect(() => {
 
-    if (id) {
-      getWallets();
-    } else {
-      getAllWallets();
-    }
+    // if (id) {
+    //   getWallets();
+    // } else {
+      getAllWallets(id);
+    // }
 
   }, [page, filters]);
 
@@ -296,7 +301,8 @@ const Walletlist = () => {
     { title: "Status", dataIndex: "status" },
   ];
 
-  const tableData = id ? walletData : filteredTableData;
+  // const tableData = id ? walletData : filteredTableData;
+  const tableData = filteredTableData;
 
     const handleBlockWallet = async (record) => {
     try {

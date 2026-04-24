@@ -1,108 +1,124 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import ReusableTable from "../reuseable/ReusableTable";
 import TableHeader from "../reuseable/TableHeader";
 import { message } from "antd";
 import axios from "axios";
 import { constant } from "../const";
 
-const columns = [
-  { title: "S.no",         dataIndex: "sno",          key: "sno"          },
-  { title: "Network Name", dataIndex: "tokenName",    key: "tokenName"    },
-  { title: "Network Symbol",       dataIndex: "networkSymbol",  key: "networkSymbol"  },
-  // { title: "Code",         dataIndex: "code",         key: "code"         },
-  // { title: "Type",         dataIndex: "type",         key: "type"         },
-  { title: "Status",       dataIndex: "verifyStatus", key: "verifyStatus" },
-];
-
 const PAGE_SIZE = 10;
 
 const BuySellNetworks = () => {
-  const [allData, setAllData] = useState([]);
-  const [originalData, setOriginalData] = useState([]);
+  const [tableData, setTableData] = useState([]);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();
 
-  const [filters, setFilters] = useState({ search: "", type: "", verifyStatus: "" });
+  const [filters, setFilters] = useState({
+    search: "",
+    verifyStatus: "",
+  });
 
-  const authHeader = { Authorization: `Bearer ${localStorage.getItem("adminToken")}` };
+  const columns = [
+    { title: "S.no", dataIndex: "sno", key: "sno" },
+    { title: "Network Name", dataIndex: "tokenName", key: "tokenName" },
+    { title: "Network Symbol", dataIndex: "networkSymbol", key: "networkSymbol" },
+    { title: "Status", dataIndex: "verifyStatus", key: "verifyStatus" },
+  ];
 
-  const typeOptions = useMemo(() => [
-    { label: "Buy",  value: "Buy"  },
-    { label: "Sell", value: "Sell" },
-  ], []);
+  const authHeader = {
+    Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+  };
 
   const updateFilter = (key, value) => {
-    setFilters((prev) => ({ ...prev, [key]: value || "" }));
+    setFilters((prev) => ({
+      ...prev,
+      [key]: value || "",
+    }));
     setPage(1);
   };
 
-  // ── fetch from API ────────────────────────────────────────────────────────
-  const fetchNetworks = async (search = "") => {
+  const fetchNetworks = async () => {
     setLoading(true);
+
     try {
+      const payload = {
+        page,
+        limit: PAGE_SIZE,
+        search: filters.search,
+      };
+
+      if (filters.verifyStatus) {
+        payload.status = filters.verifyStatus === "active" ? "true" : "false";
+      }
+
       const { data } = await axios.post(
         `${constant.backend_url}/admin/buysell-getnetworks`,
-        { search },
+        payload,
         { headers: authHeader }
       );
+
       if (data.success) {
-        const docs = data.result || data.data || [];
-        const formatted = docs.map((item) => ({
-          id:           item._id,
-          tokenName:    item.networkName  || item.tokenName  || item.name   || "-",
-          networkSymbol:  item.networkSymbol  || item.networkSymbol     || "-",
-          // code:         item.code         || item.tokenSymbol || "-",
-          // type:         item.type         || "-",
+        const docs = data.result || [];
+
+        const formatted = docs.map((item, index) => ({
+          id: item._id,
+          sno: (page - 1) * PAGE_SIZE + index + 1,
+          tokenName: item.networkName || "-",
+          networkSymbol: item.networkSymbol || "-",
           verifyStatus: item.verifyStatus === true ? "active" : "inactive",
         }));
-        setAllData(formatted);
+
+        setTableData(formatted);
+        setTotal(data.total || 0);
       } else {
         messageApi.error(data.message || "Failed to fetch networks.");
       }
-    } catch {
+    } catch (error) {
+      if (error?.response?.status === 401) {
+        localStorage.removeItem("adminToken");
+        window.location.href = "/login";
+        return;
+      }
+
       messageApi.error("Failed to fetch networks.");
     } finally {
       setLoading(false);
     }
   };
 
-  // debounce search calls
   useEffect(() => {
-    const timer = setTimeout(() => fetchNetworks(filters.search), 400);
+    const timer = setTimeout(() => {
+      fetchNetworks();
+    }, 400);
+
     return () => clearTimeout(timer);
-  }, [filters.search]);
+  }, [page, filters.search, filters.verifyStatus]);
 
-  // client-side filter by type / status + paginate
-  useEffect(() => {
-    const filtered = allData.filter((item) => {
-      const matchesStatus = !filters.verifyStatus || item.verifyStatus === filters.verifyStatus;
-      const matchesType   = !filters.type         || item.type         === filters.type;
-      return matchesStatus && matchesType;
-    });
-    const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-    setTotal(filtered.length);
-    setOriginalData(paginated.map((item, i) => ({ ...item, sno: (page - 1) * PAGE_SIZE + i + 1 })));
-  }, [allData, filters.type, filters.verifyStatus, page]);
-
-  // ── update status ─────────────────────────────────────────────────────────
   const handleStatusChange = async (record, newStatus) => {
     try {
       const { data } = await axios.post(
         `${constant.backend_url}/admin/buysell-network`,
-        { network_id: record.id, verifyStatus: newStatus === "active" },
+        {
+          network_id: record.id,
+          verifyStatus: newStatus === "active",
+        },
         { headers: authHeader }
       );
+
       if (data.success) {
-        messageApi.success(data.message || `${record.tokenName} updated to ${newStatus}`);
-        setAllData((prev) =>
-          prev.map((item) => item.id === record.id ? { ...item, verifyStatus: newStatus } : item)
-        );
+        messageApi.success(data.message || "Status updated successfully");
+        fetchNetworks();
       } else {
         messageApi.error(data.message || "Failed to update status.");
       }
-    } catch {
+    } catch (error) {
+      if (error?.response?.status === 401) {
+        localStorage.removeItem("adminToken");
+        window.location.href = "/login";
+        return;
+      }
+
       messageApi.error("Failed to update status.");
     }
   };
@@ -118,22 +134,19 @@ const BuySellNetworks = () => {
       </div>
 
       <TableHeader
-        data={originalData}
+        data={tableData}
         showCreateButton={false}
         showStatusFilter={true}
         showSearch={true}
-        networkOptions={typeOptions}
         onSearch={(value) => updateFilter("search", value)}
         onVerifyChange={(value) => updateFilter("verifyStatus", value)}
-        onTypeChange={(value) => updateFilter("type", value)}
-        onNetworkChange={(value) => updateFilter("type", value)}
         searchTooltip="Search by Network Name, Symbol"
         placeHolder="Search by network name, symbol"
       />
 
       <ReusableTable
         columns={columns}
-        data={originalData}
+        data={tableData}
         pageSize={PAGE_SIZE}
         total={total}
         currentPage={page}

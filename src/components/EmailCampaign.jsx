@@ -35,6 +35,9 @@ const EmailCampaign = () => {
   const [updateLoading, setUpdateLoading] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
 
+  const [page, setPage] = useState(1);
+const PAGE_SIZE = 10;
+
   const [addUserOpen, setAddUserOpen] = useState(false);
   const [addUserLoading, setAddUserLoading] = useState(false);
   const [addUserForm] = Form.useForm();
@@ -47,7 +50,7 @@ const EmailCampaign = () => {
   useEffect(() => {
     fetchCampaigns();
     fetchEmailContents();
-  }, []);
+  }, [page]);
 
   // ── fetch campaigns list ──────────────────────────────────────────────────
   const fetchCampaigns = async () => {
@@ -60,7 +63,7 @@ const EmailCampaign = () => {
       if (data.success === true) {
         const rows = (data.result || data.data || []).map((item, i) => ({
           ...item,
-          sno: i + 1,
+          sno: (page - 1) * PAGE_SIZE + i + 1,
           id: item._id,
           event_key: item.content_info.event_key,
           campaign_name: item.campaign_name || "-",
@@ -79,27 +82,38 @@ const EmailCampaign = () => {
     }
   };
 
+
+
+
+
   // ── fetch email contents filtered by type = "campaign" ───────────────────
-  const fetchEmailContents = async () => {
-    setContentLoading(true);
-    try {
-      const { data } = await axios.get(
-        `${constant.backend_url}/admin/get-emailcontent`,
-        { headers: authHeader }
-      );
-      if (data.success) {
-        const all = data.result || data.data || [];
-        const filtered = all.filter((item) => item.type === "campaign");
-        setEmailContents(filtered);
-      } else {
-        message.error(data.message || "Failed to load email contents.");
+const fetchEmailContents = async () => {
+  setContentLoading(true);
+
+  try {
+    const { data } = await axios.get(
+      `${constant.backend_url}/admin/get-emailcontent`,
+      {
+        params: {
+          type: "campaign",
+          page: 1,
+          limit: 10,
+        },
+        headers: authHeader,
       }
-    } catch {
-      message.error("Failed to fetch email contents.");
-    } finally {
-      setContentLoading(false);
+    );
+
+    if (data.success) {
+      setEmailContents(data.result || []);
+    } else {
+      message.error(data.message || "Failed to load email contents.");
     }
-  };
+  } catch (error) {
+    message.error("Failed to fetch email contents.");
+  } finally {
+    setContentLoading(false);
+  }
+};
 
   // ── create campaign ───────────────────────────────────────────────────────
   const handleCreate = async (values) => {
@@ -384,15 +398,17 @@ const EmailCampaign = () => {
       />
 
       {/* Campaigns Table */}
-      <ReusableTable
-        columns={columns}
-        data={campaigns}
-        rowKey="id"
-        loading={tableLoading}
-        total={campaigns.length}
-        pageSize={10}
-        actionType={[]}
-      />
+  <ReusableTable
+  columns={columns}
+  data={campaigns}
+  rowKey="id"
+  loading={tableLoading}
+  total={campaigns.length}
+  pageSize={PAGE_SIZE}
+  currentPage={page}
+  onPageChange={(p) => setPage(p)}
+  actionType={[]}
+/>
 
       {/* ── Create Campaign Modal ── */}
       <CampaignModal

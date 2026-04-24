@@ -103,7 +103,10 @@ const OnramperHistory = () => {
         res.data?.result ||
         [];
 
-      const mapped = mapOnramperData(docs);
+   const mapped = mapOnramperData(docs).map((item, index) => ({
+  ...item,
+  sno: (page - 1) * 10 + index + 1,
+}));
 
       if (id) {
         setTransactionData(mapped);
@@ -169,6 +172,7 @@ const OnramperHistory = () => {
   const filteredData = id ? transactionData : alltrandata;
 
   const columns = [
+    { title: "S.no", dataIndex: "sno" },
     {
       title: "Order ID",
       dataIndex: "order_id",
