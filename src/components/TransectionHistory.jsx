@@ -32,6 +32,10 @@ const TransectionHistory = () => {
   const [networkId, setNetworkId] = useState("");
   const [chartData, setChartData] = useState([]);
 
+
+      const [deletemodal, setDeletemodal] = useState(false);
+    const [deleteRecord, setDeleteRecord] = useState(null);
+
   const formatDateMonth = (dateStr) => {
     const d = new Date(dateStr);
     const day = d.getDate();
@@ -135,6 +139,10 @@ const TransectionHistory = () => {
   }
 };
 
+
+
+
+
 useEffect(() => {
   if (id) {
     getTransation();
@@ -148,6 +156,34 @@ useEffect(() => {
   }, [transactionData, id]);
 
 
+const handleDelete = async (userId) => {
+  try {
+    setLoading(true);
+
+    const res = await axios.post(
+      `${constant.backend_url}/admin/delete-transaction`,
+      { transactionId: userId }, // ✅ FIX
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+        },
+      }
+    );
+
+    if (res.data?.success) {
+      message.success("Transaction deleted successfully");
+      setDeletemodal(false);
+      getAllTransaction();
+    } else {
+      message.warning(res.data.message || "Delete failed");
+    }
+  } catch (error) {
+    console.log(error);
+    message.error("Something went wrong");
+  } finally {
+    setLoading(false);
+  }
+};
 
 
 
@@ -405,11 +441,55 @@ useEffect(() => {
   currentPage={page}
   onPageChange={(p) => setPage(p)}
   loading={loading}
-  actionType={["viewMore"]}
+  actionType={["viewMore","Remove"]}
   onView={(record) => {
     setSelectedTrans(record);
     setModalOpen(true);
   }}
+        onDelete={(record) => {
+        setDeleteRecord(record);
+        setDeletemodal(true);
+    }}
+/>
+
+
+
+
+            <ReusableModal
+  open={deletemodal}
+  onCancel={() => setDeletemodal(false)}
+  title="Delete Transcation"
+  description={"Are you sure you want to delete this Transcation?"}
+  showFooter={false}
+  extraContent={
+    <div className="text-center">
+
+      <p className="text-gray-300 text-base">
+        Are you sure you want to delete this Transcation?
+      </p>
+
+      <div className="flex justify-between gap-4 mt-6">
+
+        {/* ❌ NO BUTTON FIX */}
+        <button
+          className="px-6 py-2 rounded primaty-bg text-black"
+          onClick={() => setDeletemodal(false)}
+        >
+          No
+        </button>
+
+        {/* ❌ YES BUTTON FIX */}
+        <button
+          className="px-6 py-2 rounded bg-red-600 text-white"
+          onClick={() => handleDelete(deleteRecord?.key)}
+        >
+          Yes
+        </button>
+
+      </div>
+
+    </div>
+  }
 />
 
       {/* <ReusableModal
