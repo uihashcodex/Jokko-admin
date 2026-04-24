@@ -38,6 +38,9 @@ const Broadcast = () => {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
 
+
+
+  const PAGE_SIZE = 10;
   const token = localStorage.getItem("adminToken");
   const authHeader = { Authorization: `Bearer ${token}` };
 
@@ -51,31 +54,33 @@ const fetchBroadcasts = async () => {
   try {
     const { data } = await axios.get(
       `${constant.backend_url}/admin/get-broadcast`,
-      { headers: authHeader }
+      {
+        params: {
+          page,
+          limit:PAGE_SIZE,
+        },
+        headers: authHeader,
+      }
     );
 
     if (data.success) {
-      const rows = (data.result || data.data || []).map((item, i) => ({
+      const rows = (data.result || []).map((item, i) => ({
         ...item,
         id: item._id,
-        sno: i + 1,
+     sno: (page - 1) * PAGE_SIZE + i + 1,
       }));
 
-      console.log("Broadcast rows:", rows);
-
       setBroadcasts(rows);
-      setTotal(rows.length);
-    } else {
+setTotal(data.pagination?.total || 0);    
+} else {
       message.error(data.message || "Failed to load broadcasts.");
     }
   } catch (error) {
-    console.error("fetchBroadcasts error:", error);
     message.error("Failed to fetch broadcasts.");
   } finally {
     setTableLoading(false);
   }
 };
-
   // ── create ────────────────────────────────────────────────────────────────
 const handleCreate = async (values) => {
   if (!createIconFile) {
@@ -404,18 +409,17 @@ const clearPreview = (setFile, preview, setPreview) => {
         showCreateButton
         onCreate={() => setCreateOpen(true)}
       />
-
-      <ReusableTable
-        columns={columns}
-        data={broadcasts}
-        rowKey="id"
-        loading={tableLoading}
-        total={total}
-        pageSize={10}
-        currentPage={page}
-        onPageChange={(p) => setPage(p)}
-        actionType={[]}
-      />
+<ReusableTable
+  columns={columns}
+  data={broadcasts}
+  rowKey="id"
+  loading={tableLoading}
+  total={total}
+  pageSize={PAGE_SIZE}
+  currentPage={page}
+  onPageChange={(p) => setPage(p)}
+  actionType={[]}
+/>
 
       {/* ── Create Modal ── */}
       <ConfigProvider theme={{ token: { colorBgElevated: theme.sidebarSettings.backgroundColor } }}>

@@ -51,6 +51,7 @@ const CoinRabbitTrans = () => {
 
   const mapCoinRabbitData = (items = []) => {
     return items.map((item) => ({
+
       key: item?._id,
       loan_id: item?.loan_id || "-",
       firstname: item?.firstname || "-",
@@ -69,55 +70,53 @@ const CoinRabbitTrans = () => {
     }));
   };
 
-  const getTransation = async () => {
-    try {
-      setLoading(true);
+const PAGE_SIZE = 10;
 
-      const res = await axios.post(
-        `${constant.backend_url}/admin/get-all-coinrabbit-trans`,
-        { user_id: id },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
-          },
-        }
-      );
+const getTransation = async () => {
+  try {
+    setLoading(true);
 
-      if (!res.data?.success) {
-        setTransactionData([]);
-        setTotalUsers(0);
-        message.warning(res.data?.message || "No transactions found");
-        return;
+    const res = await axios.post(
+      `${constant.backend_url}/admin/get-all-coinrabbit-trans`,
+      {
+        user_id: id,
+        page,
+        limit: PAGE_SIZE,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+        },
       }
+    );
 
-      const docs =
-        res.data?.data?.docs ||
-        res.data?.result?.docs ||
-        res.data?.result ||
-        res.data?.data ||
-        [];
-
-      const mappedData = mapCoinRabbitData(docs);
-
-      setTransactionData(mappedData);
-      setTotalUsers(
-        res.data?.data?.totalDocs ||
-          res.data?.total ||
-          docs.length ||
-          0
-      );
-
-      processChartData(mappedData);
-    } catch (error) {
-      console.error(error);
-      message.error("Failed to fetch CoinRabbit details");
-    } finally {
-      setLoading(false);
+    if (!res.data?.success) {
+      setTransactionData([]);
+      setTotalUsers(0);
+      message.warning(res.data?.message || "No transactions found");
+      return;
     }
-  };
 
-  const getAllTransaction = async () => {
+    const docs = res.data?.data?.docs || [];
+
+const mappedData = mapCoinRabbitData(docs).map((item, index) => ({
+  ...item,
+  sno: (page - 1) * PAGE_SIZE + index + 1,
+}));
+
+    setTransactionData(mappedData);
+    setTotalUsers(res.data?.data?.totalDocs || 0);
+
+    processChartData(mappedData);
+  } catch (error) {
+    console.error(error);
+    message.error("Failed to fetch CoinRabbit details");
+  } finally {
+    setLoading(false);
+  }
+};
+  const getAllTransaction = async (item,index) => {
     const startTime = Date.now();
 
     try {
@@ -134,7 +133,7 @@ const CoinRabbitTrans = () => {
   {
     ...cleanFilters,
     page,
-    limit: 10,
+limit: PAGE_SIZE,
   },
   {
     headers: {
@@ -158,9 +157,14 @@ const CoinRabbitTrans = () => {
         res.data?.data ||
         [];
 
-      const mappedData = mapCoinRabbitData(docs);
+    const mappedData = mapCoinRabbitData(docs).map((item, index) => ({
+  ...item,
+  sno: (page - 1) * PAGE_SIZE + index + 1,
+}));
 
-      setAlltrandata(mappedData);
+setAlltrandata(mappedData);
+
+
       setTotalUsers(
         res.data?.data?.totalDocs ||
           res.data?.total ||
@@ -215,6 +219,7 @@ const CoinRabbitTrans = () => {
   const filteredData = id ? transactionData : alltrandata;
 
   const columns = [
+    { title: "S.no", dataIndex: "sno" },
     {
       title: "Loan ID",
       dataIndex: "loan_id",

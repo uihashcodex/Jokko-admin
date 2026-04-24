@@ -17,70 +17,60 @@ const RoleManagement = () => {
   const [initialValues, setInitialValues] = useState({});
   const [loading, setLoading] = useState(false);
 
+
+
+  const [page, setPage] = useState(1);
+const [total, setTotal] = useState(0);
+const PAGE_SIZE = 10;
+
   const roleLabelMap = {
     superadmin: "Super Admin",
     admin: "Admin",
     subadmin: "Sub Admin",
   };
+useEffect(() => {
+  fetchRoles();
+}, [page]);
 
-  useEffect(() => {
-    fetchRoles();
-  }, []);
+const fetchRoles = async (search = "") => {
+  try {
+    setLoading(true);
 
-  const fetchRoles = async (search = "") => {
-    try {
-      setLoading(true);
-
-      const response = await axios.get(
-        `${constant.backend_url}/management/roles/list`,
-        {
-          params: { search },
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      console.log("Roles response:", response.data);
-
-      let rolesArray = [];
-
-      if (Array.isArray(response.data)) {
-        rolesArray = response.data;
-      } else if (response.data && Array.isArray(response.data.result)) {
-        rolesArray = response.data.result;
-      } else if (
-        response.data &&
-        response.data.data &&
-        Array.isArray(response.data.data)
-      ) {
-        rolesArray = response.data.data;
-      } else if (
-        response.data &&
-        response.data.roles &&
-        Array.isArray(response.data.roles)
-      ) {
-        rolesArray = response.data.roles;
+    const response = await axios.get(
+      `${constant.backend_url}/management/roles/list`,
+      {
+        params: {
+          search,
+          page,
+          limit: PAGE_SIZE,
+        },
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+          "Content-Type": "application/json",
+        },
       }
+    );
 
-      const formattedData = rolesArray.map((role, index) => ({
-        key: role._id || role.id,
-        roleId: role._id || role.id,
-        sno: index + 1,
-        name: role.role_name || role.name || "",
-        permissions: Array.isArray(role.permissions) ? role.permissions : [],
-      }));
+    const rolesArray = response.data?.result || [];
 
-      setData(formattedData);
-    } catch (error) {
-      console.error("Error fetching roles:", error);
-      setData([]);
-      message.error(error?.response?.data?.message || "Failed to fetch roles");
-    } finally {
-      setLoading(false);
-    }
-  };
+    const formattedData = rolesArray.map((role, index) => ({
+      key: role._id || role.id,
+      roleId: role._id || role.id,
+      sno: (page - 1) * PAGE_SIZE + index + 1,
+      name: role.role_name || role.name || "",
+      permissions: Array.isArray(role.permissions) ? role.permissions : [],
+    }));
+
+    setData(formattedData);
+    setTotal(response.data?.total || 0);
+  } catch (error) {
+    console.error("Error fetching roles:", error);
+    setData([]);
+    message.error(error?.response?.data?.message || "Failed to fetch roles");
+  } finally {
+    setLoading(false);
+  }
+};
 
   const debouncedSearch = useMemo(
     () =>
@@ -263,21 +253,25 @@ const RoleManagement = () => {
         }}
       />
 
-      <ReusableTable
-        columns={columns}
-        data={data}
-        actionType={["update"]}
-        onUpdate={(record) => {
-          setEditingKey(record.roleId || record.key);
-          setInitialValues({
-            roleName: record.name,
-            permissions: record.permissions,
-          });
-          setOpen(true);
-        }}
-        loading={loading}
-      />
-
+ <ReusableTable
+  columns={columns}
+  data={data}
+  rowKey="key"
+  pageSize={PAGE_SIZE}
+  total={total}
+  currentPage={page}
+  onPageChange={(p) => setPage(p)}
+  actionType={["update"]}
+  onUpdate={(record) => {
+    setEditingKey(record.roleId || record.key);
+    setInitialValues({
+      roleName: record.name,
+      permissions: record.permissions,
+    });
+    setOpen(true);
+  }}
+  loading={loading}
+/>
       <ReusableModal
         open={open}
         onCancel={() => {

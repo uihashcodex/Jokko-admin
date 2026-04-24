@@ -50,6 +50,19 @@ const TableHeader = ({
   const [mobileStep, setMobileStep] = useState("start");
   const [mobileOpen, setMobileOpen] = useState(false);
 
+
+  const disabledDate = (current) => {
+  const minDate = new Date("2025-01-01");
+  const today = new Date();
+
+  minDate.setHours(0, 0, 0, 0);
+  today.setHours(23, 59, 59, 999);
+
+  return current && (current.toDate() < minDate || current.toDate() > today);
+};
+
+
+
   return (
     <Row gutter={[16, 16]} justify="end" style={{ marginBottom: 16, padding: "0 10px" }}>
       {showSearch && (
@@ -218,6 +231,7 @@ const TableHeader = ({
             </div>
           ) : (
             <RangePicker
+              disabledDate={disabledDate}
               value={dateRange}
               className="custom-select repicker-modal"
               popupClassName="custom-date-theme"

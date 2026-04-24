@@ -60,7 +60,7 @@ const Walletlist = () => {
           xrpaddress: item?.xrpAddress,
           trxAddress:item?.trxAddress,
           createdAt: item?.createdAt ? item?.createdAt.split("T")[0] : "",
-          updatedAt: item?.updatedAt ? item?.updatedAt.split("T")[0] : "",
+          // updatedAt: item?.updatedAt ? item?.updatedAt.split("T")[0] : "",
           status: item?.walletStatus ? "Active" : "Inactive",
                 }));
 
@@ -86,7 +86,9 @@ const Walletlist = () => {
     toDate: ""
   });
 
-  const getAllWallets = async (id) => {
+  const PAGE_SIZE = 10;
+
+  const getAllWallets = async (id, item,index) => {
 
     console.log("FididD", id)
 
@@ -118,19 +120,18 @@ const Walletlist = () => {
         setTotalUsers(res.data.total);
 
         // const walletres = res.data.result.map((item) => ({
-        const walletres = walletss.map((item) => ({
-          key: item?._id,
-          walletname: item?.walletName,
-          firstname: item?.firstname || "-",
-          btcaddress: item?.btcAddress,
-          evmaddress: item?.evmAddress,
-          solanaaddress: item?.solAddress,
-          xrpaddress: item?.xrpAddress,
-          trxAddress: item?.trxAddress,
-          // createdAt: item?.createdAt ? item?.createdAt.split("T")[0] : "",
-          // updatedAt: item?.updatedAt ? item?.updatedAt.split("T")[0] : "",
-          status: item?.walletStatus ? "Active" : "Inactive",
-        }));
+  const walletres = walletss.map((item, index) => ({
+  key: item?._id,
+  sno: (page - 1) * PAGE_SIZE + index + 1,
+  walletname: item?.walletName,
+  firstname: item?.firstname || "-",
+  btcaddress: item?.btcAddress,
+  evmaddress: item?.evmAddress,
+  solanaaddress: item?.solAddress,
+  xrpaddress: item?.xrpAddress,
+  trxAddress: item?.trxAddress,
+  status: item?.walletStatus ? "Active" : "Inactive",
+}));
 
         setFilteredTableData(walletres);
         setTotal(res.data.total || 0);
