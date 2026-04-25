@@ -8,6 +8,7 @@ import TableHeader from "../../reuseable/TableHeader";
 import ReusableModal from "../../reuseable/ReusableModal";
 import debounce from "lodash.debounce";
 import { message } from "antd";
+import ExportButton from "../../reuseable/ExportButton";
 
 const OnramperHistory = () => {
   const { id } = useParams();
@@ -260,6 +261,9 @@ const OnramperHistory = () => {
         showPrivateFilter={false}
         showNetworkFilter={false}
         showStatusFilter={false}
+        showExportButton={true}
+        exportFilename="provider_history"
+        exportColumns={columns}
         showDateFilter={true}
         showonrampFilter={true}
         onSearch={(value) => debouncedSearch(value)}
@@ -274,6 +278,12 @@ const OnramperHistory = () => {
           }));
         }}
       />
+
+      {id && (
+        <div style={{ display: "flex", justifyContent: "flex-end", padding: "0 10px", marginBottom: 12 }}>
+          <ExportButton filename={`provider_details_${id}`} columns={columns} data={filteredData} />
+        </div>
+      )}
 
       <ReusableTable
         columns={columns}

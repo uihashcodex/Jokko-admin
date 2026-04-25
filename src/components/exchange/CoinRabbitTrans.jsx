@@ -8,6 +8,7 @@ import TableHeader from "../../reuseable/TableHeader";
 import ReusableModal from "../../reuseable/ReusableModal";
 import debounce from "lodash.debounce";
 import { message } from "antd";
+import ExportButton from "../../reuseable/ExportButton";
 // import ChartsSection from "../../components/ChartsSection";
 
 const CoinRabbitTrans = () => {
@@ -55,7 +56,8 @@ const CoinRabbitTrans = () => {
   const mapCoinRabbitData = (items = []) => {
     return items.map((item) => ({
 
-      key: item?._id,
+      _id: item?._id || item?.id,
+      key: item?._id || item?.id,
       loan_id: item?.loan_id || "-",
       firstname: item?.firstname || "-",
       user_id: item?.user_id || "-",
@@ -314,6 +316,9 @@ setAlltrandata(mappedData);
           showPrivateFilter={false}
           showNetworkFilter={false}
           showStatusFilter={false}
+          showExportButton={true}
+          exportFilename="coinrabbit_history"
+          exportColumns={columns}
           showDateFilter={true}
           onSearch={(value) => debouncedSearch(value)}
           searchTooltip="Search by Loan ID, Status"
@@ -326,6 +331,12 @@ setAlltrandata(mappedData);
             }));
           }}
         />
+      )}
+
+      {id && (
+        <div style={{ display: "flex", justifyContent: "flex-end", padding: "0 10px", marginBottom: 12 }}>
+          <ExportButton filename={`coinrabbit_details_${id}`} columns={columns} data={filteredData} />
+        </div>
       )}
 
       <ReusableTable
@@ -375,7 +386,7 @@ setAlltrandata(mappedData);
         {/* ❌ YES BUTTON FIX */}
         <button
           className="px-6 py-2 rounded bg-red-600 text-white"
-          onClick={() => handleDelete(deleteRecord?.key)}
+          onClick={() => handleDelete(deleteRecord?._id || deleteRecord?.key)}
         >
           Yes
         </button>

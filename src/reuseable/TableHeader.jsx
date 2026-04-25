@@ -1,6 +1,7 @@
 import { Row, Col, Input, Tooltip, DatePicker, Grid } from "antd";
 import SelectField from "./SelectField";
 import ReButton from "./Button";
+import ExportButton from "./ExportButton";
 import { useState } from "react";
 import {
   CloseCircleFilled,
@@ -12,6 +13,9 @@ const { Search } = Input;
 
 const TableHeader = ({
   data = [],
+  exportFilename,
+  exportColumns,
+  showExportButton = false,
   networkOptions = [],
   onFilter,
   onSearch,
@@ -255,6 +259,16 @@ const TableHeader = ({
             type="primary"
             onClick={onCreate}
             icon={<PlusOutlined />}
+          />
+        </Col>
+      )}
+
+      {showExportButton && (
+        <Col xs={24} sm={12} md={4} lg={4}>
+          <ExportButton
+            filename={exportFilename || "export"}
+            columns={exportColumns || []}
+            data={data || []}
           />
         </Col>
       )}

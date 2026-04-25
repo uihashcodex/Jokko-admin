@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { Button, Form, Select, Tag, Modal, message, ConfigProvider, Input, Spin } from "antd";
-import { RocketOutlined, EditOutlined, UserAddOutlined } from "@ant-design/icons";
+import { RocketOutlined, EditOutlined, UserAddOutlined, DeleteOutlined } from "@ant-design/icons";
 import axios from "axios";
 import { constant } from "../const";
 import TableHeader from "../reuseable/TableHeader";
 import ReusableTable from "../reuseable/ReusableTable";
 import theme from "../config/theme";
 import { capitalize } from "../utils/capitalize";
+import ExportButton from "../reuseable/ExportButton";
 
 const TYPE_OPTIONS = [
   { label: "Professional", value: "professional" },
@@ -43,6 +44,8 @@ const PAGE_SIZE = 10;
   const [addUserForm] = Form.useForm();
 
   const [publishingId, setPublishingId] = useState(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const token = localStorage.getItem("adminToken");
   const authHeader = { Authorization: `Bearer ${token}` };
@@ -226,6 +229,43 @@ const fetchEmailContents = async () => {
     }
   };
 
+  // ── delete campaign (hard delete) ─────────────────────────────────────────
+  const openDelete = (record) => {
+    setSelectedRow(record);
+    setDeleteOpen(true);
+  };
+
+  const handleDelete = async () => {
+    try {
+      const campaignId = selectedRow?._id || selectedRow?.id;
+      if (!campaignId) {
+        message.error("Invalid campaign id");
+        return;
+      }
+
+      setDeleteLoading(true);
+
+      const { data } = await axios.delete(
+        `${constant.backend_url}/brevo/deleteCampaign/${campaignId}`,
+        { headers: authHeader }
+      );
+
+      if (data?.success) {
+        message.success(data.message || "Campaign deleted successfully");
+        setDeleteOpen(false);
+        setSelectedRow(null);
+        fetchCampaigns();
+      } else {
+        message.warning(data?.message || "Delete failed");
+      }
+    } catch (error) {
+      console.error(error);
+      message.error("Failed to delete campaign");
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
   // ── table columns ─────────────────────────────────────────────────────────
   const columns = [
     { title: "S.No", dataIndex: "sno", width: 60 },
@@ -275,6 +315,20 @@ const fetchEmailContents = async () => {
             className="ec-publish-btn"
           >
             Publish
+          </Button>
+
+          <Button
+            size="small"
+            icon={<DeleteOutlined />}
+            style={{
+              background: "rgba(255,77,79,0.1)",
+              border: "1px solid rgba(255,77,79,0.4)",
+              color: "#ff4d4f",
+              borderRadius: 6,
+            }}
+            onClick={() => openDelete(record)}
+          >
+            Delete
           </Button>
         </div>
       ),
@@ -391,9 +445,13 @@ const fetchEmailContents = async () => {
 
       {/* Table Header with Create button */}
       <TableHeader
+        data={campaigns}
         showStatusFilter={false}
         showSearch={false}
         showCreateButton
+        showExportButton={true}
+        exportFilename="email_campaigns"
+        exportColumns={columns}
         onCreate={() => setCreateOpen(true)}
       />
 
@@ -496,6 +554,62 @@ const fetchEmailContents = async () => {
                 Yes
               </Button>
             </> : <Spin {...sharedProps} styles={{ indicator: { color: "#C9F07B" } }} />}
+          </div>
+        </Modal>
+      </ConfigProvider>
+
+      {/* ── Delete Campaign Modal ── */}
+      <ConfigProvider
+        theme={{ token: { colorBgElevated: theme.sidebarSettings.backgroundColor } }}
+      >
+        <Modal
+          open={deleteOpen}
+          onCancel={() => { setDeleteOpen(false); setSelectedRow(null); }}
+          footer={null}
+          centered
+          width="90%"
+          style={{ maxWidth: 440 }}
+          destroyOnHidden
+          className="custom-modal modal-style"
+          styles={{
+            content: { background: theme.sidebarSettings.backgroundColor, borderRadius: 12 },
+            body: { paddingTop: 20, paddingBottom: 20 },
+          }}
+        >
+          <div style={modalStyles.header}>
+            <div style={modalStyles.iconWrap}>
+              <DeleteOutlined style={{ fontSize: 18, color: "#eb2724c9" }} />
+            </div>
+            <div>
+              <p style={modalStyles.title}>Delete Campaign</p>
+              <p style={modalStyles.subtitle}>This action is permanent.</p>
+            </div>
+          </div>
+
+          <div style={modalStyles.divider} />
+
+          <p style={{ color: "rgba(255,255,255,0.75)" }}>
+            Are you sure you want to delete{" "}
+            <b style={{ color: "#fff" }}>{selectedRow?.campaign_name || "this campaign"}</b>?
+          </p>
+
+          <div style={modalStyles.btnRow}>
+            <Button
+              onClick={() => { setDeleteOpen(false); setSelectedRow(null); }}
+              style={modalStyles.cancelBtn}
+              disabled={deleteLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              danger
+              type="primary"
+              onClick={handleDelete}
+              loading={deleteLoading}
+              style={{ ...modalStyles.submitBtn, background: "#eb2724c9", borderColor: "#eb2724c9", color: "#fff" }}
+            >
+              Delete
+            </Button>
           </div>
         </Modal>
       </ConfigProvider>

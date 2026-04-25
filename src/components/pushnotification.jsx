@@ -3,6 +3,7 @@ import { Button, Form, Input, message } from "antd";
 import { SendOutlined, BellOutlined } from "@ant-design/icons";
 import axios from "axios";
 import { constant } from "../const";
+import ExportButton from "../reuseable/ExportButton";
 
 const { TextArea } = Input;
 
@@ -46,6 +47,10 @@ const PushNotification = () => {
             Push Notification
           </h1>
         </div>
+      </div>
+
+      <div style={{ display: "flex", justifyContent: "flex-end", padding: "0 10px", marginBottom: 12 }}>
+        <ExportButton filename="push_notification" columns={[]} data={[]} disabled={true} buttonText="Export" />
       </div>
 
       {/* Notification Composer Card */}

@@ -179,6 +179,9 @@ const BuySellNetworks = () => {
         showCreateButton={false}
         showStatusFilter={true}
         showSearch={true}
+        showExportButton={true}
+        exportFilename="buysell_networks"
+        exportColumns={columns}
         onSearch={(value) => updateFilter("search", value)}
         onVerifyChange={(value) => updateFilter("verifyStatus", value)}
         searchTooltip="Search by Network Name, Symbol"

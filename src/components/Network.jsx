@@ -501,6 +501,9 @@ const Network = () => {
                     onSearch={(value) => updateFilter("search", value)}
                     onTypeChange={(value) => updateFilter("type", value)}
                     onVerifyChange={(value) => updateFilter("status", value)}
+                    showExportButton={true}
+                    exportFilename="networks"
+                    exportColumns={columns}
                     searchTooltip="Search by Chain Id, Network Symbol,  Network Name"
                     onNetChange={(value) => updateFilter("modeStatus", value)}
                     showNetFilter={true}

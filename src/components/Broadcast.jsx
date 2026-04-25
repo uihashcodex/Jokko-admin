@@ -10,6 +10,7 @@ import { constant } from "../const";
 import TableHeader from "../reuseable/TableHeader";
 import ReusableTable from "../reuseable/ReusableTable";
 import ReusableModal from "../reuseable/ReusableModal";
+import DeleteAction from "../reuseable/DeleteAction";
 import theme from "../config/theme";
 
 const Broadcast = () => {
@@ -26,7 +27,6 @@ const Broadcast = () => {
   const [updateLoading, setUpdateLoading] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
 
-  const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteRecord, setDeleteRecord] = useState(null);
 
@@ -196,7 +196,6 @@ const openUpdate = (record) => {
       );
       if (data.success) {
         message.success(data.message || "Broadcast deleted!");
-        setDeleteOpen(false);
         setDeleteRecord(null);
         fetchBroadcasts();
       } else {
@@ -301,17 +300,23 @@ const columns = [
         >
           Update
         </Button>
-        <Button
-          size="small"
-          icon={<DeleteOutlined />}
-          onClick={() => {
+        <DeleteAction
+          buttonVariant="solid"
+          title="Delete Broadcast"
+          description={
+            <>
+              Are you sure you want to delete{" "}
+              <strong style={{ color: "#fff" }}>{record?.title}</strong>? This cannot be undone.
+            </>
+          }
+          loading={deleteLoading && deleteRecord?.id === record?.id}
+          onOpen={() => setDeleteRecord(record)}
+          onConfirm={async () => {
             setDeleteRecord(record);
-            setDeleteOpen(true);
+            await handleDelete();
           }}
-          style={btnStyles.delete}
-        >
-          Delete
-        </Button>
+          onClose={() => setDeleteRecord(null)}
+        />
       </div>
     ),
   },
@@ -404,9 +409,13 @@ const clearPreview = (setFile, preview, setPreview) => {
       </div>
 
       <TableHeader
+        data={broadcasts}
         showStatusFilter={false}
         showSearch={false}
         showCreateButton
+        showExportButton={true}
+        exportFilename="broadcast"
+        exportColumns={columns}
         onCreate={() => setCreateOpen(true)}
       />
 <ReusableTable
@@ -499,48 +508,6 @@ const clearPreview = (setFile, preview, setPreview) => {
         </Modal>
       </ConfigProvider>
 
-      {/* ── Delete Confirm Modal ── */}
-      <ConfigProvider theme={{ token: { colorBgElevated: theme.sidebarSettings.backgroundColor } }}>
-        <Modal
-          open={deleteOpen}
-          onCancel={() => { setDeleteOpen(false); setDeleteRecord(null); }}
-          footer={null}
-          centered
-          width={400}
-          destroyOnHidden
-          className="custom-modal modal-style"
-          styles={{
-            content: { background: theme.sidebarSettings.backgroundColor, borderRadius: 12 },
-            body: { paddingTop: 20, paddingBottom: 20 },
-          }}
-        >
-          <div style={{ textAlign: "center", padding: "8px 0 16px" }}>
-            <DeleteOutlined style={{ fontSize: 36, color: "#ff4d4f", marginBottom: 12 }} />
-            <p style={{ color: "#fff", fontWeight: 700, fontSize: 16, margin: "0 0 6px" }}>
-              Delete Broadcast
-            </p>
-            <p style={{ color: "rgba(255,255,255,0.5)", fontSize: 13, margin: 0 }}>
-              Are you sure you want to delete <strong style={{ color: "#fff" }}>{deleteRecord?.title}</strong>? This cannot be undone.
-            </p>
-          </div>
-          <div style={{ display: "flex", justifyContent: "center", gap: 12, marginTop: 16 }}>
-            <Button
-              onClick={() => { setDeleteOpen(false); setDeleteRecord(null); }}
-              style={modalStyles.cancelBtn}
-            >
-              Cancel
-            </Button>
-            <Button
-              loading={deleteLoading}
-              onClick={handleDelete}
-              style={{ ...modalStyles.submitBtn, background: "#ff4d4f", borderColor: "#ff4d4f" }}
-            >
-              Delete
-            </Button>
-          </div>
-        </Modal>
-      </ConfigProvider>
-
       <style>{`
         .bc-input {
           background-color: #0e2e2a !important;
@@ -575,9 +542,9 @@ const btnStyles = {
     borderRadius: 6,
   },
   delete: {
-    background: "rgba(255,77,79,0.1)",
-    border: "1px solid rgba(255,77,79,0.4)",
-    color: "#ff4d4f",
+    background: "#eb2724c9",
+    border: "none",
+    color: "#fff",
     borderRadius: 6,
   },
 };

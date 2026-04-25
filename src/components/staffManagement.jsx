@@ -354,6 +354,9 @@ sno: (page - 1) * PAGE_SIZE + index + 1,          ...staff,
           data={originalData}
           onFilter={setFilteredData}
           showCreateButton={true}
+          showExportButton={true}
+          exportFilename="staff"
+          exportColumns={columns}
           onCreate={() => {
             setEditing(null);
             setInitialValues({});

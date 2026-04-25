@@ -259,6 +259,9 @@ const BuySellFiatAsset = () => {
           showCreateButton={false}
           showStatusFilter={true}
           showSearch={true}
+          showExportButton={true}
+          exportFilename="buysell_fiat_assets"
+          exportColumns={columns}
           networkOptions={typeOptions}
           onSearch={(value) => debouncedSearch(value)}
 onVerifyChange={(value) =>

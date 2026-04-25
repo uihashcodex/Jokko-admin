@@ -279,6 +279,9 @@ const fetchRoles = async (search = "") => {
         data={data}
         showCreateButton={true}
         showStatusFilter={false}
+        showExportButton={true}
+        exportFilename="roles"
+        exportColumns={columns}
         onSearch={(value) => debouncedSearch(value)}
          searchTooltip="Search by Role Name"
         onCreate={() => {

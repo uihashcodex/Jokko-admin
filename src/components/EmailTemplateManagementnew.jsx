@@ -457,6 +457,9 @@ const EmailTemplateManagementnew = () => {
         showCreateButton={true}
         showSearch={true}
         showStatusFilter={true}
+        showExportButton={true}
+        exportFilename="email_content"
+        exportColumns={columns}
         onSearch={(value) => debouncedSearch(value)}
         onVerifyChange={handleStatusFilter}
         searchTooltip="Search by event key, subject, template name"

@@ -163,6 +163,9 @@ const CoinRabbitCrypto = () => {
         showCreateButton={false}
         showStatusFilter={true}
         showSearch={true}
+        showExportButton={true}
+        exportFilename="coinrabbit_crypto"
+        exportColumns={columns}
         networkOptions={typeOptions}
         onSearch={(value) => updateFilter("search", value)}
         onVerifyChange={(value) => updateFilter("verifyStatus", value)}

@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { Button } from "antd";
+import { Button, message } from "antd";
 import ReusableModal from "../reuseable/ReusableModal";
 import theme from '../config/theme';
-import { CheckOutlined } from "@ant-design/icons";
+import { CheckOutlined, DeleteOutlined } from "@ant-design/icons";
 import axios from "axios";
 import { constant } from "../const";
+import ExportButton from "../reuseable/ExportButton";
 
 const TemplateDesignSelector = () => {
     // default template
@@ -16,6 +17,13 @@ const TemplateDesignSelector = () => {
     const [templates, setTemplates] = useState([]);
     const [selectedTemplate, setSelectedTemplate] = useState(null);
     const [loading, setLoading] = useState(false);
+    const exportColumns = [
+        { title: "Template Name", dataIndex: "template_name" },
+        { title: "Is Default", dataIndex: "isDefault" },
+        { title: "Created At", dataIndex: "createdAt" },
+    ];
+    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+    const [pendingDeleteTemplate, setPendingDeleteTemplate] = useState(null);
     const WRAPPER_WIDTH = 260;
     const WRAPPER_HEIGHT = 300;
 
@@ -87,6 +95,48 @@ const TemplateDesignSelector = () => {
             console.error(error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const requestDeleteTemplate = (template) => {
+        if (!template?._id) return;
+        if (template?.isDefault) {
+            message.warning("You can't delete the default template");
+            return;
+        }
+        setPendingDeleteTemplate(template);
+        setDeleteConfirmOpen(true);
+    };
+
+    const handleDeleteConfirm = async () => {
+        try {
+            if (!pendingDeleteTemplate?._id) return;
+            setLoading(true);
+
+            const res = await axios.post(
+                `${constant.backend_url}/admin/delete-templates`,
+                { templateId: pendingDeleteTemplate._id },
+                {
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+                    },
+                }
+            );
+
+            if (res.data?.success) {
+                message.success(res.data.message || "Template deleted successfully");
+                await fetchTemplates();
+            } else {
+                message.warning(res.data?.message || "Delete failed");
+            }
+        } catch (error) {
+            console.error(error);
+            message.error("Something went wrong");
+        } finally {
+            setLoading(false);
+            setDeleteConfirmOpen(false);
+            setPendingDeleteTemplate(null);
         }
     };
 
@@ -164,6 +214,9 @@ const TemplateDesignSelector = () => {
 
     return (
         <div style={{ padding: "20px" }}>
+            <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
+                <ExportButton filename="email_templates" columns={exportColumns} data={templates} />
+            </div>
             {/* 🔥 Selected Template */}
             <div
 
@@ -232,6 +285,18 @@ const TemplateDesignSelector = () => {
                             >
                                 <div className="tick-icon">
                                     <CheckOutlined />
+                                </div>
+
+                                <div
+                                    className="delete-icon"
+                                    title="Delete template"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        requestDeleteTemplate(template);
+                                    }}
+                                >
+                                    <DeleteOutlined />
                                 </div>
 
                                 {/* <div style={{ width: "220px", height: "200px", overflow: "hidden" }}> */}
@@ -319,6 +384,41 @@ const TemplateDesignSelector = () => {
                                 style={{ background: theme.sidebarSettings.activeBgColor }}
                             >
                                 Confirm
+                            </Button>
+                        </div>
+                    </div>
+                }
+            />
+
+            <ReusableModal
+                open={deleteConfirmOpen}
+                onCancel={() => {
+                    setDeleteConfirmOpen(false);
+                    setPendingDeleteTemplate(null);
+                }}
+                title="Delete Template"
+                description={`Are you sure you want to permanently delete '${pendingDeleteTemplate?.template_name || ""}'?`}
+                showFooter={false}
+                extraContent={
+                    <div style={{ textAlign: "center" }}>
+                        <div style={{ display: "flex", justifyContent: "center", gap: "10px" }}>
+                            <Button
+                                onClick={() => {
+                                    setDeleteConfirmOpen(false);
+                                    setPendingDeleteTemplate(null);
+                                }}
+                                disabled={loading}
+                            >
+                                Cancel
+                            </Button>
+
+                            <Button
+                                danger
+                                type="primary"
+                                onClick={handleDeleteConfirm}
+                                loading={loading}
+                            >
+                                Delete
                             </Button>
                         </div>
                     </div>

@@ -454,6 +454,9 @@ isDefaultNetwork: (
                 onSearch={(value) => debouncedSearch(value)}
                 onTypeChange={(value) => updateFilter("type", value)}
                 onVerifyChange={(value) => updateFilter("status", value)}
+                showExportButton={true}
+                exportFilename="assets"
+                exportColumns={columns}
                 showDateFilter={true}
                 onDateChange={(dates) => {
                     updateFilter("fromDate", dates?.[0] || "");

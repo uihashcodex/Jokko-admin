@@ -186,6 +186,9 @@ const BuySellCrypto = () => {
         showCreateButton={false}
         showStatusFilter={true}
         showSearch={true}
+        showExportButton={true}
+        exportFilename="buysell_crypto"
+        exportColumns={columns}
         onSearch={(value) => updateFilter("search", value)}
         onVerifyChange={(value) => updateFilter("verifyStatus", value)}
         searchTooltip="Search by Token Name, Token Symbol, Code"

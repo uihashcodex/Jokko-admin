@@ -13,6 +13,7 @@ import { useMemo } from "react";
 import { message } from "antd";
 import create from "@ant-design/icons/lib/components/IconFont";
 import ChartsSection from "../components/ChartsSection";
+import ExportButton from "../reuseable/ExportButton";
 
 
 const TransectionHistory = () => {
@@ -414,6 +415,9 @@ const handleDelete = async (userId) => {
           showCreateButton={false}
           showPrivateFilter={false}
           showStatusFilter={false}
+          showExportButton={true}
+          exportFilename="transaction_history"
+          exportColumns={columns}
           onSearch={(value) => debouncedSearch(value)}
           searchTooltip="Search By Hash, Address, Token Symbol, Amount"
           showNetworkFilter={true}
@@ -430,6 +434,12 @@ const handleDelete = async (userId) => {
           onNetworkChange={updateNetworkFilter}
           networkOptions={networkOptions}
         />
+      )}
+
+      {id && (
+        <div style={{ display: "flex", justifyContent: "flex-end", padding: "0 10px", marginBottom: 12 }}>
+          <ExportButton filename={`user_transactions_${id}`} columns={columns} data={transactionData} />
+        </div>
       )}
 
     <ReusableTable

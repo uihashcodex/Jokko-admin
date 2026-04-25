@@ -455,6 +455,9 @@ const getToken = async () => {
                 onSearch={(value) => debouncedSearch(value)}
                 onTypeChange={(value) => updateFilter("type", value)}
                 onVerifyChange={(value) => updateFilter("status", value)}
+                showExportButton={true}
+                exportFilename="trending_currency"
+                exportColumns={columns}
                 showDateFilter={true}
                 onDateChange={(dates) => {
                     updateFilter("fromDate", dates?.[0] || "");

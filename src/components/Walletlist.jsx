@@ -9,13 +9,13 @@ import ReusableModal from "../reuseable/ReusableModal";
 import { message, Tooltip } from "antd";
 import { CopyOutlined } from "@ant-design/icons";
 import create from "@ant-design/icons/lib/components/IconFont";
+import ExportButton from "../reuseable/ExportButton";
 const Walletlist = () => {
 
   const { state } = useLocation();
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const [walletData, setWalletData] = useState([]);
   const [filteredTableData, setFilteredTableData] = useState([]);
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -55,8 +55,8 @@ const Walletlist = () => {
       if (res.data?.success) {
 
         const walletsList = res.data.result.wallets.map((item) => ({
-          key: item?._id,
-          walletname: item?.walletName,
+          key: item?._id || item?.id,
+          walletname: item?.walletname || item?.walletName,
           firstname: item?.firstname || "-",
           btcaddress: item?.btcAddress,
           evmaddress: item?.evmAddress,
@@ -68,7 +68,7 @@ const Walletlist = () => {
           status: item?.walletStatus ? "Active" : "Inactive",
                 }));
 
-        setWalletData(walletsList);
+        setFilteredTableData(walletsList);
 
       }
 
@@ -125,9 +125,9 @@ const Walletlist = () => {
 
         // const walletres = res.data.result.map((item) => ({
   const walletres = walletss.map((item, index) => ({
-  key: item?._id,
+  key: item?._id || item?.id,
   sno: (page - 1) * PAGE_SIZE + index + 1,
-  walletname: item?.walletName,
+  walletname: item?.walletname || item?.walletName,
   firstname: item?.firstname || "-",
   btcaddress: item?.btcAddress,
   evmaddress: item?.evmAddress,
@@ -162,7 +162,7 @@ const Walletlist = () => {
       getAllWallets(id);
     // }
 
-  }, [page, filters]);
+  }, [id, page, filters]);
 
 
 
@@ -187,7 +187,7 @@ const Walletlist = () => {
             if (res.data?.success) {
                 message.success("Wallet Deleted successfully");
                 setDeletemodal(false);
-                getAllWallets();
+                getAllWallets(id);
             } else {
                 message.warning(res.data.message || "Delete failed");
             }
@@ -340,7 +340,6 @@ const Walletlist = () => {
     { title: "Status", dataIndex: "status" },
   ];
 
-  // const tableData = id ? walletData : filteredTableData;
   const tableData = filteredTableData;
 
     const handleBlockWallet = async (record) => {
@@ -367,23 +366,13 @@ const Walletlist = () => {
 
         const updatedStatus = isCurrentlyActive ? "Inactive" : "Active";
 
-        if (id) {
-          setWalletData(prev =>
-            prev.map(item =>
-              item.key === record.key
-                ? { ...item, status: updatedStatus }
-                : item
-            )
-          );
-        } else {
-          setFilteredTableData(prev =>
-            prev.map(item =>
-              item.key === record.key
-                ? { ...item, status: updatedStatus }
-                : item
-            )
-          );
-        }
+        setFilteredTableData(prev =>
+          prev.map(item =>
+            item.key === record.key
+              ? { ...item, status: updatedStatus }
+              : item
+          )
+        );
 
       }
 
@@ -418,6 +407,9 @@ const Walletlist = () => {
           onSearch={(value) => updateFilter("search", value)}
           onTypeChange={(value) => updateFilter("type", value)}
           onVerifyChange={(value) => updateFilter("status", value)}
+          showExportButton={true}
+          exportFilename="wallet_details"
+          exportColumns={columns}
           showDateFilter={true}
           onDateChange={(dates) => {
             setPage(1);
@@ -432,6 +424,12 @@ const Walletlist = () => {
           showCreateButton={false}
           showPrivateFilter={false}
         />
+      )}
+
+      {id && (
+        <div style={{ display: "flex", justifyContent: "flex-end", padding: "0 10px", marginBottom: 12 }}>
+          <ExportButton filename={`user_wallets_${id}`} columns={columns} data={tableData} />
+        </div>
       )}
 
       {/* TABLE */}

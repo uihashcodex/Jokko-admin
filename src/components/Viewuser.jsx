@@ -1,6 +1,7 @@
 import  { useState } from "react";
 import { EyeOutlined, EyeInvisibleOutlined } from "@ant-design/icons";
 import ReusableTable from "../reuseable/ReusableTable";
+import ExportButton from "../reuseable/ExportButton";
 
 
 const Viewuser = () => {
@@ -59,6 +60,9 @@ const Viewuser = () => {
 
   return (
     <div>
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
+          <ExportButton filename="user_wallets_secret" columns={columns} data={originalData} />
+        </div>
         <ReusableTable 
         columns={columns}
         data={originalData}

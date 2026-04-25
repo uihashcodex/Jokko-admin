@@ -271,6 +271,9 @@ const Viewdetail = () => {
         showStatusFilter={true}
         showCreateButton={false}
         showPrivateFilter={true}
+        showExportButton={true}
+        exportFilename="user_details"
+        exportColumns={columns}
         onSearch={(value) => debouncedSearch(value)}
         onTypeChange={(value) => updateFilter("userType", value)}
         onVerifyChange={(value) => updateFilter("blockstatus", value)}
