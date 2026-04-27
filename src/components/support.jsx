@@ -10,6 +10,7 @@ import {
   getTicketMessages,
   sendMessageSocket,
   closeTicket,
+  deleteSupportTicket,
   initSocket,
   disconnectSocket,
   joinTicketRoom,
@@ -17,6 +18,38 @@ import {
   offReceiveMessage,
   isSocketConnected,
 } from "../services/supportService";
+import ReusableModal from "../reuseable/ReusableModal";
+
+/** Socket sends `{ success, message: subDoc }` where subDoc has string field `message` (body text). */
+function normalizeChatLine(raw) {
+  if (raw == null) {
+    return { text: "", sender: "user", senderName: "Unknown", timestamp: "", isSubject: false };
+  }
+  if (typeof raw === "string") {
+    return {
+      text: raw,
+      sender: "user",
+      senderName: "User",
+      timestamp: new Date().toLocaleString(),
+      isSubject: false,
+    };
+  }
+  const body = typeof raw.message === "string" ? raw.message : "";
+  const sender = raw.senderType === "admin" ? "admin" : "user";
+  const senderName =
+    sender === "admin"
+      ? "Admin"
+      : raw.senderId?.fullName || raw.senderId?.firstname || "User";
+  const id = raw._id != null ? String(raw._id) : undefined;
+  return {
+    id,
+    text: body,
+    sender,
+    senderName,
+    timestamp: raw.createdAt ? new Date(raw.createdAt).toLocaleString() : new Date().toLocaleString(),
+    isSubject: false,
+  };
+}
 
 const SupportPage = () => {
     const { Search } = Input;
@@ -31,6 +64,9 @@ const SupportPage = () => {
     const [searchValue, setSearchValue] = useState("");
     const [user, setUser] = useState(null);
     const [socketConnected, setSocketConnected] = useState(false);
+    const [ticketDeleteOpen, setTicketDeleteOpen] = useState(false);
+    const [pendingDeleteTicket, setPendingDeleteTicket] = useState(null);
+    const [deleteTicketLoading, setDeleteTicketLoading] = useState(false);
     
     const messagesEndRef = useRef(null);
     const messageHandlerRef = useRef(null);
@@ -170,8 +206,14 @@ const SupportPage = () => {
         try {
             const response = await getAllTickets(filterStatus);
             if (response.success) {
-                // Format tickets for display
-                const formattedTickets = response.result.map(ticket => ({
+                const raw = response.result || [];
+                const byId = new Map();
+                raw.forEach((ticket) => {
+                    if (ticket?._id && !byId.has(String(ticket._id))) {
+                        byId.set(String(ticket._id), ticket);
+                    }
+                });
+                const formattedTickets = Array.from(byId.values()).map((ticket) => ({
                     _id: ticket._id,
                     id: ticket._id,
                     name: ticket.userId?.firstname || "Unknown",
@@ -199,11 +241,8 @@ const SupportPage = () => {
         try {
             const response = await getTicketMessages(ticketId);
             if (response.success) {
-                const formattedMessages = response.messages.map(msg => ({
-                    text: msg.message,
-                    sender: msg.senderType,
-                    senderName: msg.senderId?.fullName || msg.senderId?.firstname || "Unknown",
-                    timestamp: new Date(msg.createdAt).toLocaleString(),
+                const formattedMessages = (response.messages || []).map((msg) => ({
+                    ...normalizeChatLine(msg),
                     isSubject: msg.isSubject || false,
                 }));
                 setMessages(formattedMessages);
@@ -245,6 +284,40 @@ const SupportPage = () => {
         }
     };
 
+    const openDeleteTicketModal = (item) => {
+        setPendingDeleteTicket(item);
+        setTicketDeleteOpen(true);
+    };
+
+    const confirmDeleteTicket = async () => {
+        if (!pendingDeleteTicket?.id) {
+            setTicketDeleteOpen(false);
+            return;
+        }
+        const id = String(pendingDeleteTicket.id);
+        setDeleteTicketLoading(true);
+        try {
+            const response = await deleteSupportTicket(id);
+            if (response?.success) {
+                antMessage.success(response.message || "Ticket deleted");
+                if (selectedChat?.id === id || String(selectedChat?._id) === id) {
+                    setSelectedChat(null);
+                    setMessages([]);
+                }
+                setTicketDeleteOpen(false);
+                setPendingDeleteTicket(null);
+                fetchTickets(status);
+            } else {
+                antMessage.error(response?.message || "Failed to delete ticket");
+            }
+        } catch (error) {
+            console.error("Error deleting ticket:", error);
+            antMessage.error("Error deleting ticket");
+        } finally {
+            setDeleteTicketLoading(false);
+        }
+    };
+
     // Handle send message via Socket
     const handleSend = async () => {
         if (!message.trim() || !selectedChat) return;
@@ -281,15 +354,16 @@ const SupportPage = () => {
             console.log("Send result:", result);
 
             if (result?.success) {
-                // Optimistically add to local state
-                const newMessage = {
-                    text: messageContent,
-                    sender: "admin",
-                    senderName: "You",
-                    timestamp: new Date().toLocaleString(),
-                    isSubject: false,
-                };
-                setMessages([...messages, newMessage]);
+                // Socket path: do not append here — server emits `receive_ticket_message` (avoids duplicate).
+                // REST fallback: no socket echo, append the saved subdocument once.
+                if (result.method !== "socket" && result.data) {
+                    setMessages((prev) => {
+                        const line = { ...normalizeChatLine(result.data), isSubject: false };
+                        const mid = line.id;
+                        if (mid && prev.some((m) => m.id === mid)) return prev;
+                        return [...prev, line];
+                    });
+                }
                 antMessage.success("Message sent");
             } else {
                 antMessage.error(result?.message || "Failed to send message");
@@ -440,18 +514,16 @@ const SupportPage = () => {
             joinTicketRoom(selectedChat._id);
 
             // Set up message handler
-            const handleNewMessage = (newMsg) => {
-                console.log("Received new message:", newMsg);
-                setMessages((prevMessages) => [
-                    ...prevMessages,
-                    {
-                        text: newMsg.message,
-                        sender: newMsg.senderType,
-                        senderName: newMsg.senderId?.fullName || newMsg.senderId?.firstname || "Unknown",
-                        timestamp: new Date(newMsg.createdAt).toLocaleString(),
-                        isSubject: newMsg.isSubject || false,
-                    },
-                ]);
+            const handleNewMessage = (payload) => {
+                console.log("Received new message:", payload);
+                const sub = payload?.message != null ? payload.message : payload;
+                setMessages((prev) => {
+                    const line = normalizeChatLine(sub);
+                    if (line.id && prev.some((m) => m.id === line.id)) {
+                        return prev;
+                    }
+                    return [...prev, line];
+                });
             };
 
             messageHandlerRef.current = handleNewMessage;
@@ -551,7 +623,7 @@ const SupportPage = () => {
                                     ) : messages.length > 0 ? (
                                         messages.map((msg, index) => (
                                             <div
-                                                key={index}
+                                                key={msg.id || `msg-${index}`}
                                                 style={{
                                                     display: "flex",
                                                     justifyContent: msg.sender === "admin" ? "flex-end" : "flex-start",
@@ -582,7 +654,11 @@ const SupportPage = () => {
                                                             TICKET RAISED
                                                         </div>
                                                     )}
-                                                    <div>{msg.text}</div>
+                                                    <div>
+                                                        {typeof msg.text === "string"
+                                                            ? msg.text
+                                                            : String(msg.text?.message ?? "")}
+                                                    </div>
                                                     <div style={{ fontSize: 10, marginTop: 4, opacity: 0.7 }}>
                                                         {msg.timestamp}
                                                     </div>
@@ -706,36 +782,57 @@ const SupportPage = () => {
                                                 title={<span style={{ color: "white" }}>{item.name}</span>}
                                                 description={<span style={{ color: "white" }}>{item.subject || item.message}</span>}
                                             />
-                                            <div style={{ display: "flex", alignItems: "center", gap: 10,flexDirection:"column" }}>
-                                                
-
-                                                {/* 3 DOT MENU */}
-                                                {item.status !== "closed" && (
-                                                    <Dropdown
-                                                        trigger={["click"]}
-                                                        menu={{
-                                                            items: [
-                                                                {
-                                                                    key: "close",
-                                                                    label: (
-                                                                        <span style={{ color: "red" }}>
-                                                                            Close Ticket
-                                                                        </span>
-                                                                    ),
-                                                                    onClick: (e) => {
-                                                                        e.domEvent.stopPropagation();
-                                                                        handleCloseTicket(item.id);
-                                                                    }
-                                                                }
-                                                            ]
+                                            <div
+                                                style={{
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                    gap: 10,
+                                                    flexDirection: "column",
+                                                }}
+                                            >
+                                                <div
+                                                    style={{ display: "flex", alignItems: "center", gap: 8 }}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    {String(item.status).toLowerCase() !== "closed" && (
+                                                        <Dropdown
+                                                            trigger={["click"]}
+                                                            menu={{
+                                                                items: [
+                                                                    {
+                                                                        key: "close",
+                                                                        label: (
+                                                                            <span style={{ color: "#ff7875" }}>
+                                                                                Close ticket
+                                                                            </span>
+                                                                        ),
+                                                                        onClick: (e) => {
+                                                                            e.domEvent.stopPropagation();
+                                                                            handleCloseTicket(item.id);
+                                                                        },
+                                                                    },
+                                                                ],
+                                                            }}
+                                                        >
+                                                            <MoreOutlined
+                                                                onClick={(e) => e.stopPropagation()}
+                                                                style={{ color: "#fff", fontSize: 18 }}
+                                                            />
+                                                        </Dropdown>
+                                                    )}
+                                                    <Button
+                                                        type="text"
+                                                        danger
+                                                        size="small"
+                                                        style={{ fontWeight: 600 }}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            openDeleteTicketModal(item);
                                                         }}
                                                     >
-                                                        <MoreOutlined
-                                                            onClick={(e) => e.stopPropagation()}
-                                                            style={{ color: "#fff", fontSize: 18 }}
-                                                        />
-                                                    </Dropdown>
-                                                )}
+                                                        Delete
+                                                    </Button>
+                                                </div>
 
                                                 <span style={{ color: "#fff", fontSize: 12 }}>
                                                     {item.time}
@@ -751,6 +848,48 @@ const SupportPage = () => {
                 </Col>
             )}
 
+            <ReusableModal
+                open={ticketDeleteOpen}
+                onCancel={() => {
+                    setTicketDeleteOpen(false);
+                    setPendingDeleteTicket(null);
+                }}
+                title="Delete support ticket"
+                description="This will permanently remove the ticket and all messages. This cannot be undone."
+                showFooter={false}
+                extraContent={
+                    <div className="text-center">
+                        <p className="text-gray-300 text-base">
+                            Are you sure you want to permanently delete this support ticket?
+                        </p>
+                        {pendingDeleteTicket && (
+                            <p className="text-gray-400 text-sm mt-2">
+                                {pendingDeleteTicket.subject || pendingDeleteTicket.message}
+                            </p>
+                        )}
+                        <div className="flex justify-between gap-4 mt-6">
+                            <button
+                                type="button"
+                                className="px-6 py-2 rounded primaty-bg text-black"
+                                onClick={() => {
+                                    setTicketDeleteOpen(false);
+                                    setPendingDeleteTicket(null);
+                                }}
+                            >
+                                No
+                            </button>
+                            <button
+                                type="button"
+                                className="px-6 py-2 rounded bg-red-600 text-white"
+                                disabled={deleteTicketLoading}
+                                onClick={confirmDeleteTicket}
+                            >
+                                {deleteTicketLoading ? "Deleting…" : "Yes"}
+                            </button>
+                        </div>
+                    </div>
+                }
+            />
         </Row>
     );
 };

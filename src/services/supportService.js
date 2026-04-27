@@ -1,4 +1,5 @@
 import { constant } from "../const";
+import axios from "axios";
 import io from "socket.io-client";
 
 const API_BASE_URL = `${constant.backend_url}/support`;
@@ -191,6 +192,39 @@ export const sendMessage = async (ticketId, message) => {
   } catch (error) {
     console.error("Error sending message:", error);
     return { success: false, message: error.message };
+  }
+};
+
+/** Admin: permanently delete ticket (uses /admin/... so it matches other hard-deletes) */
+export const deleteSupportTicket = async (ticketId) => {
+  const id = ticketId != null ? String(ticketId).trim() : "";
+  if (!id) {
+    return { success: false, message: "Missing ticket id" };
+  }
+  try {
+    const { data, status } = await axios.post(
+      `${constant.backend_url}/admin/delete-support-ticket`,
+      { ticketId: id },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+        },
+        validateStatus: () => true,
+      }
+    );
+    if (status >= 200 && status < 300 && data?.success) {
+      return data;
+    }
+    return {
+      success: false,
+      message: data?.message || `Delete failed (${status})`,
+    };
+  } catch (error) {
+    const msg =
+      error?.response?.data?.message || error?.message || "Error deleting ticket";
+    console.error("deleteSupportTicket:", error);
+    return { success: false, message: msg };
   }
 };
 

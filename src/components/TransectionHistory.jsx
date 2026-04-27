@@ -128,12 +128,7 @@ const TransectionHistory = () => {
       setTotalUsers(res.data.total || 0);
     }
   } catch (error) {
-    if (error?.response?.status === 401) {
-      localStorage.removeItem("adminToken");
-      window.location.href = "/login";
-      return;
-    }
-
+    if (error?.response?.status === 401) return;
     console.error(error);
   } finally {
     setLoading(false);

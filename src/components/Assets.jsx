@@ -16,6 +16,9 @@ const Assets = () => {
 
     const [originalData, setOriginalData] = useState([]);
     const [networkOptions, setNetworkOptions] = useState([]);
+    /** When selected network is not verified, Status must stay Inactive and the field is disabled (see TrendingCurrency Switch). */
+    const [statusSelectDisabled, setStatusSelectDisabled] = useState(false);
+    const [networksById, setNetworksById] = useState({});
     const [loading, setLoading] = useState(false);
     const [deletemodal, setDeletemodal] = useState(false);
     const [deleteRecord, setDeleteRecord] = useState(null);
@@ -102,12 +105,45 @@ const Assets = () => {
     // const [select, setSelect] = useState(networkOptions);
 
 
-    const modalFields = selectedAsset
-        ? fields
-        : fields.filter(f => f.name !== "status");
+    const modalFields = useMemo(() => {
+        const base = selectedAsset
+            ? fields
+            : fields.filter((f) => f.name !== "status");
+        return base.map((f) =>
+            f.name === "status" ? { ...f, disabled: statusSelectDisabled } : f
+        );
+    }, [selectedAsset, statusSelectDisabled, networkOptions]);
+
+    const modalInitialValues = useMemo(() => {
+        if (!selectedAsset) return undefined;
+        const nid = selectedAsset.network_id;
+        const net = networksById[nid];
+        if (net && net.verifyStatus === false) {
+            return { ...selectedAsset, status: "inactive" };
+        }
+        return selectedAsset;
+    }, [selectedAsset, networksById]);
+
+    const applyNetworkToStatusField = (networkId, form) => {
+        const id = networkId == null ? "" : String(networkId);
+        const net = networksById[id];
+        if (net && net.verifyStatus === false) {
+            form.setFieldsValue({ status: "inactive" });
+            setStatusSelectDisabled(true);
+        } else {
+            setStatusSelectDisabled(false);
+        }
+    };
+
+    const handleAssetFormValuesChange = (changed, _all, form) => {
+        if (Object.prototype.hasOwnProperty.call(changed, "network_id")) {
+            applyNetworkToStatusField(changed.network_id, form);
+        }
+    };
 
     const handleCreate = () => {
         setSelectedAsset(null);
+        setStatusSelectDisabled(false);
         setOpen(true);
     };
 
@@ -199,7 +235,9 @@ const Assets = () => {
 isDefaultNetwork: (
   <Switch
     checked={item?.isDefault === true}
-    disabled={!item?.verifyStatus} 
+    disabled={
+      !item?.verifyStatus || item?.network?.verifyStatus === false
+    }
     onChange={() => handleDefaultNetworkChange(item?._id)}
   />
 ),                }));
@@ -350,11 +388,8 @@ isDefaultNetwork: (
     const getNetwork = async () => {
         try {
             const response = await axios.post(
-                `${constant.backend_url}/assets/get-all-networks?page=1&limit=10`,
-
-                {
-
-                },
+                `${constant.backend_url}/assets/get-all-networks?page=1&limit=500`,
+                {},
                 {
                     headers: {
                         "Content-Type": "application/json",
@@ -364,24 +399,26 @@ isDefaultNetwork: (
             );
 
             if (response.data?.success) {
-                const netWorkdata = response.data.result.docs.map((item, index) => ({
-                    // id: item?._id,
-                    label: item?.networkName.toUpperCase(),
-                    value: item?._id,
-                }));
-                console.log(netWorkdata, "sssssss");
-
+                const docs = response.data?.result?.docs || response.data?.result || [];
+                const byId = {};
+                const netWorkdata = docs.map((item) => {
+                    if (item?._id) {
+                        byId[String(item._id)] = { verifyStatus: item.verifyStatus !== false };
+                    }
+                    return {
+                        label: (item?.networkName || "-").toUpperCase(),
+                        value: item?._id,
+                    };
+                });
                 setNetworkOptions(netWorkdata);
-                // setSelect(netWorkdata[0]?.value);
-
+                setNetworksById(byId);
             } else {
                 setNetworkOptions([]);
-                // setSelect([]);
+                setNetworksById({});
             }
         } catch (error) {
             console.error("Error fetching data:", error);
         }
-
     }
 
     useEffect(() => {
@@ -389,8 +426,18 @@ isDefaultNetwork: (
     }, []);
 
     useEffect(() => {
-        console.log("networkOptions updated:", networkOptions);
-    }, [networkOptions]);
+        if (!open) {
+            setStatusSelectDisabled(false);
+            return;
+        }
+        if (!selectedAsset) return;
+        const nid = selectedAsset.network_id;
+        if (nid && networksById[String(nid)]?.verifyStatus === false) {
+            setStatusSelectDisabled(true);
+        } else {
+            setStatusSelectDisabled(false);
+        }
+    }, [open, selectedAsset, networksById]);
 
     const debouncedSearch = useMemo(
         () =>
@@ -483,13 +530,17 @@ isDefaultNetwork: (
 />
 
             <ReusableModal
-                key={networkOptions.length}
+                key={`asset-modal-${open ? "1" : "0"}-${selectedAsset?.id ?? "create"}`}
                 open={open}
-                onCancel={() => setOpen(false)}
+                onCancel={() => {
+                    setOpen(false);
+                    setStatusSelectDisabled(false);
+                }}
                 onSubmit={handleSubmit}
                 title={selectedAsset ? "Update Asset" : "Create Asset"}
                 fields={modalFields}
-                initialValues={selectedAsset}
+                initialValues={selectedAsset ? modalInitialValues : undefined}
+                onFormValuesChange={handleAssetFormValuesChange}
                 maskClosable={false}
             />
             <ReusableModal

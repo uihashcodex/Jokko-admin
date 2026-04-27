@@ -49,6 +49,13 @@ const Viewdetail = () => {
   const [totalUsers, setTotalUsers] = useState(0);
     const [deleteRecord, setDeleteRecord] = useState(null);
     const [deletemodal, setDeletemodal] = useState(false);
+    const [deleteCounts, setDeleteCounts] = useState({
+      wallets: 0,
+      transactions: 0,
+      onramper_orders: 0,
+      coinrabbit_orders: 0,
+    });
+    const [deleteCountsLoading, setDeleteCountsLoading] = useState(false);
 
   const handleCreate = () => {
     setOpen(true);
@@ -201,7 +208,46 @@ const Viewdetail = () => {
         }
     };
 
-  
+  const fetchUserDeleteCounts = async (userId) => {
+    if (!userId) return;
+    setDeleteCountsLoading(true);
+    try {
+      const res = await axios.get(
+        `${constant.backend_url}/admin/user-delete-counts`,
+        {
+          params: { userId },
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+          },
+        }
+      );
+      if (res.data?.success && res.data?.result) {
+        const r = res.data.result;
+        setDeleteCounts({
+          wallets: r.wallets ?? 0,
+          transactions: r.transactions ?? 0,
+          onramper_orders: r.onramper_orders ?? 0,
+          coinrabbit_orders: r.coinrabbit_orders ?? 0,
+        });
+      } else {
+        setDeleteCounts({
+          wallets: 0,
+          transactions: 0,
+          onramper_orders: 0,
+          coinrabbit_orders: 0,
+        });
+      }
+    } catch (e) {
+      setDeleteCounts({
+        wallets: 0,
+        transactions: 0,
+        onramper_orders: 0,
+        coinrabbit_orders: 0,
+      });
+    } finally {
+      setDeleteCountsLoading(false);
+    }
+  };
 
   const debouncedSearch = useMemo(
     () =>
@@ -318,31 +364,123 @@ const Viewdetail = () => {
 
         onBlock={(record) => blockUser(record)}
         onUnblock={(record) => blockUser(record)}
-         onDelete={(record) => {
+         onDelete={async (record) => {
         setDeleteRecord(record);
+        setDeleteCounts({ wallets: 0, transactions: 0 });
         setDeletemodal(true);
+        await fetchUserDeleteCounts(record.key);
     }}
       />
 
     <ReusableModal
   open={deletemodal}
-  onCancel={() => setDeletemodal(false)}
+  onCancel={() => {
+    setDeletemodal(false);
+    setDeleteCounts({
+      wallets: 0,
+      transactions: 0,
+      onramper_orders: 0,
+      coinrabbit_orders: 0,
+    });
+  }}
   title="Delete User"
-  description={"Are you sure you want to delete this user?"}
+  description={"PERMANENT DELETE: This cannot be undone."}
   showFooter={false}
   extraContent={
     <div className="text-center">
 
-      <p className="text-gray-300 text-base">
-        Are you sure you want to delete this user?
-      </p>
+      <div className="rounded-md border border-red-500/40 bg-red-500/10 p-3 text-left">
+        <p className="text-red-300 text-base font-semibold">
+          PERMANENT DELETE (cannot be undone)
+        </p>
+        <p className="text-gray-300 text-sm mt-1">
+          If you click <b>Yes</b>, this user will be permanently deleted from the database.
+        </p>
+      </div>
+
+      <div className="mt-4 text-left text-gray-300">
+        {deleteCountsLoading && (
+          <p className="text-sm text-gray-400">Loading record counts…</p>
+        )}
+        {(() => {
+          const c = deleteCounts;
+          const hasAny =
+            !deleteCountsLoading &&
+            (c.wallets > 0 ||
+              c.transactions > 0 ||
+              c.onramper_orders > 0 ||
+              c.coinrabbit_orders > 0);
+          const parts = [
+            c.wallets > 0 && `${c.wallets} wallet${c.wallets === 1 ? "" : "s"}`,
+            c.transactions > 0 &&
+              `${c.transactions} transaction${c.transactions === 1 ? "" : "s"}`,
+            c.coinrabbit_orders > 0 &&
+              `${c.coinrabbit_orders} CoinRabbit order${c.coinrabbit_orders === 1 ? "" : "s"}`,
+            c.onramper_orders > 0 &&
+              `${c.onramper_orders} provider / Onramper order${c.onramper_orders === 1 ? "" : "s"}`,
+          ].filter(Boolean);
+          const rec = (n) => `record${n === 1 ? "" : "s"}`;
+          return (
+            <>
+              {hasAny && (
+                <>
+                  <p className="text-sm text-gray-200 font-medium mb-2">
+                    {parts.join(", ")}.
+                  </p>
+                  <ul className="list-none pl-0 space-y-2">
+                    {c.wallets > 0 && (
+                      <li className="text-sm text-white">
+                        Wallets ({c.wallets} {rec(c.wallets)})
+                      </li>
+                    )}
+                    {c.transactions > 0 && (
+                      <li className="text-sm text-white">
+                        Transactions ({c.transactions} {rec(c.transactions)})
+                      </li>
+                    )}
+                    {c.coinrabbit_orders > 0 && (
+                      <li className="text-sm text-white">
+                        CoinRabbit orders ({c.coinrabbit_orders} {rec(c.coinrabbit_orders)})
+                      </li>
+                    )}
+                    {c.onramper_orders > 0 && (
+                      <li className="text-sm text-white">
+                        Provider / Onramper orders ({c.onramper_orders}{" "}
+                        {rec(c.onramper_orders)})
+                      </li>
+                    )}
+                  </ul>
+                </>
+              )}
+              {!deleteCountsLoading &&
+                c.wallets === 0 &&
+                c.transactions === 0 &&
+                c.onramper_orders === 0 &&
+                c.coinrabbit_orders === 0 && (
+                  <p className="text-sm text-gray-400">
+                    No wallet, transaction, CoinRabbit, or provider orders found to
+                    list. The user account will still be removed.
+                  </p>
+                )}
+            </>
+          );
+        })()}
+      </div>
 
       <div className="flex justify-between gap-4 mt-6">
 
         {/* ❌ NO BUTTON FIX */}
         <button
           className="px-6 py-2 rounded primaty-bg text-black"
-          onClick={() => setDeletemodal(false)}
+          onClick={() => {
+            setDeletemodal(false);
+            setDeleteCounts({
+              wallets: 0,
+              transactions: 0,
+              onramper_orders: 0,
+              coinrabbit_orders: 0,
+            });
+          }}
         >
           No
         </button>

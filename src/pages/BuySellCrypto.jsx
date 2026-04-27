@@ -88,12 +88,7 @@ const BuySellCrypto = () => {
         messageApi.error(data.message || "Failed to fetch assets.");
       }
     } catch (error) {
-      if (error?.response?.status === 401) {
-        localStorage.removeItem("adminToken");
-        window.location.href = "/login";
-        return;
-      }
-
+      if (error?.response?.status === 401) return;
       messageApi.error("Failed to fetch crypto assets.");
     } finally {
       setLoading(false);
@@ -161,12 +156,7 @@ const BuySellCrypto = () => {
         messageApi.error(data.message || "Failed to update status.");
       }
     } catch (error) {
-      if (error?.response?.status === 401) {
-        localStorage.removeItem("adminToken");
-        window.location.href = "/login";
-        return;
-      }
-
+      if (error?.response?.status === 401) return;
       messageApi.error("Failed to update status.");
     }
   };

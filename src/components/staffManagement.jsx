@@ -299,7 +299,7 @@ sno: (page - 1) * PAGE_SIZE + index + 1,          ...staff,
           (updateData.username || "") === (selectedStaff.username || "") &&
           (updateData.email || "") === (selectedStaff.email || "") &&
           (updateData.phone || "") === (selectedStaff.phone || "") &&
-          (updateData.role || "") === (selectedStaff.roleType || "") &&
+          (updateData.roleType || "") === (selectedStaff.roleType || "") &&
           (updateData.status || "") === (selectedStaff.status || "") &&
           !resetPassword;
 

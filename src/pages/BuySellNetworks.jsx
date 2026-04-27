@@ -80,12 +80,7 @@ const BuySellNetworks = () => {
         messageApi.error(data.message || "Failed to fetch networks.");
       }
     } catch (error) {
-      if (error?.response?.status === 401) {
-        localStorage.removeItem("adminToken");
-        window.location.href = "/login";
-        return;
-      }
-
+      if (error?.response?.status === 401) return;
       messageApi.error("Failed to fetch networks.");
     } finally {
       setLoading(false);
@@ -118,12 +113,7 @@ const BuySellNetworks = () => {
         messageApi.error(data.message || "Failed to update status.");
       }
     } catch (error) {
-      if (error?.response?.status === 401) {
-        localStorage.removeItem("adminToken");
-        window.location.href = "/login";
-        return;
-      }
-
+      if (error?.response?.status === 401) return;
       messageApi.error("Failed to update status.");
     }
   };
