@@ -17,12 +17,14 @@ const EmailTemplateManagementnew = () => {
   const [deleteRecord, setDeleteRecord] = useState(null);
   const [deletemodal, setDeletemodal] = useState(false);
 
+  // CHANGE THESE STATES
+const [selectedDesign, setSelectedDesign] = useState(null);
+const [createDesign, setCreateDesign] = useState(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [originalData, setOriginalData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
-  const [selectedDesign, setSelectedDesign] = useState("template1");
   const [globalDesign, setGlobalDesign] = useState("template1");
   const [designModalOpen, setDesignModalOpen] = useState(false);
   const [pendingDesign, setPendingDesign] = useState(null);
@@ -36,7 +38,6 @@ const EmailTemplateManagementnew = () => {
   const [createDrawerOpen, setCreateDrawerOpen] = useState(false);
   const [liveCreateBody, setLiveCreateBody] = useState("");
   const [liveCreateSubject, setLiveCreateSubject] = useState("");
-  const [createDesign, setCreateDesign] = useState("template1");
   const [isCreateActive, setIsCreateActive] = useState(true);
   const [createDesignModalOpen, setCreateDesignModalOpen] = useState(false);
   const [pendingCreateDesign, setPendingCreateDesign] = useState(null);
@@ -164,15 +165,17 @@ const EmailTemplateManagementnew = () => {
     fetchDesignTemplates();
   }, []);
 
-  useEffect(() => {
-    if (designTemplates.length > 0) {
-      const defaultTemp = designTemplates.find((t) => t.isDefault);
-      if (defaultTemp) {
-        setGlobalDesign(defaultTemp.template_name);
-      }
-    }
-  }, [designTemplates]);
+// FETCH TEMPLATE DESIGN AS OBJECT ID + NAME
+useEffect(() => {
+  if (designTemplates.length > 0) {
+    const defaultTemp = designTemplates.find((t) => t.isDefault);
 
+    if (defaultTemp) {
+      setGlobalDesign(defaultTemp._id); // store ObjectId
+      setSelectedDesign(defaultTemp._id);
+    }
+  }
+}, [designTemplates]);
   const debouncedSearch = useMemo(
     () =>
       debounce((value) => {
@@ -229,16 +232,17 @@ const EmailTemplateManagementnew = () => {
       if (response.data?.success) {
         const docs = response.data.result || [];
 
-        const formattedData = docs.map((item) => ({
-          id: item._id,
-          event_key: item.event_key,
-          subject: item.subject,
-          body: item.body,
-          design: item.template_name,
-          is_active: item.is_active,
-          template_name: item.template_name,
-          status: item.is_active ? "Active" : "Inactive",
-        }));
+ // TABLE DATA FORMAT
+const formattedData = docs.map((item) => ({
+  id: item._id,
+  event_key: item.event_key,
+  subject: item.subject,
+  body: item.body,
+  design: item.template_name?._id || item.template_name, 
+  template_name: item.template_name?.template_name || "Unknown Template",
+  is_active: item.is_active,
+  status: item.is_active ? "Active" : "Inactive",
+}));
 
         setOriginalData(formattedData);
         setTotal(response.data.total || formattedData.length);
@@ -335,22 +339,22 @@ const EmailTemplateManagementnew = () => {
         }
       }
 
-      const response = await axios.post(
-        `${constant.backend_url}/admin/edit-emailcontent`,
-        {
-          event_key: selectedRow?.event_key,
-          subject: values?.subject,
-          body: values?.body,
-          template_name: selectedDesign,
-          is_active: isActive,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
-          },
-        }
-      );
-
+  // UPDATE API PAYLOAD
+const response = await axios.post(
+  `${constant.backend_url}/admin/edit-emailcontent`,
+  {
+    event_key: selectedRow?.event_key,
+    subject: values?.subject,
+    body: values?.body,
+    template_name: selectedDesign, // send ObjectId
+    is_active: isActive,
+  },
+  {
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+    },
+  }
+);
       if (response.data?.success) {
         message.success(response.data.message);
         getEmailTemplates();
@@ -401,19 +405,17 @@ const EmailTemplateManagementnew = () => {
   const formattedCreateContent = formatBody(liveCreateBody);
 
   const activeDesign = selectedDesign || globalDesign;
-  const selectedTemplateObj = designTemplates.find(
-    (t) => t.template_name === activeDesign
-  );
-
+ const selectedTemplateObj = designTemplates.find(
+  (t) => t._id === activeDesign
+);
   const previewHtml =
     selectedTemplateObj?.html
       ?.replace(/{{subject}}/g, liveSubject || selectedRow?.subject || "Email Subject")
       ?.replace(/{{content}}/g, formattedContent) || "<p>No template found</p>";
 
-  const createTemplateObj = designTemplates.find(
-    (t) => t.template_name === (createDesign || globalDesign)
-  );
-
+ const createTemplateObj = designTemplates.find(
+  (t) => t._id === (createDesign || globalDesign)
+);
   const createPreviewHtml =
     createTemplateObj?.html
       ?.replace(/{{subject}}/g, liveCreateSubject || "Email Subject")
@@ -569,10 +571,12 @@ const EmailTemplateManagementnew = () => {
                   <div
                     key={template._id}
                     className="template-card upload-templatecard"
-                    onClick={() => setPendingDesign(template.template_name)}
-                    style={{
+// TEMPLATE SELECTION MODAL
+onClick={() => setPendingDesign(template._id)}                    
+style={{
                       border:
-                        pendingDesign === template.template_name
+
+                        pendingDesign === template._id
                           ? "2px solid #c9f07b"
                           : "2px solid transparent",
                       borderRadius: "12px",
@@ -702,10 +706,10 @@ const EmailTemplateManagementnew = () => {
                   <div
                     key={template._id}
                     className="template-card upload-templatecard"
-                    onClick={() => setPendingCreateDesign(template.template_name)}
+                    onClick={() => setPendingCreateDesign(template._id)}
                     style={{
                       border:
-                        pendingCreateDesign === template.template_name
+                        pendingCreateDesign === template._id
                           ? "2px solid #c9f07b"
                           : "2px solid transparent",
                       borderRadius: "12px",
