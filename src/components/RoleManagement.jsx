@@ -16,6 +16,7 @@ const RoleManagement = () => {
   const [editingKey, setEditingKey] = useState(null);
   const [initialValues, setInitialValues] = useState({});
   const [loading, setLoading] = useState(false);
+  const [searchText, setSearchText] = useState("");
 
     const [deletemodal, setDeletemodal] = useState(false);
     const [deleteRecord, setDeleteRecord] = useState(null);
@@ -33,7 +34,16 @@ useEffect(() => {
   fetchRoles();
 }, [page]);
 
-const fetchRoles = async (search = "") => {
+const formatRoles = (roles = [], pageNumber = 1, pageLimit = PAGE_SIZE) =>
+  roles.map((role, index) => ({
+    key: role._id || role.id,
+    roleId: role._id || role.id,
+    sno: (pageNumber - 1) * pageLimit + index + 1,
+    name: role.role_name || role.name || "",
+    permissions: Array.isArray(role.permissions) ? role.permissions : [],
+  }));
+
+const fetchRoles = async (search = searchText, pageNumber = page, pageLimit = PAGE_SIZE) => {
   try {
     setLoading(true);
 
@@ -42,8 +52,8 @@ const fetchRoles = async (search = "") => {
       {
         params: {
           search,
-          page,
-          limit: PAGE_SIZE,
+          page: pageNumber,
+          limit: pageLimit,
         },
         headers: {
           Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
@@ -53,14 +63,7 @@ const fetchRoles = async (search = "") => {
     );
 
     const rolesArray = response.data?.result || [];
-
-    const formattedData = rolesArray.map((role, index) => ({
-      key: role._id || role.id,
-      roleId: role._id || role.id,
-      sno: (page - 1) * PAGE_SIZE + index + 1,
-      name: role.role_name || role.name || "",
-      permissions: Array.isArray(role.permissions) ? role.permissions : [],
-    }));
+    const formattedData = formatRoles(rolesArray, pageNumber, pageLimit);
 
     setData(formattedData);
     setTotal(response.data?.total || 0);
@@ -73,10 +76,28 @@ const fetchRoles = async (search = "") => {
   }
 };
 
+const getRolesForExport = async () => {
+  const response = await axios.get(`${constant.backend_url}/management/roles/list`, {
+    params: {
+      search: searchText,
+      page: 1,
+      limit: total || 100000,
+    },
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+      "Content-Type": "application/json",
+    },
+  });
+
+  return formatRoles(response.data?.result || [], 1, total || 100000);
+};
+
   const debouncedSearch = useMemo(
     () =>
       debounce((value) => {
-        fetchRoles(value);
+        setSearchText(value);
+        setPage(1);
+        fetchRoles(value, 1);
       }, 600),
     []
   );
@@ -282,6 +303,7 @@ const fetchRoles = async (search = "") => {
         showExportButton={true}
         exportFilename="roles"
         exportColumns={columns}
+        getExportData={getRolesForExport}
         onSearch={(value) => debouncedSearch(value)}
          searchTooltip="Search by Role Name"
         onCreate={() => {

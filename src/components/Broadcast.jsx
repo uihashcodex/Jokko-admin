@@ -49,6 +49,15 @@ const Broadcast = () => {
   }, [page]);
 
   // ── fetch ─────────────────────────────────────────────────────────────────
+const formatBroadcasts = (items = [], pageNumber = page, forExport = false) =>
+  items.map((item, i) => ({
+    ...item,
+    id: item._id,
+    sno: (pageNumber - 1) * PAGE_SIZE + i + 1,
+    verifyStatus: forExport ? (item.verifyStatus ? "Active" : "In Active") : item.verifyStatus,
+    createdAt: forExport && item.createdAt ? item.createdAt.split("T")[0] : item.createdAt,
+  }));
+
 const fetchBroadcasts = async () => {
   setTableLoading(true);
   try {
@@ -64,11 +73,7 @@ const fetchBroadcasts = async () => {
     );
 
     if (data.success) {
-      const rows = (data.result || []).map((item, i) => ({
-        ...item,
-        id: item._id,
-     sno: (page - 1) * PAGE_SIZE + i + 1,
-      }));
+      const rows = formatBroadcasts(data.result || [], page);
 
       setBroadcasts(rows);
 setTotal(data.pagination?.total || 0);    
@@ -80,6 +85,22 @@ setTotal(data.pagination?.total || 0);
   } finally {
     setTableLoading(false);
   }
+};
+
+const getBroadcastsForExport = async () => {
+  const { data } = await axios.get(
+    `${constant.backend_url}/admin/get-broadcast`,
+    {
+      params: {
+        page: 1,
+        limit: total || 100000,
+      },
+      headers: authHeader,
+    }
+  );
+
+  if (!data.success) return [];
+  return formatBroadcasts(data.result || [], 1, true);
 };
   // ── create ────────────────────────────────────────────────────────────────
 const handleCreate = async (values) => {
@@ -416,6 +437,7 @@ const clearPreview = (setFile, preview, setPreview) => {
         showExportButton={true}
         exportFilename="broadcast"
         exportColumns={columns}
+        getExportData={getBroadcastsForExport}
         onCreate={() => setCreateOpen(true)}
       />
 <ReusableTable

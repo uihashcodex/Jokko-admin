@@ -149,15 +149,39 @@ const TrendingCurrency = () => {
         }
     };
 
+const getCleanFilters = () =>
+    Object.fromEntries(Object.entries(filters).filter(([_, v]) => v !== ""));
+
+const formatTokens = (docs = [], pageNumber = 1, pageLimit = 10, forExport = false) =>
+    docs.map((item, index) => ({
+        id: item?._id,
+        key: item?._id,
+        sno: (pageNumber - 1) * pageLimit + index + 1,
+        tokenName: item?.tokenName || "-",
+        tokenSymbol: item?.tokenSymbol,
+        contractAddress: item?.contractAddress || "-",
+        tokenDecimals: item?.decimals || "-",
+        status: item?.verifyStatus ? "active" : "inactive",
+        network_id: item?.network?._id || "-",
+        createdAt: item?.createdAt ? item.createdAt.split("T")[0] : "-",
+        networkName: item?.network?.networkName || "-",
+        modeStatus: item?.modeStatus || "-",
+        isTrending: forExport ? (item?.isTrending ? "Yes" : "No") : (
+            <Switch
+                checked={item?.isTrending === true}
+                disabled={!item?.verifyStatus}
+                onChange={() => handleIsTrendingChange(item?._id)}
+            />
+        ),
+    }));
+
 const getToken = async () => {
     const startTime = Date.now();
 
     try {
         setLoading(true);
 
-        const cleanFilters = Object.fromEntries(
-            Object.entries(filters).filter(([_, v]) => v !== "")
-        );
+        const cleanFilters = getCleanFilters();
 
         const response = await axios.post(
             `${constant.backend_url}/assets/get-all-tokens`,
@@ -179,28 +203,7 @@ const getToken = async () => {
 
             setTotalUsers(response.data.total || 0); 
 
-            const formattedData = docs.map((item, index) => ({
-                id: item?._id,
-                key: item?._id,
-                sno: (page - 1) * 10 + index + 1,
-                tokenName: item?.tokenName || "-",
-                tokenSymbol: item?.tokenSymbol,
-                contractAddress: item?.contractAddress || "-",
-                tokenDecimals: item?.decimals || "-",
-                status: item?.verifyStatus ? "active" : "inactive",
-                network_id: item?.network?._id || "-",
-                createdAt: item?.createdAt ? item.createdAt.split("T")[0] : "-",
-                // updatedAt: item?.updatedAt ? item.updatedAt.split("T")[0] : "-",
-                networkName: item?.network?.networkName || "-",
-                modeStatus: item?.modeStatus || "-",
-                isTrending: (
-                    <Switch
-                        checked={item?.isTrending === true}
-                        disabled={!item?.verifyStatus}
-                        onChange={() => handleIsTrendingChange(item?._id)}
-                    />
-                ),
-            }));
+            const formattedData = formatTokens(docs, page, 10);
 
             setOriginalData(formattedData);
             setFilteredData(formattedData);
@@ -219,6 +222,26 @@ const getToken = async () => {
             setLoading(false);
         }, Math.max(minTime - elapsed, 0));
     }
+};
+
+const getTrendingForExport = async () => {
+    const response = await axios.post(
+        `${constant.backend_url}/assets/get-all-tokens`,
+        {
+            ...getCleanFilters(),
+            page: 1,
+            limit: totalUsers || 100000,
+        },
+        {
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+            },
+        }
+    );
+
+    if (!response.data?.success) return [];
+    return formatTokens(response.data.result || [], 1, totalUsers || 100000, true);
 };
     useEffect(() => {
         getToken();
@@ -458,6 +481,7 @@ const getToken = async () => {
                 showExportButton={true}
                 exportFilename="trending_currency"
                 exportColumns={columns}
+                getExportData={getTrendingForExport}
                 showDateFilter={true}
                 onDateChange={(dates) => {
                     updateFilter("fromDate", dates?.[0] || "");

@@ -231,6 +231,44 @@ setAlltrandata(mappedData);
     }
   };
 
+  const getCoinRabbitForExport = async () => {
+    const cleanFilters = Object.fromEntries(
+      Object.entries(filters).filter(
+        ([, value]) => value !== "" && value !== undefined && value !== null
+      )
+    );
+
+    const res = await axios.post(
+      `${constant.backend_url}/admin/get-all-coinrabbit-trans`,
+      {
+        ...cleanFilters,
+        ...(id ? { user_id: id } : {}),
+        page: 1,
+        limit: totalUsers || 100000,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+        },
+      }
+    );
+
+    if (!res.data?.success) return [];
+
+    const docs =
+      res.data?.data?.docs ||
+      res.data?.result?.docs ||
+      res.data?.result ||
+      res.data?.data ||
+      [];
+
+    return mapCoinRabbitData(docs).map((item, index) => ({
+      ...item,
+      sno: index + 1,
+    }));
+  };
+
   useEffect(() => {
     if (id) {
       getTransation();
@@ -319,6 +357,7 @@ setAlltrandata(mappedData);
           showExportButton={true}
           exportFilename="coinrabbit_history"
           exportColumns={columns}
+          getExportData={getCoinRabbitForExport}
           showDateFilter={true}
           onSearch={(value) => debouncedSearch(value)}
           searchTooltip="Search by Loan ID, Status"
@@ -335,7 +374,12 @@ setAlltrandata(mappedData);
 
       {id && (
         <div style={{ display: "flex", justifyContent: "flex-end", padding: "0 10px", marginBottom: 12 }}>
-          <ExportButton filename={`coinrabbit_details_${id}`} columns={columns} data={filteredData} />
+          <ExportButton
+            filename={`coinrabbit_details_${id}`}
+            columns={columns}
+            data={filteredData}
+            getExportData={getCoinRabbitForExport}
+          />
         </div>
       )}
 

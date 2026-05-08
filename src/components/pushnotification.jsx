@@ -48,6 +48,16 @@ const PushNotification = () => {
     }
   };
 
+  const getNotificationsForExport = async () => {
+    const { data } = await axios.get(
+      `${constant.backend_url}/admin/push-notifications?page=1&limit=${total || 100000}`,
+      { headers: authHeader }
+    );
+
+    if (!data?.success) return [];
+    return (data?.result?.items || []).map((n) => ({ ...n, key: n._id }));
+  };
+
   useEffect(() => {
     fetchNotifications(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -184,6 +194,7 @@ const PushNotification = () => {
         showExportButton={true}
         exportFilename="push_notifications"
         exportColumns={listColumns.filter((c) => c.dataIndex)}
+        getExportData={getNotificationsForExport}
       />
 
       <ReusableTable

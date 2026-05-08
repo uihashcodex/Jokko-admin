@@ -16,6 +16,7 @@ export const PERMISSION_ROUTE_MAP = {
   "Staff Management": "/staffmanagement",
   Broadcast: "/broadcast",
   Providers: "/onramper-history",
+  Providers: "/oframper-history",
   "CoinRabbit History": "/coin-rabbbit-history",
   "Fiat Assets": "/buy-sell-fiat-asset",
   "Buy/Sell Crypto": "/buy-sell-crypto",

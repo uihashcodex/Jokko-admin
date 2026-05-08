@@ -56,6 +56,17 @@ const PAGE_SIZE = 10;
   }, [page]);
 
   // ── fetch campaigns list ──────────────────────────────────────────────────
+  const formatCampaigns = (items = [], pageNumber = page) =>
+    items.map((item, i) => ({
+      ...item,
+      sno: (pageNumber - 1) * PAGE_SIZE + i + 1,
+      id: item._id,
+      event_key: item.content_info?.event_key,
+      campaign_name: item.campaign_name || "-",
+      template_name: item.content_info?.template_name || "-",
+      subject: item.content_info?.subject || "-",
+    }));
+
   const fetchCampaigns = async () => {
     setTableLoading(true);
     try {
@@ -64,16 +75,7 @@ const PAGE_SIZE = 10;
         { headers: authHeader }
       );
       if (data.success === true) {
-        const rows = (data.result || data.data || []).map((item, i) => ({
-          ...item,
-          sno: (page - 1) * PAGE_SIZE + i + 1,
-          id: item._id,
-          event_key: item.content_info.event_key,
-          campaign_name: item.campaign_name || "-",
-          template_name: item.content_info.template_name || "-",
-          subject: item.content_info.subject || "-",
-
-        }));
+        const rows = formatCampaigns(data.result || data.data || [], page);
         setCampaigns(rows);
       } else {
         message.error(data.message || "Failed to load campaigns.");
@@ -83,6 +85,16 @@ const PAGE_SIZE = 10;
     } finally {
       setTableLoading(false);
     }
+  };
+
+  const getCampaignsForExport = async () => {
+    const { data } = await axios.get(
+      `${constant.backend_url}/brevo/getCampaigns`,
+      { headers: authHeader }
+    );
+
+    if (data.success !== true) return [];
+    return formatCampaigns(data.result || data.data || [], 1);
   };
 
 
@@ -452,6 +464,7 @@ const fetchEmailContents = async () => {
         showExportButton={true}
         exportFilename="email_campaigns"
         exportColumns={columns}
+        getExportData={getCampaignsForExport}
         onCreate={() => setCreateOpen(true)}
       />
 

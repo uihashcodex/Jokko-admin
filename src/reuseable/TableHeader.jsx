@@ -13,6 +13,7 @@ const { Search } = Input;
 
 const TableHeader = ({
   data = [],
+  getExportData,
   exportFilename,
   exportColumns,
   showExportButton = false,
@@ -269,6 +270,7 @@ const TableHeader = ({
             filename={exportFilename || "export"}
             columns={exportColumns || []}
             data={data || []}
+            getExportData={getExportData}
           />
         </Col>
       )}

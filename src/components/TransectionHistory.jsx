@@ -44,6 +44,48 @@ const TransectionHistory = () => {
     return `${day} ${month}`; // 7 Mar
   };
 
+  const formatTransactionDateTime = (item) => {
+    if (item?.transactionDate && item?.transactionTime) {
+      return {
+        transactionDate: item.transactionDate,
+        transactionTime: item.transactionTime,
+        dateTimeDisplay: `${item.transactionDate} ${item.transactionTime}`,
+      };
+    }
+
+    const rawDate = item?.DateTime || item?.createdAt;
+    if (!rawDate) {
+      return {
+        transactionDate: "-",
+        transactionTime: "-",
+        dateTimeDisplay: "-",
+      };
+    }
+
+    const date = new Date(rawDate);
+    if (Number.isNaN(date.getTime())) {
+      return {
+        transactionDate: "-",
+        transactionTime: "-",
+        dateTimeDisplay: "-",
+      };
+    }
+
+    const transactionDate = date.toLocaleDateString("en-CA");
+    const transactionTime = date.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: true,
+    });
+
+    return {
+      transactionDate,
+      transactionTime,
+      dateTimeDisplay: `${transactionDate} ${transactionTime}`,
+    };
+  };
+
   const processChartData = () => {
     const grouped = {};
     transactionData.forEach(trans => {
@@ -84,6 +126,31 @@ const TransectionHistory = () => {
     toDate: ""
   });
 
+  const formatTransactions = (transactions = [], pageNumber = 1, pageLimit = PAGE_SIZE) =>
+    transactions.map((item, index) => {
+      const dateTime = formatTransactionDateTime(item);
+
+      return {
+        key: item?._id,
+        id: item?._id,
+        sno: (pageNumber - 1) * pageLimit + index + 1,
+        transactionHash: item?.transactionHash || "-",
+        firstname: item?.firstname || "-",
+        networkName: item?.network_id?.networkName || item?.networkName || "-",
+        amount: item?.amount
+          ? `${Number(item.amount).toFixed(4)} ${item?.tokenSymbol || ""}`
+          : "-",
+        from: item?.from || "-",
+        to: item?.to || "-",
+        tokenSymbol: item?.tokenSymbol || "-",
+        createdAt: dateTime.transactionDate,
+        updatedAt: item?.updatedAt ? item.updatedAt.split("T")[0] : "",
+        status: item?.status || "-",
+        transType: item?.transType || "-",
+        ...dateTime,
+      };
+    });
+
  const getTransation = async () => {
   try {
     setLoading(true);
@@ -104,25 +171,7 @@ const TransectionHistory = () => {
 
     if (res.data?.success) {
       const trandata = res.data.result || [];
-
-      const trans = trandata.map((item, index) => ({
-        key: item._id,
-        id: item._id,
-        sno: (page - 1) * PAGE_SIZE + index + 1,
-        transactionHash: item?.transactionHash || "-",
-        firstname: item?.firstname || "-",
-        networkName: item?.network_id?.networkName || "-",
-        amount: item?.amount
-          ? `${Number(item.amount).toFixed(4)} ${item?.tokenSymbol || ""}`
-          : "-",
-        from: item?.from || "-",
-        to: item?.to || "-",
-        tokenSymbol: item?.tokenSymbol || "-",
-        createdAt: item?.createdAt ? item.createdAt.split("T")[0] : "",
-        updatedAt: item?.updatedAt ? item.updatedAt.split("T")[0] : "",
-        status: item?.status || "-",
-        transType: item?.transType || "-",
-      }));
+      const trans = formatTransactions(trandata, page, PAGE_SIZE);
 
       setTransactionData(trans);
       setTotalUsers(res.data.total || 0);
@@ -213,25 +262,7 @@ const handleDelete = async (userId) => {
 
         const users = res.data.result || [];
         setTotalUsers(res.data.total);
-
-        // const transres = res.data.result.map((item) => ({
-        const transres = users.map((item, index) => ({
-          key: item?._id,
-            sno: (page - 1) * PAGE_SIZE + index + 1,
-          transactionHash: item?.transactionHash || "-",
-          firstname: item?.firstname || "-",
-          networkName: item?.networkName || "-",
-          // here
-          amount: item?.amount
-            ? `${Number(item.amount).toFixed(4)} ${item?.tokenSymbol || ""}`
-            : "-",
-          from: item?.from || "-",
-          to: item?.to || "-",
-          tokenSymbol: item?.tokenSymbol || "-",
-          createdAt: item?.createdAt ? item?.createdAt.split("T")[0] : "",
-          updatedAt:item?.updatedAt ? item?.updatedAt.split("T")[0] : "", 
-          // status: item?.status          
-        }))
+        const transres = formatTransactions(users, page, PAGE_SIZE);
         console.log(transres, "dsggffgf");
 
         setAlltrandata(transres);
@@ -257,6 +288,45 @@ const handleDelete = async (userId) => {
         setLoading(false);
       }, remaining > 0 ? remaining : 0);
     }
+  };
+
+  const getTransactionsForExport = async () => {
+    if (id) {
+      const res = await axios.post(
+        `${constant.backend_url}/admin/getAllUsersWalletTransactions?page=1&limit=${totalUsers || 100000}`,
+        {
+          user_id: id,
+          search: filters.search,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+          },
+        }
+      );
+
+      if (!res.data?.success) return [];
+      return formatTransactions(res.data.result || [], 1, totalUsers || 100000);
+    }
+
+    const cleanFilters = Object.fromEntries(
+      Object.entries(filters).filter(([_, v]) => v !== "" && v !== undefined)
+    );
+    const res = await axios.get(`${constant.backend_url}/admin/get-all-transactions`, {
+      params: {
+        ...cleanFilters,
+        page: 1,
+        limit: totalUsers || 100000,
+      },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+      },
+    });
+
+    if (!res.data?.success) return [];
+    return formatTransactions(res.data.result || [], 1, totalUsers || 100000);
   };
 
   // useEffect(() => {
@@ -317,7 +387,7 @@ const handleDelete = async (userId) => {
       }
     },
     { title: "Token Symbol", dataIndex: "tokenSymbol" },
-    { title: "Created At", dataIndex: "createdAt", key: "createdAt" },
+    { title: "Date & Time", dataIndex: "dateTimeDisplay", key: "dateTimeDisplay" },
     // { title: "Updated At", dataIndex: "createdAt", key: "updatedAt" },
     // { title: "Status", dataIndex: "status" },
   ];
@@ -413,6 +483,7 @@ const handleDelete = async (userId) => {
           showExportButton={true}
           exportFilename="transaction_history"
           exportColumns={columns}
+          getExportData={getTransactionsForExport}
           onSearch={(value) => debouncedSearch(value)}
           searchTooltip="Search By Hash, Address, Token Symbol, Amount"
           showNetworkFilter={true}
@@ -433,7 +504,12 @@ const handleDelete = async (userId) => {
 
       {id && (
         <div style={{ display: "flex", justifyContent: "flex-end", padding: "0 10px", marginBottom: 12 }}>
-          <ExportButton filename={`user_transactions_${id}`} columns={columns} data={transactionData} />
+          <ExportButton
+            filename={`user_transactions_${id}`}
+            columns={columns}
+            data={transactionData}
+            getExportData={getTransactionsForExport}
+          />
         </div>
       )}
 
@@ -588,6 +664,11 @@ const handleDelete = async (userId) => {
             <div className="flex items-center justify-between bg-[#1f252a] p-3 rounded">
               <span className="text-gray-400">Token Symbol</span>
               <span className="text-white">{selectedTrans?.tokenSymbol}</span>
+            </div>
+
+            <div className="flex items-center justify-between bg-[#1f252a] p-3 rounded">
+              <span className="text-gray-400">Date & Time</span>
+              <span className="text-white">{selectedTrans?.dateTimeDisplay}</span>
             </div>
 
           </div>

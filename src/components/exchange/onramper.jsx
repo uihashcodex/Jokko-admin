@@ -25,13 +25,13 @@ const OnramperHistory = () => {
 
 
 
-      const [deletemodal, setDeletemodal] = useState(false);
-    const [deleteRecord, setDeleteRecord] = useState(null);
+  const [deletemodal, setDeletemodal] = useState(false);
+  const [deleteRecord, setDeleteRecord] = useState(null);
 
   const [filters, setFilters] = useState({
     search: "",
     status: "",
-    type: "",
+    type: "buy",
     onramp: "", // provider filter
     fromDate: "",
     toDate: "",
@@ -65,42 +65,42 @@ const OnramperHistory = () => {
 
 
 
-        const handleDelete = async (userId) => {
-        try {
-            setLoading(true);
+  const handleDelete = async (userId) => {
+    try {
+      setLoading(true);
 
-            const res = await axios.post(
-                `${constant.backend_url}/admin/delete-provider`,
-                {
-                    userId
-                },
-                {
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
-                    },
-                }
-            );
-
-            if (res.data?.success) {
-                message.success("Wallet Deleted successfully");
-                setDeletemodal(false);
-                fetchTransactions();
-            } else {
-                message.warning(res.data.message || "Delete failed");
-            }
-
-        } catch (error) {
-            console.log(error);
-            message.error("Something went wrong");
-        } finally {
-            setLoading(false);
+      const res = await axios.post(
+        `${constant.backend_url}/admin/delete-provider`,
+        {
+          userId
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+          },
         }
-    };
+      );
+
+      if (res.data?.success) {
+        message.success("Wallet Deleted successfully");
+        setDeletemodal(false);
+        fetchTransactions();
+      } else {
+        message.warning(res.data.message || "Delete failed");
+      }
+
+    } catch (error) {
+      console.log(error);
+      message.error("Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  };
 
 
 
 
-  const buildPayload = () => {
+  const buildPayload = (overrides = {}) => {
     const cleanFilters = Object.fromEntries(
       Object.entries(filters).filter(
         ([, value]) => value !== "" && value !== undefined && value !== null
@@ -112,6 +112,7 @@ const OnramperHistory = () => {
       page,
       limit: 10,
       ...(id ? { user_id: id } : {}),
+      ...overrides,
     };
   };
 
@@ -147,10 +148,10 @@ const OnramperHistory = () => {
         res.data?.result ||
         [];
 
-   const mapped = mapOnramperData(docs).map((item, index) => ({
-  ...item,
-  sno: (page - 1) * 10 + index + 1,
-}));
+      const mapped = mapOnramperData(docs).map((item, index) => ({
+        ...item,
+        sno: (page - 1) * 10 + index + 1,
+      }));
 
       if (id) {
         setTransactionData(mapped);
@@ -160,10 +161,10 @@ const OnramperHistory = () => {
 
       setTotalUsers(
         res.data?.data?.totalDocs ||
-          res.data?.result?.totalDocs ||
-          res.data?.total ||
-          docs.length ||
-          0
+        res.data?.result?.totalDocs ||
+        res.data?.total ||
+        docs.length ||
+        0
       );
     } catch (error) {
       console.error("Failed to fetch onramper transactions:", error);
@@ -177,6 +178,35 @@ const OnramperHistory = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const getProviderTransactionsForExport = async () => {
+    const res = await axios.post(
+      `${constant.backend_url}/admin/get-all-onramper-trans`,
+      buildPayload({
+        page: 1,
+        limit: totalUsers || 100000,
+      }),
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+        },
+      }
+    );
+
+    if (!res.data?.success) return [];
+
+    const docs =
+      res.data?.data?.docs ||
+      res.data?.result?.docs ||
+      res.data?.result ||
+      [];
+
+    return mapOnramperData(docs).map((item, index) => ({
+      ...item,
+      sno: index + 1,
+    }));
   };
 
   useEffect(() => {
@@ -261,9 +291,10 @@ const OnramperHistory = () => {
         showPrivateFilter={false}
         showNetworkFilter={false}
         showStatusFilter={false}
-        showExportButton={true}
+        showExportButton={!id}
         exportFilename="provider_history"
         exportColumns={columns}
+        getExportData={getProviderTransactionsForExport}
         showDateFilter={true}
         showonrampFilter={true}
         onSearch={(value) => debouncedSearch(value)}
@@ -281,7 +312,12 @@ const OnramperHistory = () => {
 
       {id && (
         <div style={{ display: "flex", justifyContent: "flex-end", padding: "0 10px", marginBottom: 12 }}>
-          <ExportButton filename={`provider_details_${id}`} columns={columns} data={filteredData} />
+          <ExportButton
+            filename={`provider_details_${id}`}
+            columns={columns}
+            data={filteredData}
+            getExportData={getProviderTransactionsForExport}
+          />
         </div>
       )}
 
@@ -300,10 +336,10 @@ const OnramperHistory = () => {
           setModalOpen(true);
         }}
 
-                    onDelete={(record) => {
-        setDeleteRecord(record);
-        setDeletemodal(true);
-    }}
+        onDelete={(record) => {
+          setDeleteRecord(record);
+          setDeletemodal(true);
+        }}
       />
 
       <ReusableModal
@@ -411,7 +447,7 @@ const OnramperHistory = () => {
               <span className="text-gray-400">Created At</span>
               <span className="text-white">{selectedTrans?.createdAt}</span>
             </div>
-{/* 
+            {/* 
             <div className="flex items-center justify-between bg-[#1f252a] p-3 rounded">
               <span className="text-gray-400">Updated At</span>
               <span className="text-white">{selectedTrans?.updatedAt}</span>
@@ -422,42 +458,42 @@ const OnramperHistory = () => {
 
 
 
-            <ReusableModal
-  open={deletemodal}
-  onCancel={() => setDeletemodal(false)}
-  title="Delete BuySell Transcations?"
-  description={"Are you sure you want to delete this BuySell Transcations?"}
-  showFooter={false}
-  extraContent={
-    <div className="text-center">
+      <ReusableModal
+        open={deletemodal}
+        onCancel={() => setDeletemodal(false)}
+        title="Delete BuySell Transcations?"
+        description={"Are you sure you want to delete this BuySell Transcations?"}
+        showFooter={false}
+        extraContent={
+          <div className="text-center">
 
-      <p className="text-gray-300 text-base">
-        Are you sure you want to delete this BuySell Transcations??
-      </p>
+            <p className="text-gray-300 text-base">
+              Are you sure you want to delete this BuySell Transcations??
+            </p>
 
-      <div className="flex justify-between gap-4 mt-6">
+            <div className="flex justify-between gap-4 mt-6">
 
-        {/* ❌ NO BUTTON FIX */}
-        <button
-          className="px-6 py-2 rounded primaty-bg text-black"
-          onClick={() => setDeletemodal(false)}
-        >
-          No
-        </button>
+              {/* ❌ NO BUTTON FIX */}
+              <button
+                className="px-6 py-2 rounded primaty-bg text-black"
+                onClick={() => setDeletemodal(false)}
+              >
+                No
+              </button>
 
-        {/* ❌ YES BUTTON FIX */}
-        <button
-          className="px-6 py-2 rounded bg-red-600 text-white"
-          onClick={() => handleDelete(deleteRecord?.key)}
-        >
-          Yes
-        </button>
+              {/* ❌ YES BUTTON FIX */}
+              <button
+                className="px-6 py-2 rounded bg-red-600 text-white"
+                onClick={() => handleDelete(deleteRecord?.key)}
+              >
+                Yes
+              </button>
 
-      </div>
+            </div>
 
-    </div>
-  }
-/>
+          </div>
+        }
+      />
     </>
   );
 };

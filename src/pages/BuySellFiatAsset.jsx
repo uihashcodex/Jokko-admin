@@ -44,6 +44,32 @@ const BuySellFiatAsset = () => {
     []
   );
 
+  const formatFiatAssets = (docs = [], pageNumber = 1, pageLimit = PAGE_SIZE) =>
+    docs.map((item, index) => ({
+      id: item?._id || item?.id || index,
+      sno: (pageNumber - 1) * pageLimit + index + 1,
+      tokenName:
+        item?.tokenName ||
+        item?.name ||
+        item?.fiatName ||
+        item?.currencyName ||
+        "-",
+      tokenSymbol:
+        item?.tokenSymbol ||
+        item?.symbol ||
+        item?.fiatSymbol ||
+        item?.currencySymbol ||
+        "-",
+      code: item?.code || item?.currencyCode || item?.fiatCode || "-",
+      type: item?.type || "-",
+      verifyStatus:
+        typeof item?.verifyStatus === "boolean"
+          ? item.verifyStatus
+            ? "active"
+            : "inactive"
+          : item?.verifyStatus || item?.status || "-",
+    }));
+
   const updateFilter = (key, value) => {
     setPage(1);
     setFilters((prev) => ({
@@ -90,30 +116,7 @@ const BuySellFiatAsset = () => {
           response.data?.result?.total ||
           docs.length;
 
-        const formattedData = docs.map((item, index) => ({
-          id: item?._id || item?.id || index,
-          sno: (page - 1) * PAGE_SIZE + index + 1,
-          tokenName:
-            item?.tokenName ||
-            item?.name ||
-            item?.fiatName ||
-            item?.currencyName ||
-            "-",
-          tokenSymbol:
-            item?.tokenSymbol ||
-            item?.symbol ||
-            item?.fiatSymbol ||
-            item?.currencySymbol ||
-            "-",
-          code: item?.code || item?.currencyCode || item?.fiatCode || "-",
-          type: item?.type || "-",
-          verifyStatus:
-            typeof item?.verifyStatus === "boolean"
-              ? item.verifyStatus
-                ? "active"
-                : "inactive"
-              : item?.verifyStatus || item?.status || "-",
-        }));
+        const formattedData = formatFiatAssets(docs, page, PAGE_SIZE);
 
         setOriginalData(formattedData);
         setTotal(totalCount);
@@ -137,6 +140,41 @@ const BuySellFiatAsset = () => {
         setLoading(false);
       }, Math.max(minTime - elapsed, 0));
     }
+  };
+
+  const getFiatAssetsForExport = async () => {
+    const cleanFilters = Object.fromEntries(
+      Object.entries(filters).filter(([_, v]) => v !== "")
+    );
+    const totalPages = Math.max(1, Math.ceil((total || 0) / PAGE_SIZE));
+    const rows = [];
+
+    for (let pageNumber = 1; pageNumber <= totalPages; pageNumber += 1) {
+      const response = await axios.post(
+        `${constant.backend_url}/admin/buysell-fiatAsset`,
+        {
+          ...cleanFilters,
+          page: pageNumber,
+          limit: PAGE_SIZE,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+          },
+          validateStatus: () => true,
+        }
+      );
+
+      if (!response.data?.success) break;
+      const docs = Array.isArray(response.data?.result)
+        ? response.data.result
+        : response.data?.result?.docs || [];
+
+      rows.push(...formatFiatAssets(docs, pageNumber, PAGE_SIZE));
+    }
+
+    return rows;
   };
 
   useEffect(() => {
@@ -262,6 +300,7 @@ const BuySellFiatAsset = () => {
           showExportButton={true}
           exportFilename="buysell_fiat_assets"
           exportColumns={columns}
+          getExportData={getFiatAssetsForExport}
           networkOptions={typeOptions}
           onSearch={(value) => debouncedSearch(value)}
 onVerifyChange={(value) =>

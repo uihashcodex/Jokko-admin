@@ -39,6 +39,16 @@ const CoinRabbitCrypto = () => {
     { label: "Sell", value: "Sell" },
   ], []);
 
+  const getFilteredExportData = () => {
+    const filtered = allData.filter((item) => {
+      const matchesStatus = !filters.verifyStatus || item.verifyStatus === filters.verifyStatus;
+      const matchesType = !filters.type || item.type === filters.type;
+      return matchesStatus && matchesType;
+    });
+
+    return filtered.map((item, index) => ({ ...item, sno: index + 1 }));
+  };
+
   const updateFilter = (key, value) => {
     setFilters((prev) => ({ ...prev, [key]: value || "" }));
     setPage(1);
@@ -166,6 +176,7 @@ const CoinRabbitCrypto = () => {
         showExportButton={true}
         exportFilename="coinrabbit_crypto"
         exportColumns={columns}
+        getExportData={getFilteredExportData}
         networkOptions={typeOptions}
         onSearch={(value) => updateFilter("search", value)}
         onVerifyChange={(value) => updateFilter("verifyStatus", value)}

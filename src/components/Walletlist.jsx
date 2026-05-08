@@ -92,6 +92,20 @@ const Walletlist = () => {
 
   const PAGE_SIZE = 10;
 
+  const formatWallets = (wallets = [], pageNumber = 1, pageLimit = PAGE_SIZE) =>
+    wallets.map((item, index) => ({
+      key: item?._id || item?.id,
+      sno: (pageNumber - 1) * pageLimit + index + 1,
+      walletname: item?.walletname || item?.walletName,
+      firstname: item?.firstname || "-",
+      btcaddress: item?.btcAddress,
+      evmaddress: item?.evmAddress,
+      solanaaddress: item?.solAddress,
+      xrpaddress: item?.xrpAddress,
+      trxAddress: item?.trxAddress,
+      status: item?.walletStatus ? "Active" : "Inactive",
+    }));
+
   const getAllWallets = async (id, item,index) => {
 
     console.log("FididD", id)
@@ -123,19 +137,7 @@ const Walletlist = () => {
           const walletss = res.data.result || [];
         setTotalUsers(res.data.total);
 
-        // const walletres = res.data.result.map((item) => ({
-  const walletres = walletss.map((item, index) => ({
-  key: item?._id || item?.id,
-  sno: (page - 1) * PAGE_SIZE + index + 1,
-  walletname: item?.walletname || item?.walletName,
-  firstname: item?.firstname || "-",
-  btcaddress: item?.btcAddress,
-  evmaddress: item?.evmAddress,
-  solanaaddress: item?.solAddress,
-  xrpaddress: item?.xrpAddress,
-  trxAddress: item?.trxAddress,
-  status: item?.walletStatus ? "Active" : "Inactive",
-}));
+        const walletres = formatWallets(walletss, page, PAGE_SIZE);
 
         setFilteredTableData(walletres);
         setTotal(res.data.total || 0);
@@ -151,6 +153,26 @@ const Walletlist = () => {
     } catch (error) {
       console.error(error);
     }
+  };
+
+  const getWalletsForExport = async () => {
+    const cleanFilters = Object.fromEntries(
+      Object.entries(filters).filter(([_, v]) => v !== "" && v !== undefined)
+    );
+    const res = await axios.get(`${constant.backend_url}/users/get-all-wallets`, {
+      params: {
+        ...cleanFilters,
+        page: 1,
+        limit: total || totalUsers || 100000,
+        userId: id,
+      },
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+      },
+    });
+
+    if (!res.data?.success) return [];
+    return formatWallets(res.data.result || [], 1, total || totalUsers || 100000);
   };
   
 
@@ -410,6 +432,7 @@ const Walletlist = () => {
           showExportButton={true}
           exportFilename="wallet_details"
           exportColumns={columns}
+          getExportData={getWalletsForExport}
           showDateFilter={true}
           onDateChange={(dates) => {
             setPage(1);
@@ -428,7 +451,12 @@ const Walletlist = () => {
 
       {id && (
         <div style={{ display: "flex", justifyContent: "flex-end", padding: "0 10px", marginBottom: 12 }}>
-          <ExportButton filename={`user_wallets_${id}`} columns={columns} data={tableData} />
+          <ExportButton
+            filename={`user_wallets_${id}`}
+            columns={columns}
+            data={tableData}
+            getExportData={getWalletsForExport}
+          />
         </div>
       )}
 

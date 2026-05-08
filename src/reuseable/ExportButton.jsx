@@ -34,6 +34,7 @@ const ExportButton = ({
   filename = "export",
   columns = [],
   data = [],
+  getExportData,
   disabled = false,
   buttonText = "Export",
 }) => {
@@ -51,7 +52,12 @@ const ExportButton = ({
   const handleExport = async () => {
     try {
       if (disabled) return;
-      if (!Array.isArray(data) || data.length === 0) {
+      setDownloading(true);
+
+      const exportData =
+        typeof getExportData === "function" ? await getExportData() : data;
+
+      if (!Array.isArray(exportData) || exportData.length === 0) {
         message.warning("No data to export");
         return;
       }
@@ -59,11 +65,8 @@ const ExportButton = ({
         message.warning("No exportable columns found");
         return;
       }
-
-      setDownloading(true);
-
       const headers = exportableColumns.map((c) => escapeCsv(c.header)).join(",");
-      const rows = data.map((row) => {
+      const rows = exportData.map((row) => {
         return exportableColumns
           .map((c) => {
             const idx = c.dataIndex;
@@ -109,4 +112,3 @@ const ExportButton = ({
 };
 
 export default ExportButton;
-

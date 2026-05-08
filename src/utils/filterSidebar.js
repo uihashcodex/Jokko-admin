@@ -19,6 +19,7 @@ const MODULE_MAP = {
   "/staffmanagement": "Staff Management",
   "/broadcast": "Broadcast",
   "/onramper-history": "Providers",
+  "/oframper-history": "Providers",
   "/coin-rabbbit-history": "CoinRabbit History",
   "/buy-sell-fiat-asset": "Fiat Assets",
   "/buy-sell-crypto": "Buy/Sell Crypto",

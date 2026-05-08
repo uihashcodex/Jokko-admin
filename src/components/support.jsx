@@ -19,6 +19,7 @@ import {
   isSocketConnected,
 } from "../services/supportService";
 import ReusableModal from "../reuseable/ReusableModal";
+import ExportButton from "../reuseable/ExportButton";
 
 /** Socket sends `{ success, message: subDoc }` where subDoc has string field `message` (body text). */
 function normalizeChatLine(raw) {
@@ -233,6 +234,35 @@ const SupportPage = () => {
         } finally {
             setLoading(false);
         }
+    };
+
+    const supportExportColumns = [
+        { title: "User Name", dataIndex: "name" },
+        { title: "Subject", dataIndex: "subject" },
+        { title: "Status", dataIndex: "status" },
+        { title: "Created At", dataIndex: "time" },
+    ];
+
+    const getSupportTicketsForExport = async () => {
+        const response = await getAllTickets(status);
+        if (!response.success) return [];
+
+        const raw = response.result || [];
+        const byId = new Map();
+        raw.forEach((ticket) => {
+            if (ticket?._id && !byId.has(String(ticket._id))) {
+                byId.set(String(ticket._id), ticket);
+            }
+        });
+
+        return Array.from(byId.values()).map((ticket) => ({
+            _id: ticket._id,
+            id: ticket._id,
+            name: ticket.userId?.firstname || "Unknown",
+            subject: ticket.subject,
+            status: String(ticket.status || "open").toLowerCase(),
+            time: ticket.createdAt ? new Date(ticket.createdAt).toLocaleDateString() : "-",
+        }));
     };
 
     // Fetch messages for selected chat
@@ -725,22 +755,30 @@ const SupportPage = () => {
                         title="Chats"
                         className="support-list-card"
                         extra={
-                            <Segmented
-                                options={[
-                                    { label: "Opened", value: "open" },
-                                    { label: "Closed", value: "closed" }
-                                ]}
-                                value={status}
-                                onChange={setStatus}
-                                style={{
-                                    background: "#15202b",
-                                    border:"1px solid #C9F07B",
-                                    padding:"5px 12px",
-                                    borderRadius: 8,
-                                    color:"#fff"
-                                }}
-                                className="support-segment"
-                            />
+                            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                                <Segmented
+                                    options={[
+                                        { label: "Opened", value: "open" },
+                                        { label: "Closed", value: "closed" }
+                                    ]}
+                                    value={status}
+                                    onChange={setStatus}
+                                    style={{
+                                        background: "#15202b",
+                                        border:"1px solid #C9F07B",
+                                        padding:"5px 12px",
+                                        borderRadius: 8,
+                                        color:"#fff"
+                                    }}
+                                    className="support-segment"
+                                />
+                                <ExportButton
+                                    filename={`support_${status}_tickets`}
+                                    columns={supportExportColumns}
+                                    data={chatList}
+                                    getExportData={getSupportTicketsForExport}
+                                />
+                            </div>
                         }
                     >
 

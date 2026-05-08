@@ -38,6 +38,16 @@ const BuySellCrypto = () => {
     Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
   };
 
+  const formatAssets = (docs = [], pageNumber = 1, pageLimit = PAGE_SIZE) =>
+    docs.map((item, index) => ({
+      id: item._id,
+      sno: (pageNumber - 1) * pageLimit + index + 1,
+      tokenName: item.tokenName || item.name || "-",
+      tokenSymbol: item.tokenSymbol || item.symbol || "-",
+      code: item.code || item.tokenSymbol || "-",
+      verifyStatus: item.verifyStatus === true ? "active" : "inactive",
+    }));
+
 
 
 
@@ -72,15 +82,7 @@ const BuySellCrypto = () => {
 
       if (data.success) {
         const docs = data.result || [];
-
-        const formatted = docs.map((item, index) => ({
-          id: item._id,
-          sno: (page - 1) * PAGE_SIZE + index + 1,
-          tokenName: item.tokenName || item.name || "-",
-          tokenSymbol: item.tokenSymbol || item.symbol || "-",
-          code: item.code || item.tokenSymbol || "-",
-          verifyStatus: item.verifyStatus === true ? "active" : "inactive",
-        }));
+        const formatted = formatAssets(docs, page, PAGE_SIZE);
 
         setTableData(formatted);
         setTotal(data.total || 0);
@@ -93,6 +95,34 @@ const BuySellCrypto = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const getAssetsForExport = async () => {
+    const totalPages = Math.max(1, Math.ceil((total || 0) / PAGE_SIZE));
+    const rows = [];
+
+    for (let pageNumber = 1; pageNumber <= totalPages; pageNumber += 1) {
+      const payload = {
+        page: pageNumber,
+        limit: PAGE_SIZE,
+        search: filters.search,
+      };
+
+      if (filters.verifyStatus) {
+        payload.status = filters.verifyStatus === "active" ? "true" : "false";
+      }
+
+      const { data } = await axios.post(
+        `${constant.backend_url}/admin/buysell-assets`,
+        payload,
+        { headers: authHeader }
+      );
+
+      if (!data.success) break;
+      rows.push(...formatAssets(data.result || [], pageNumber, PAGE_SIZE));
+    }
+
+    return rows;
   };
 
   useEffect(() => {
@@ -179,6 +209,7 @@ const BuySellCrypto = () => {
         showExportButton={true}
         exportFilename="buysell_crypto"
         exportColumns={columns}
+        getExportData={getAssetsForExport}
         onSearch={(value) => updateFilter("search", value)}
         onVerifyChange={(value) => updateFilter("verifyStatus", value)}
         searchTooltip="Search by Token Name, Token Symbol, Code"

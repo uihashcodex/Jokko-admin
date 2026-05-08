@@ -203,6 +203,18 @@ useEffect(() => {
     }
   };
 
+  const formatEmailContent = (docs = []) =>
+    docs.map((item) => ({
+      id: item._id,
+      event_key: item.event_key,
+      subject: item.subject,
+      body: item.body,
+      design: item.template_name?._id || item.template_name,
+      template_name: item.template_name?.template_name || "Unknown Template",
+      is_active: item.is_active,
+      status: item.is_active ? "Active" : "Inactive",
+    }));
+
   const getEmailTemplates = async () => {
     const startTime = Date.now();
 
@@ -232,17 +244,7 @@ useEffect(() => {
       if (response.data?.success) {
         const docs = response.data.result || [];
 
- // TABLE DATA FORMAT
-const formattedData = docs.map((item) => ({
-  id: item._id,
-  event_key: item.event_key,
-  subject: item.subject,
-  body: item.body,
-  design: item.template_name?._id || item.template_name, 
-  template_name: item.template_name?.template_name || "Unknown Template",
-  is_active: item.is_active,
-  status: item.is_active ? "Active" : "Inactive",
-}));
+const formattedData = formatEmailContent(docs);
 
         setOriginalData(formattedData);
         setTotal(response.data.total || formattedData.length);
@@ -267,6 +269,28 @@ const formattedData = docs.map((item) => ({
   useEffect(() => {
     getEmailTemplates();
   }, [search, statusFilter, page]);
+
+  const getEmailContentForExport = async () => {
+    const params = {
+      search,
+      page: 1,
+      limit: total || 100000,
+    };
+
+    if (statusFilter !== "") {
+      params.is_active = statusFilter;
+    }
+
+    const response = await axios.get(`${constant.backend_url}/admin/get-emailcontent`, {
+      params,
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+      },
+    });
+
+    if (!response.data?.success) return [];
+    return formatEmailContent(response.data.result || []);
+  };
 
   const handleUpdate = (record) => {
     setSelectedRow(record);
@@ -462,6 +486,7 @@ const response = await axios.post(
         showExportButton={true}
         exportFilename="email_content"
         exportColumns={columns}
+        getExportData={getEmailContentForExport}
         onSearch={(value) => debouncedSearch(value)}
         onVerifyChange={handleStatusFilter}
         searchTooltip="Search by event key, subject, template name"

@@ -74,6 +74,22 @@ sno: (page - 1) * PAGE_SIZE + index + 1,          ...staff,
     }
   };
 
+  const getStaffForExport = async () => {
+    const response = await getStaffList({
+      page: 1,
+      limit: total || 100000,
+      search: filters.search,
+      status: filters.status,
+    });
+
+    if (!response?.success || !response?.result) return [];
+    return response.result.map((staff, index) => ({
+      key: staff?._id,
+      sno: index + 1,
+      ...staff,
+    }));
+  };
+
   const fetchRoleOptions = async () => {
     try {
       const response = await axios.get(
@@ -357,6 +373,7 @@ sno: (page - 1) * PAGE_SIZE + index + 1,          ...staff,
           showExportButton={true}
           exportFilename="staff"
           exportColumns={columns}
+          getExportData={getStaffForExport}
           onCreate={() => {
             setEditing(null);
             setInitialValues({});
