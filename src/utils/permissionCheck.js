@@ -14,6 +14,7 @@ export const PERMISSION_ROUTE_MAP = {
   Profile: "/profile",
   "Role Management": "/rolemanagement",
   "Staff Management": "/staffmanagement",
+  Env: "/env",
   Broadcast: "/broadcast",
   Providers: "/onramper-history",
   "CoinRabbit History": "/coin-rabbbit-history",

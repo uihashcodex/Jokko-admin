@@ -3,13 +3,12 @@ import {
   Button, Form, Input, Upload, Modal, message, ConfigProvider, Image, Tag
 } from "antd";
 import {
-  NotificationOutlined, PlusOutlined, EditOutlined, DeleteOutlined, UploadOutlined
+  NotificationOutlined, EditOutlined, DeleteOutlined, UploadOutlined
 } from "@ant-design/icons";
 import axios from "axios";
 import { constant } from "../const";
 import TableHeader from "../reuseable/TableHeader";
 import ReusableTable from "../reuseable/ReusableTable";
-import ReusableModal from "../reuseable/ReusableModal";
 import theme from "../config/theme";
 
 const Broadcast = () => {
@@ -37,6 +36,9 @@ const Broadcast = () => {
 
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
+  const [filters, setFilters] = useState({
+    status: "",
+  });
 
 
 
@@ -46,19 +48,33 @@ const Broadcast = () => {
 
   useEffect(() => {
     fetchBroadcasts();
-  }, [page]);
+  }, [page, filters.status]);
+
+  const updateFilter = (key, value) => {
+    setFilters((prev) => ({
+      ...prev,
+      [key]: value || "",
+    }));
+    setPage(1);
+  };
 
   // ── fetch ─────────────────────────────────────────────────────────────────
 const fetchBroadcasts = async () => {
   setTableLoading(true);
   try {
+    const params = {
+      page,
+      limit:PAGE_SIZE,
+    };
+
+    if (filters.status) {
+      params.status = filters.status === "active" ? "true" : "false";
+    }
+
     const { data } = await axios.get(
       `${constant.backend_url}/admin/get-broadcast`,
       {
-        params: {
-          page,
-          limit:PAGE_SIZE,
-        },
+        params,
         headers: authHeader,
       }
     );
@@ -276,11 +292,15 @@ const columns = [
   {
     title: "Status",
     dataIndex: "verifyStatus",
-    render: (v) => (
-      <Tag color={v ? "green" : "red"}>
-        {v ? "Active" : "In Active"}
+    render: (v) => {
+      const isActive = v === true || v === "active" || v === "true";
+
+      return (
+      <Tag color={isActive ? "green" : "red"}>
+        {isActive ? "Active" : "Inactive"}
       </Tag>
-    ),
+      );
+    },
   },
   {
     title: "Created At",
@@ -404,9 +424,10 @@ const clearPreview = (setFile, preview, setPreview) => {
       </div>
 
       <TableHeader
-        showStatusFilter={false}
+        showStatusFilter={true}
         showSearch={false}
         showCreateButton
+        onVerifyChange={(value) => updateFilter("status", value)}
         onCreate={() => setCreateOpen(true)}
       />
 <ReusableTable

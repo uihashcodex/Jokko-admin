@@ -1,22 +1,33 @@
 import { useState } from "react";
-import { Button, Form, Input, message } from "antd";
-import { SendOutlined, BellOutlined } from "@ant-design/icons";
+import { Button, Form, Input, message, Tag } from "antd";
+import { SendOutlined, BellOutlined, UserAddOutlined } from "@ant-design/icons";
 import axios from "axios";
 import { constant } from "../const";
+import UserPickerModal from "../reuseable/UserPickerModal";
 
 const { TextArea } = Input;
 
 const PushNotification = () => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
+  const [userPickerOpen, setUserPickerOpen] = useState(false);
+  const [selectedUsers, setSelectedUsers] = useState([]);
 
   const handleSend = async (values) => {
     setLoading(true);
     try {
+      const selectedEmails = selectedUsers
+        .map((user) => user.email)
+        .filter((email) => email && email !== "-");
+
       // TODO: wire up to your API endpoint
       const { data } = await axios.post(
         `${constant.backend_url}/admin/send-batch`,
-        values,
+        {
+          ...values,
+          user_ids: selectedUsers.map((user) => user.id),
+          emails: selectedEmails,
+        },
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
@@ -27,6 +38,7 @@ const PushNotification = () => {
       if (data.success === true) {
         message.success(data.message);
         form.resetFields();
+        setSelectedUsers([]);
       } else {
         message.error(data.message);
       }
@@ -58,7 +70,7 @@ const PushNotification = () => {
           <div>
             <p style={styles.cardTitle}>Compose Notification</p>
             <p style={styles.cardSubtitle}>
-              Fill in the title and content, then click Send.
+              Select users, fill in the title and content, then click Send.
             </p>
           </div>
         </div>
@@ -72,6 +84,36 @@ const PushNotification = () => {
           onFinish={handleSend}
           style={styles.form}
         >
+          <div style={styles.recipientRow}>
+            <Button
+              htmlType="button"
+              icon={<UserAddOutlined />}
+              onClick={() => setUserPickerOpen(true)}
+              style={styles.selectUsersBtn}
+            >
+              Select Users
+            </Button>
+
+            <span style={styles.recipientCount}>
+              {selectedUsers.length
+                ? `${selectedUsers.length} selected`
+                : "No users selected"}
+            </span>
+          </div>
+
+          {selectedUsers.length > 0 && (
+            <div style={styles.selectedUserPreview}>
+              {selectedUsers.slice(0, 4).map((user) => (
+                <Tag key={user.id} color="green" style={{ marginBottom: 6 }}>
+                  {user.name}
+                </Tag>
+              ))}
+              {selectedUsers.length > 4 && (
+                <Tag color="blue">+{selectedUsers.length - 4} more</Tag>
+              )}
+            </div>
+          )}
+
           {/* Title Field */}
           <Form.Item
             label={<span style={styles.label}>Title</span>}
@@ -127,6 +169,18 @@ const PushNotification = () => {
           </Form.Item>
         </Form>
       </div>
+
+      <UserPickerModal
+        open={userPickerOpen}
+        title="Select Users"
+        subtitle="Push notification recipients"
+        submitText="Use Selected Users"
+        onCancel={() => setUserPickerOpen(false)}
+        onSubmit={({ users }) => {
+          setSelectedUsers(users);
+          setUserPickerOpen(false);
+        }}
+      />
 
       {/* Scoped styles */}
       <style>{`
@@ -211,6 +265,31 @@ const styles = {
   },
   form: {
     marginTop: 0,
+  },
+  recipientRow: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    marginBottom: 14,
+  },
+  selectUsersBtn: {
+    background: "rgba(24,144,255,0.12)",
+    border: "1px solid rgba(24,144,255,0.4)",
+    color: "#40a9ff",
+    borderRadius: 8,
+    height: 40,
+    fontWeight: 650,
+  },
+  recipientCount: {
+    color: "rgba(255,255,255,0.55)",
+    fontSize: 13,
+  },
+  selectedUserPreview: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: 6,
+    marginBottom: 16,
   },
   label: {
     color: "rgba(255,255,255,0.85)",
