@@ -149,6 +149,10 @@
             {
               "key": "/staffmanagement",
               "label": "Staff Management"
+            },
+            {
+              "key": "/env",
+              "label": "Env"
             }
           ]
         },

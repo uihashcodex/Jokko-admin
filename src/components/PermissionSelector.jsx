@@ -12,6 +12,7 @@ const MODULES = [
   "Email Campaign",
   "Support",
   // "Role Management",
+  "Env",
   "Broadcast",
   // "Staff Management",
   "Providers",

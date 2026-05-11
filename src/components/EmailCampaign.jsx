@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { Button, Form, Select, Tag, Modal, message, ConfigProvider, Input, Spin } from "antd";
-import { RocketOutlined, EditOutlined, UserAddOutlined } from "@ant-design/icons";
+import { Button, Form, Select, Tag, Modal, message, ConfigProvider, Input } from "antd";
+import { RocketOutlined, EditOutlined, UserAddOutlined, PlusOutlined } from "@ant-design/icons";
 import axios from "axios";
 import { constant } from "../const";
 import TableHeader from "../reuseable/TableHeader";
 import ReusableTable from "../reuseable/ReusableTable";
+import UserPickerModal from "../reuseable/UserPickerModal";
 import theme from "../config/theme";
 import { capitalize } from "../utils/capitalize";
 
@@ -12,11 +13,6 @@ const TYPE_OPTIONS = [
   { label: "Professional", value: "professional" },
   { label: "Individual", value: "individual" },
 ];
-
-const sharedProps = {
-  spinning: true,
-  percent: 0,
-};
 
 const EmailCampaign = () => {
   const [createForm] = Form.useForm();
@@ -40,7 +36,7 @@ const PAGE_SIZE = 10;
 
   const [addUserOpen, setAddUserOpen] = useState(false);
   const [addUserLoading, setAddUserLoading] = useState(false);
-  const [addUserForm] = Form.useForm();
+  const [selectedCampaignId, setSelectedCampaignId] = useState(undefined);
 
   const [publishingId, setPublishingId] = useState(null);
 
@@ -178,27 +174,38 @@ const fetchEmailContents = async () => {
   };
 
   // ── add user ──────────────────────────────────────────────────────────────
-  const openAddUser = (record) => {
+  const openAddUser = (record = null) => {
     setSelectedRow(record);
+    setSelectedCampaignId(record?.id);
     setAddUserOpen(true);
   };
 
-  const handleAddUser = async () => {
+  const handleAddUser = async ({ userIds, emails }) => {
+    if (!selectedCampaignId) {
+      message.error("Please select a campaign.");
+      return;
+    }
+
     setAddUserLoading(true);
     try {
       const { data } = await axios.post(
         `${constant.backend_url}/brevo/batchJoinContactList`,
-        { campaign_id: selectedRow.id },
+        {
+          campaign_id: selectedCampaignId,
+          user_ids: userIds,
+          emails,
+        },
         { headers: authHeader }
       );
       if (data.success) {
-        message.success(data.message || "User added successfully!");
+        message.success(data.message || "Users added successfully!");
         setAddUserOpen(false);
+        setSelectedCampaignId(undefined);
       } else {
-        message.error(data.message || "Failed to add user.");
+        message.error(data.message || "Failed to add users.");
       }
     } catch {
-      message.error("Failed to add user.");
+      message.error("Failed to add users.");
     } finally {
       setAddUserLoading(false);
     }
@@ -264,7 +271,7 @@ const fetchEmailContents = async () => {
             onClick={() => openAddUser(record)}
             style={btnStyles.addUser}
           >
-            Add Existing Users
+            Select Users
           </Button>
           <Button
             size="small"
@@ -389,13 +396,28 @@ const fetchEmailContents = async () => {
         </div>
       </div>
 
-      {/* Table Header with Create button */}
       <TableHeader
         showStatusFilter={false}
         showSearch={false}
-        showCreateButton
-        onCreate={() => setCreateOpen(true)}
+        showCreateButton={false}
       />
+
+      <div style={pageActionStyles.wrap}>
+        <Button
+          icon={<UserAddOutlined />}
+          onClick={() => openAddUser()}
+          style={pageActionStyles.selectUsers}
+        >
+          Select Users
+        </Button>
+        <Button
+          icon={<PlusOutlined />}
+          onClick={() => setCreateOpen(true)}
+          style={pageActionStyles.create}
+        >
+          Create
+        </Button>
+      </div>
 
       {/* Campaigns Table */}
   <ReusableTable
@@ -430,75 +452,36 @@ const fetchEmailContents = async () => {
         loading={updateLoading}
       />
 
-      {/* ── Add User Modal ── */}
-      <ConfigProvider
-        theme={{ token: { colorBgElevated: theme.sidebarSettings.backgroundColor } }}
-      >
-        <Modal
-          open={addUserOpen}
-          onCancel={() => { setAddUserOpen(false); }}
-          footer={null}
-          centered
-          width="90%"
-          style={{ maxWidth: 440 }}
-          destroyOnHidden
-          className="custom-modal modal-style"
-          styles={{
-            content: { background: theme.sidebarSettings.backgroundColor, borderRadius: 12 },
-            body: { paddingTop: 20, paddingBottom: 20 },
-          }}
-        >
-          <div style={modalStyles.header}>
-            <div style={modalStyles.iconWrap}>
-              <UserAddOutlined style={{ fontSize: 18, color: "#c9f07b" }} />
-            </div>
-            <div>
-              <p style={modalStyles.title}>Add Users to Campaign</p>
-              {/* <p style={modalStyles.subtitle}>Enter the user email to add.</p> */}
-            </div>
-          </div>
-          <div style={modalStyles.divider} />
-
-          Are you sure to add existing users of type {capitalize(selectedRow?.type)} to this campaign?
-
-          {/* <Form form={addUserForm} layout="vertical" onFinish={handleAddUser}>
-            <Form.Item
-              label={<span style={modalStyles.label}>User Email</span>}
-              name="email"
-              rules={[
-                { required: true, message: "Please enter an email" },
-                { type: "email", message: "Enter a valid email" },
-              ]}
-            >
-              <input
-                placeholder="user@example.com"
-                className="ec-text-input"
-                onChange={(e) => addUserForm.setFieldValue("email", e.target.value)}
+      <UserPickerModal
+        open={addUserOpen}
+        title="Select Users"
+        subtitle={selectedRow?.campaign_name || "Choose campaign recipients"}
+        submitText="Add Users"
+        submitLoading={addUserLoading}
+        onCancel={() => {
+          setAddUserOpen(false);
+          setSelectedCampaignId(undefined);
+        }}
+        onSubmit={handleAddUser}
+        topContent={
+          !selectedRow && (
+            <>
+              <label style={modalStyles.label}>Campaign</label>
+              <Select
+                placeholder="Select campaign"
+                value={selectedCampaignId}
+                onChange={setSelectedCampaignId}
+                className="ec-select"
+                style={{ height: 44, width: "100%", marginTop: 8 }}
+                options={campaigns.map((campaign) => ({
+                  label: campaign.campaign_name,
+                  value: campaign.id,
+                }))}
               />
-            </Form.Item>
-
-            </Form> */}
-          <div style={modalStyles.btnRow}>
-            {!addUserLoading ? <>
-              <Button
-                onClick={() => { setAddUserOpen(false); }}
-                style={modalStyles.cancelBtn}
-                disabled={addUserLoading}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleAddUser}
-                loading={addUserLoading}
-                style={modalStyles.submitBtn}
-                className="ec-publish-btn"
-              >
-                Yes
-              </Button>
-            </> : <Spin {...sharedProps} styles={{ indicator: { color: "#C9F07B" } }} />}
-          </div>
-        </Modal>
-      </ConfigProvider>
+            </>
+          )
+        }
+      />
 
       {/* Scoped Styles */}
       <style>{`
@@ -640,6 +623,31 @@ const modalStyles = {
     borderRadius: 8,
     height: 40,
     paddingInline: 24,
+  },
+};
+
+const pageActionStyles = {
+  wrap: {
+    display: "flex",
+    justifyContent: "flex-end",
+    gap: 10,
+    margin: "0 10px 16px",
+  },
+  selectUsers: {
+    background: "rgba(24,144,255,0.12)",
+    border: "1px solid rgba(24,144,255,0.4)",
+    color: "#40a9ff",
+    borderRadius: 6,
+    height: 36,
+    fontWeight: 650,
+  },
+  create: {
+    background: "#c9f07b",
+    borderColor: "#c9f07b",
+    color: "#000",
+    borderRadius: 6,
+    height: 36,
+    fontWeight: 700,
   },
 };
 

@@ -17,6 +17,7 @@ const MODULE_MAP = {
   "/profile": "Profile",
   "/rolemanagement": "Role Management",
   "/staffmanagement": "Staff Management",
+  "/env": "Env",
   "/broadcast": "Broadcast",
   "/onramper-history": "Providers",
   "/coin-rabbbit-history": "CoinRabbit History",
