@@ -11,6 +11,7 @@ export const PERMISSION_ROUTE_MAP = {
   "Email Management": "/emailcontent",
   "Email Campaign": "/emailcampaign",
   Support: "/support",
+  "Support Categories": "/support-categories",
   Profile: "/profile",
   "Role Management": "/rolemanagement",
   "Staff Management": "/staffmanagement",

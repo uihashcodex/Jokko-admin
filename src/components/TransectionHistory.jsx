@@ -23,6 +23,7 @@ const TransectionHistory = () => {
   const [originalData, setOriginalData] = useState([]);
   const [transactionData, setTransactionData] = useState([]);
   const [alltrandata, setAlltrandata] = useState([]);
+  const [transactionDateFilterData, setTransactionDateFilterData] = useState([]);
   const [filteredTableData, setFilteredTableData] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedTrans, setSelectedTrans] = useState(null);
@@ -33,6 +34,14 @@ const TransectionHistory = () => {
   const [networkId, setNetworkId] = useState("");
   const [chartData, setChartData] = useState([]);
 
+  const PAGE_SIZE = 10;
+
+  const [filters, setFilters] = useState({
+    search: "",
+    network_id: "",
+    fromDate: "",
+    toDate: ""
+  });
 
   const [deletemodal, setDeletemodal] = useState(false);
   const [deleteRecord, setDeleteRecord] = useState(null);
@@ -87,6 +96,44 @@ const TransectionHistory = () => {
     };
   };
 
+  const getTransactionDate = (item) => {
+    const rawDate = item?.transactionDate || item?.DateTime || item?.createdAt;
+    if (!rawDate || rawDate === "-") return null;
+
+    const date = new Date(rawDate);
+    return Number.isNaN(date.getTime()) ? null : date;
+  };
+
+  const getStartOfDay = (value) => {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return null;
+    date.setHours(0, 0, 0, 0);
+    return date;
+  };
+
+  const getEndOfDay = (value) => {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return null;
+    date.setHours(23, 59, 59, 999);
+    return date;
+  };
+
+  const hasDateFilter = Boolean(filters.fromDate || filters.toDate);
+
+  const matchesDateFilter = (item) => {
+    if (!hasDateFilter) return true;
+
+    const transactionDate = getTransactionDate(item);
+    const fromDate = getStartOfDay(filters.fromDate);
+    const toDate = getEndOfDay(filters.toDate);
+
+    return (
+      transactionDate &&
+      (!fromDate || transactionDate >= fromDate) &&
+      (!toDate || transactionDate <= toDate)
+    );
+  };
+
   const processChartData = () => {
     const grouped = {};
     transactionData.forEach(trans => {
@@ -116,16 +163,6 @@ const TransectionHistory = () => {
 
     },
   ];
-
-  const PAGE_SIZE = 10;
-
-
-  const [filters, setFilters] = useState({
-    search: "",
-    network_id: "",
-    fromDate: "",
-    toDate: ""
-  });
 
   const formatTransactions = (transactions = [], pageNumber = 1, pageLimit = PAGE_SIZE) =>
     transactions.map((item, index) => {
@@ -243,14 +280,19 @@ const TransectionHistory = () => {
       const cleanFilters = Object.fromEntries(
         Object.entries(filters).filter(([_, v]) => v !== "" && v !== undefined)
       );
+      const serverFilters = hasDateFilter
+        ? Object.fromEntries(
+          Object.entries(cleanFilters).filter(([key]) => !["fromDate", "toDate"].includes(key))
+        )
+        : cleanFilters;
       const res = await axios.get(`${constant.backend_url}/admin/get-all-transactions`,
 
         {
 
           params: {
-            ...cleanFilters,
-            page: page,
-            limit: 10
+            ...serverFilters,
+            page: hasDateFilter ? 1 : page,
+            limit: hasDateFilter ? 100000 : PAGE_SIZE
           },
           headers: {
             "Content-Type": "application/json",
@@ -261,9 +303,14 @@ const TransectionHistory = () => {
       );
       if (res.data?.success) {
 
-        const users = res.data.result || [];
-        setTotalUsers(res.data.total);
-        const transres = formatTransactions(users, page, PAGE_SIZE);
+        const users = hasDateFilter
+          ? (res.data.result || []).filter(matchesDateFilter)
+          : res.data.result || [];
+        const visibleUsers = hasDateFilter
+          ? users.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+          : users;
+        setTotalUsers(hasDateFilter ? users.length : res.data.total);
+        const transres = formatTransactions(visibleUsers, page, PAGE_SIZE);
         console.log(transres, "dsggffgf");
 
         setAlltrandata(transres);
@@ -330,6 +377,40 @@ const TransectionHistory = () => {
     return formatTransactions(res.data.result || [], 1, totalUsers || 100000);
   };
 
+  const getTransactionDateFilterData = async () => {
+    if (id) return;
+
+    try {
+      const cleanFilters = Object.fromEntries(
+        Object.entries({
+          search: filters.search,
+          network_id: filters.network_id,
+        }).filter(([_, v]) => v !== "" && v !== undefined)
+      );
+
+      const res = await axios.get(`${constant.backend_url}/admin/get-all-transactions`, {
+        params: {
+          ...cleanFilters,
+          page: 1,
+          limit: 100000,
+        },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+        },
+      });
+
+      if (res.data?.success) {
+        setTransactionDateFilterData(res.data.result || []);
+      } else {
+        setTransactionDateFilterData([]);
+      }
+    } catch (error) {
+      console.error(error);
+      setTransactionDateFilterData([]);
+    }
+  };
+
   // useEffect(() => {
   //   getAllTransaction();
   // }, [page, filters]);
@@ -339,6 +420,10 @@ const TransectionHistory = () => {
       getAllTransaction();
     }
   }, [page, filters, id]);
+
+  useEffect(() => {
+    getTransactionDateFilterData();
+  }, [id, filters.search, filters.network_id]);
 
   const updateFilter = (value) => {
     setPage(1);
@@ -479,6 +564,7 @@ const TransectionHistory = () => {
       {!id && (
         <TableHeader
           data={alltrandata}
+          dateFilterData={transactionDateFilterData}
           // onFilter={(data) => setFilteredTableData(data)}
           showCreateButton={false}
           showPrivateFilter={false}

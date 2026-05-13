@@ -44,6 +44,7 @@ const Viewdetail = () => {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [originalData, setOriginalData] = useState([]);
+  const [dateFilterData, setDateFilterData] = useState([]);
   const [open, setOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [totalUsers, setTotalUsers] = useState(0);
@@ -159,9 +160,40 @@ const Viewdetail = () => {
     return formatUsers(res.data.result || [], 1, totalUsers || 100000);
   };
 
+  const getUsersDateFilterData = async () => {
+    try {
+      const cleanFilters = Object.fromEntries(
+        Object.entries(filters).filter(
+          ([key, value]) => !["fromDate", "toDate"].includes(key) && value !== "" && value !== undefined
+        )
+      );
+
+      const res = await axios.get(`${constant.backend_url}/admin/get-all-users`, {
+        params: {
+          ...cleanFilters,
+          page: 1,
+          limit: 100000,
+        },
+      });
+
+      if (res.data?.success) {
+        setDateFilterData(formatUsers(res.data.result || [], 1, 100000));
+      } else {
+        setDateFilterData([]);
+      }
+    } catch (error) {
+      console.error("Error fetching user date filter data:", error);
+      setDateFilterData([]);
+    }
+  };
+
   useEffect(() => {
     fetUsers();
   }, [page, filters]);
+
+  useEffect(() => {
+    getUsersDateFilterData();
+  }, [filters.search, filters.userType, filters.blockstatus]);
 
 
 
@@ -343,6 +375,7 @@ const Viewdetail = () => {
       </div>
       <TableHeader
         data={originalData}
+        dateFilterData={dateFilterData}
         onCreate={handleCreate}
         showStatusFilter={true}
         showCreateButton={false}

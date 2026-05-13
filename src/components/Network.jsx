@@ -28,6 +28,7 @@ const Network = () => {
     const [deleteRecord, setDeleteRecord] = useState(null);
     const [forceDeleteModal, setForceDeleteModal] = useState(false);
     const [deleteTokens, setDeleteTokens] = useState([]);
+    const [dateFilterData, setDateFilterData] = useState([]);
     const columns = [
         { title: "S.no", dataIndex: "sno", key: "sno" },
         { title: "Network Name", dataIndex: "networkname", key: "networkname" },
@@ -181,7 +182,8 @@ const Network = () => {
             blockExplorerUrl: item.blockExplorerUrl,
             status: item.verifyStatus == true ? "active" : "inactive",
             type: item.type,
-            modeStatus: item.modeStatus
+            modeStatus: item.modeStatus,
+            createdAt: item?.createdAt ? item.createdAt.split("T")[0] : "-",
         }));
 
 
@@ -260,9 +262,47 @@ const Network = () => {
         return formatNetworks(docs, 1, totalUsers || 100000);
     };
 
+    const getNetworksDateFilterData = async () => {
+        try {
+            const cleanFilters = Object.fromEntries(
+                Object.entries(filters).filter(
+                    ([key, value]) => !["fromDate", "toDate"].includes(key) && value !== ""
+                )
+            );
+
+            const response = await axios.post(
+                `${constant.backend_url}/assets/get-all-networks`,
+                {
+                    ...cleanFilters,
+                    page: 1,
+                    limit: 100000,
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+                    }
+                }
+            );
+
+            if (response.data?.success) {
+                const docs = response.data?.result?.docs || response.data?.result || [];
+                setDateFilterData(formatNetworks(docs, 1, 100000));
+            } else {
+                setDateFilterData([]);
+            }
+        } catch (error) {
+            console.error("Error fetching network date filter data:", error);
+            setDateFilterData([]);
+        }
+    };
+
     useEffect(() => {
         getNetworks();
     }, [page, filters]);
+
+    useEffect(() => {
+        getNetworksDateFilterData();
+    }, [filters.search, filters.type, filters.status, filters.modeStatus]);
 
     const updateFilter = (key, value) => {
 
@@ -521,6 +561,7 @@ const Network = () => {
 
                 <TableHeader
                     data={originalData}
+                    dateFilterData={dateFilterData}
                     // onFilter={setFilteredData}
                     onCreate={handleCreate}
                     showStatusFilter={true}

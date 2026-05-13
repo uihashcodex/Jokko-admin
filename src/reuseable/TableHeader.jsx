@@ -91,6 +91,7 @@ const TableHeader = ({
   showSearch = true,
   onDateChange,
   dateFieldNames = DEFAULT_DATE_FIELDS,
+  dateFilterData,
   searchTooltip,
   onSelect,
   onCreate,
@@ -113,7 +114,7 @@ const TableHeader = ({
 
 
   const dateBounds = useMemo(() => {
-    const sourceData = Array.isArray(data) ? data : [];
+    const sourceData = Array.isArray(dateFilterData) ? dateFilterData : Array.isArray(data) ? data : [];
     const dates = sourceData
       .flatMap((item) => dateFieldNames.map((fieldName) => parseDateValue(item?.[fieldName])))
       .filter(Boolean)
@@ -138,7 +139,7 @@ const TableHeader = ({
       minPickerDate: dayjs(minDate),
       maxPickerDate: dayjs(today),
     };
-  }, [data, dateFieldNames]);
+  }, [data, dateFilterData, dateFieldNames]);
 
   const disabledDate = (current) => {
     if (!current) return false;

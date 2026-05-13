@@ -15,6 +15,7 @@ import { Switch } from 'antd';
 const Assets = () => {
 
     const [originalData, setOriginalData] = useState([]);
+    const [dateFilterData, setDateFilterData] = useState([]);
     const [networkOptions, setNetworkOptions] = useState([]);
     /** When selected network is not verified, Status must stay Inactive and the field is disabled (see TrendingCurrency Switch). */
     const [statusSelectDisabled, setStatusSelectDisabled] = useState(false);
@@ -284,9 +285,47 @@ const Assets = () => {
         if (!response.data?.success) return [];
         return formatTokens(response.data.result || [], 1, totalUsers || 100000, true);
     };
+
+    const getTokensDateFilterData = async () => {
+        try {
+            const cleanFilters = Object.fromEntries(
+                Object.entries(filters).filter(
+                    ([key, value]) => !["fromDate", "toDate"].includes(key) && value !== ""
+                )
+            );
+
+            const response = await axios.post(
+                `${constant.backend_url}/assets/get-all-tokens`,
+                {
+                    ...cleanFilters,
+                    page: 1,
+                    limit: 100000,
+                },
+                {
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+                    },
+                }
+            );
+
+            if (response.data?.success) {
+                setDateFilterData(formatTokens(response.data.result || [], 1, 100000, true));
+            } else {
+                setDateFilterData([]);
+            }
+        } catch (error) {
+            console.error("Error fetching asset date filter data:", error);
+            setDateFilterData([]);
+        }
+    };
     useEffect(() => {
         getToken();
     }, [page, filters]);
+
+    useEffect(() => {
+        getTokensDateFilterData();
+    }, [filters.search, filters.type, filters.status]);
 
 
     const updateFilter = (key, value) => {
@@ -521,6 +560,7 @@ const Assets = () => {
 
             <TableHeader
                 data={originalData}
+                dateFilterData={dateFilterData}
                 onFilter={setFilteredData}
                 onCreate={handleCreate}
                 onSearch={(value) => debouncedSearch(value)}

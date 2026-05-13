@@ -17,6 +17,7 @@ import {
     onReceiveMessage,
     offReceiveMessage,
     isSocketConnected,
+    getSupportCategories,
 } from "../services/supportService";
 import ReusableModal from "../reuseable/ReusableModal";
 import ExportButton from "../reuseable/ExportButton";
@@ -76,6 +77,7 @@ const SupportPage = () => {
     const [ticketDeleteOpen, setTicketDeleteOpen] = useState(false);
     const [pendingDeleteTicket, setPendingDeleteTicket] = useState(null);
     const [deleteTicketLoading, setDeleteTicketLoading] = useState(false);
+    const [supportCategories, setSupportCategories] = useState([]);
 
     const messagesEndRef = useRef(null);
     const messageHandlerRef = useRef(null);
@@ -199,26 +201,26 @@ const SupportPage = () => {
     // ]);
 
 
-    const categoryOptions = [
+    const categoryOptions = useMemo(() => [
         { label: "All Categories", value: "all" },
-        { label: "General", value: "general" },
-        { label: "Wallet Issue", value: "wallet_issue" },
-        { label: "Buy Crypto", value: "buy_crypto" },
-
-        { label: "Sell Crypto", value: "sell_crypto" },
-        { label: "Login Issue", value: "login_issue" },
-        { label: "Deposit Issue", value: "deposit_issue" },
-        { label: "Withdrawal Issue", value: "withdrawal_issue" },
-
-        { label: "Transaction Failed", value: "transaction_failed" },
-        { label: "Payment Issue", value: "payment_issue" },
-        { label: "Security Issue", value: "security_issue" },
-
-
-
-    ];
+        ...supportCategories.map((item) => ({
+            label: item.categories || item.category || item.value,
+            value: item.value || item.category || item.categories,
+        })),
+    ], [supportCategories]);
 
     const activeCategory = filters.category === "all" ? null : filters.category;
+
+    useEffect(() => {
+        const fetchSupportCategories = async () => {
+            const response = await getSupportCategories(true);
+            if (response?.success) {
+                setSupportCategories(response.result || []);
+            }
+        };
+
+        fetchSupportCategories();
+    }, []);
 
     // Fetch tickets by status
     const fetchTickets = useCallback(async (filterStatus, filterCategory = null) => {

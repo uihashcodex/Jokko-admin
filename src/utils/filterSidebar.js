@@ -14,6 +14,7 @@ const MODULE_MAP = {
   "/emailcontent": "Email Management",
   "/emailcampaign": "Email Campaign",
   "/support": "Support",
+  "/support-categories": "Support Categories",
   "/profile": "Profile",
   "/rolemanagement": "Role Management",
   "/staffmanagement": "Staff Management",
