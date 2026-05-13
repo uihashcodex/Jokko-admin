@@ -27,6 +27,7 @@ import StaffManagement from "../components/staffManagement"
 import Env from "../components/Env";
 import { constant } from "../const";
 import SupportPage from "../components/support";
+import SupportCategories from "../components/SupportCategories";
 import CoinRabbitTrans from "../components/exchange/CoinRabbitTrans";
 import OnramperHistory from "../components/exchange/onramper";
 import OframperHistory from "../components/exchange/oframper";
@@ -78,6 +79,7 @@ const WalletRouts = () => {
       <Route path={`/${constant?.adminRoute}/trendingcurrency`} element={<TrendingCurrency />} />
       <Route path={`/${constant?.adminRoute}/defaultcurrency`} element={<DefaultCurrency />} />
       <Route path={`/${constant?.adminRoute}/support`} element={<SupportPage />} />
+      <Route path={`/${constant?.adminRoute}/support-categories`} element={<SupportCategories />} />
       <Route path={`/${constant?.adminRoute}/rolemanagement`} element={<RoleManagement />} />
       <Route path={`/${constant?.adminRoute}/staffmanagement`} element={<StaffManagement />} />
       <Route path={`/${constant?.adminRoute}/env`} element={<Env />} />

@@ -18,6 +18,7 @@ const CoinRabbitTrans = () => {
 
   const [transactionData, setTransactionData] = useState([]);
   const [alltrandata, setAlltrandata] = useState([]);
+  const [dateFilterData, setDateFilterData] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedTrans, setSelectedTrans] = useState(null);
   const [totalUsers, setTotalUsers] = useState(0);
@@ -269,6 +270,50 @@ setAlltrandata(mappedData);
     }));
   };
 
+  const fetchDateFilterData = async () => {
+    try {
+      const cleanFilters = Object.fromEntries(
+        Object.entries({
+          search: filters.search,
+          status: filters.status,
+        }).filter(([, value]) => value !== "" && value !== undefined && value !== null)
+      );
+
+      const res = await axios.post(
+        `${constant.backend_url}/admin/get-all-coinrabbit-trans`,
+        {
+          ...cleanFilters,
+          ...(id ? { user_id: id } : {}),
+          page: 1,
+          limit: 100000,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+          },
+        }
+      );
+
+      if (!res.data?.success) {
+        setDateFilterData([]);
+        return;
+      }
+
+      const docs =
+        res.data?.data?.docs ||
+        res.data?.result?.docs ||
+        res.data?.result ||
+        res.data?.data ||
+        [];
+
+      setDateFilterData(mapCoinRabbitData(docs));
+    } catch (error) {
+      console.error("Failed to fetch CoinRabbit date filter data:", error);
+      setDateFilterData([]);
+    }
+  };
+
   useEffect(() => {
     if (id) {
       getTransation();
@@ -276,6 +321,10 @@ setAlltrandata(mappedData);
       getAllTransaction();
     }
   }, [id, page, filters]);
+
+  useEffect(() => {
+    fetchDateFilterData();
+  }, [id, filters.search, filters.status]);
 
   const updateFilter = (value) => {
     setPage(1);
@@ -350,6 +399,7 @@ setAlltrandata(mappedData);
       {!id && (
         <TableHeader
           data={alltrandata}
+          dateFilterData={dateFilterData}
           showCreateButton={false}
           showPrivateFilter={false}
           showNetworkFilter={false}

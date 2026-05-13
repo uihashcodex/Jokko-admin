@@ -156,6 +156,99 @@ export const getAllTickets = async (status = null, category = null) => {
   }
 };
 
+export const getSupportCategories = async (activeOnly = true) => {
+  try {
+    const token = localStorage.getItem("adminToken");
+    const query = activeOnly ? "?activeOnly=true" : "";
+    const response = await fetch(`${API_BASE_URL}/categories${query}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error fetching support categories:", error);
+    return { success: false, message: error.message, result: [] };
+  }
+};
+
+export const getAdminSupportCategories = async () => {
+  try {
+    const { data } = await axios.get(`${constant.backend_url}/admin/support-categories`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+      },
+    });
+    return data;
+  } catch (error) {
+    console.error("getAdminSupportCategories:", error);
+    return { success: false, message: error.message, result: [] };
+  }
+};
+
+export const createSupportCategory = async ({ category, isActive = true }) => {
+  try {
+    const { data } = await axios.post(
+      `${constant.backend_url}/admin/add-support-categories`,
+      { category, isActive },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+        },
+        validateStatus: () => true,
+      }
+    );
+    return data;
+  } catch (error) {
+    console.error("createSupportCategory:", error);
+    return { success: false, message: error.message };
+  }
+};
+
+export const updateSupportCategory = async ({ categoryId, category, isActive }) => {
+  try {
+    const { data } = await axios.post(
+      `${constant.backend_url}/admin/update-support-categories`,
+      { categoryId, category, isActive },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+        },
+        validateStatus: () => true,
+      }
+    );
+    return data;
+  } catch (error) {
+    console.error("updateSupportCategory:", error);
+    return { success: false, message: error.message };
+  }
+};
+
+export const deleteSupportCategory = async (categoryId) => {
+  try {
+    const { data } = await axios.post(
+      `${constant.backend_url}/admin/delete-support-categories`,
+      { categoryId },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+        },
+        validateStatus: () => true,
+      }
+    );
+    return data;
+  } catch (error) {
+    console.error("deleteSupportCategory:", error);
+    return { success: false, message: error.message };
+  }
+};
+
 // Get ticket messages
 export const getTicketMessages = async (ticketId) => {
   try {

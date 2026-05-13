@@ -14,6 +14,7 @@ import { Switch } from 'antd';
 const TrendingCurrency = () => {
 
     const [originalData, setOriginalData] = useState([]);
+    const [dateFilterData, setDateFilterData] = useState([]);
     const [networkOptions, setNetworkOptions] = useState([]);
     const [loading, setLoading] = useState(false);
     const [deletemodal, setDeletemodal] = useState(false);
@@ -243,9 +244,47 @@ const getTrendingForExport = async () => {
     if (!response.data?.success) return [];
     return formatTokens(response.data.result || [], 1, totalUsers || 100000, true);
 };
+
+const getTrendingDateFilterData = async () => {
+    try {
+        const cleanFilters = Object.fromEntries(
+            Object.entries(filters).filter(
+                ([key, value]) => !["fromDate", "toDate"].includes(key) && value !== ""
+            )
+        );
+
+        const response = await axios.post(
+            `${constant.backend_url}/assets/get-all-tokens`,
+            {
+                ...cleanFilters,
+                page: 1,
+                limit: 100000,
+            },
+            {
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+                },
+            }
+        );
+
+        if (response.data?.success) {
+            setDateFilterData(formatTokens(response.data.result || [], 1, 100000, true));
+        } else {
+            setDateFilterData([]);
+        }
+    } catch (error) {
+        console.error("Error fetching trending currency date filter data:", error);
+        setDateFilterData([]);
+    }
+};
     useEffect(() => {
         getToken();
     }, [page, filters]);
+
+    useEffect(() => {
+        getTrendingDateFilterData();
+    }, [filters.search, filters.type, filters.status]);
 
 
     const updateFilter = (key, value) => {
@@ -473,6 +512,7 @@ const getTrendingForExport = async () => {
 
             <TableHeader
                 data={originalData}
+                dateFilterData={dateFilterData}
                 onFilter={setFilteredData}
                 onCreate={handleCreate}
                 onSearch={(value) => debouncedSearch(value)}

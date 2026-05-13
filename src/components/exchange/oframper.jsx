@@ -17,6 +17,7 @@ const OframperHistory = () => {
 
     const [transactionData, setTransactionData] = useState([]);
     const [alltrandata, setAlltrandata] = useState([]);
+    const [dateFilterData, setDateFilterData] = useState([]);
     const [modalOpen, setModalOpen] = useState(false);
     const [selectedTrans, setSelectedTrans] = useState(null);
     const [totalUsers, setTotalUsers] = useState(0);
@@ -210,9 +211,54 @@ const OframperHistory = () => {
         }));
     };
 
+    const fetchDateFilterData = async () => {
+        try {
+            const payload = buildPayload({
+                page: 1,
+                limit: 100000,
+                fromDate: undefined,
+                toDate: undefined,
+            });
+
+            delete payload.fromDate;
+            delete payload.toDate;
+
+            const res = await axios.post(
+                `${constant.backend_url}/admin/get-all-onramper-trans`,
+                payload,
+                {
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+                    },
+                }
+            );
+
+            if (!res.data?.success) {
+                setDateFilterData([]);
+                return;
+            }
+
+            const docs =
+                res.data?.data?.docs ||
+                res.data?.result?.docs ||
+                res.data?.result ||
+                [];
+
+            setDateFilterData(mapOnramperData(docs));
+        } catch (error) {
+            console.error("Failed to fetch Offramper date filter data:", error);
+            setDateFilterData([]);
+        }
+    };
+
     useEffect(() => {
         fetchTransactions();
     }, [id, page, filters]);
+
+    useEffect(() => {
+        fetchDateFilterData();
+    }, [id, filters.search, filters.status, filters.type, filters.onramp]);
 
     const updateSearchFilter = (value) => {
         setPage(1);
@@ -288,6 +334,7 @@ const OframperHistory = () => {
 
             <TableHeader
                 data={filteredData}
+                dateFilterData={dateFilterData}
                 showCreateButton={false}
                 showPrivateFilter={false}
                 showNetworkFilter={false}
