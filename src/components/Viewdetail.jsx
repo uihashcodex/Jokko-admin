@@ -35,7 +35,7 @@ const columns = [
 ];
 
 
-const user = JSON.parse(localStorage.getItem("user")) || {};
+const user = JSON?.parse(localStorage?.getItem("user")) || {};
 const userPermissions = user?.permissions || [];
 
 
@@ -107,7 +107,20 @@ const Viewdetail = () => {
 
         const users = res.data.result || [];
         setTotalUsers(res.data.total);
-        const tableData = formatUsers(users, page, 10);
+        const tableData = users.map((user, index) => ({
+
+          key: user?._id,
+          sno: (page - 1) * 10 + index + 1,
+          name: `${user?.firstname || ""} ${user?.lastname || ""}`.trim() || "-",
+          email: user?.email || "-",
+          phone: user?.phone || "-",
+          status: user?.blockstatus ? "Inactive" : "active",
+          type: user?.type || "-",
+          country: user?.country || "-",
+          createdAt: user?.createdAt ? user.createdAt.split("T")[0] : "-",
+          // updatedAt: user?.updatedAt ? user.updatedAt.split("T")[0] : "-",
+          uniqueid: user?.unique_id || "-"
+        }));
 
         console.log(tableData, "tableData");
 
