@@ -48,6 +48,15 @@ const EmailTemplateManagementnew = () => {
     { title: "Event Key", dataIndex: "event_key" },
     { title: "Subject", dataIndex: "subject" },
     {
+      title: "Language",
+      dataIndex: "language",
+      render: (lang) => {
+        if (lang === "en") return "English";
+        if (lang === "fr") return "French";
+        return lang || "-";
+      },
+    },
+    {
       title: "Body",
       dataIndex: "body",
       render: (body) => {
@@ -96,6 +105,17 @@ const EmailTemplateManagementnew = () => {
       onChange: (e) => setLiveCreateSubject(e.target.value),
     },
     {
+      name: "language",
+      placeholder: "Select Language",
+      label: "Email Language",
+      type: "select",
+      options: [
+        { label: "English", value: "en" },
+        { label: "French", value: "fr" },
+      ],
+      rules: [{ required: true, message: "Language is required" }],
+    },
+    {
       name: "body",
       label: "Email Body",
       type: "editor",
@@ -119,6 +139,16 @@ const EmailTemplateManagementnew = () => {
       type: "text",
       rules: [{ required: true, message: "Subject is required" }],
       onChange: (e) => setLiveSubject(e.target.value),
+    },
+    {
+      name: "language",
+      label: "Email Language",
+      type: "select",
+      options: [
+        { label: "English", value: "en" },
+        { label: "French", value: "fr" },
+      ],
+      rules: [{ required: true, message: "Language is required" }],
     },
     {
       name: "body",
@@ -209,6 +239,7 @@ const EmailTemplateManagementnew = () => {
       id: item._id,
       event_key: item.event_key,
       subject: item.subject,
+      language: item.language,
       body: item.body,
       design: item.template_name?._id || item.template_name,
       template_name: item.template_name?.template_name || "Unknown Template",
@@ -309,6 +340,7 @@ const EmailTemplateManagementnew = () => {
         {
           event_key: values.event_key,
           subject: values.subject,
+          language: values.language,
           body: values.body,
           template_name: createDesign || globalDesign,
           is_active: isCreateActive,
@@ -370,6 +402,7 @@ const EmailTemplateManagementnew = () => {
         {
           event_key: selectedRow?.event_key,
           subject: values?.subject,
+          language: values?.language,
           body: values?.body,
           template_name: selectedDesign, // send ObjectId
           is_active: isActive,

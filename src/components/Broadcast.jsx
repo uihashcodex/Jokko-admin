@@ -3,7 +3,7 @@ import {
   Button, Form, Input, Upload, Modal, message, ConfigProvider, Image, Tag
 } from "antd";
 import {
-  NotificationOutlined, EditOutlined, DeleteOutlined, UploadOutlined
+  NotificationOutlined, EditOutlined, DeleteOutlined, UploadOutlined, RiseOutlined
 } from "@ant-design/icons";
 import DeleteAction from "../reuseable/DeleteAction";
 
@@ -376,72 +376,173 @@ const Broadcast = () => {
   };
 
   // ── shared form body (used in both create & update modals) ────────────────
-  const BroadcastForm = ({ form, onFinish, loading, iconFile, setIconFile, preview, setPreview, submitLabel = "Submit" }) => (
-    <Form form={form} layout="vertical" onFinish={onFinish}>
-      <Form.Item
-        label={<span style={modalStyles.label}>Title</span>}
-        name="title"
-        rules={[{ required: true, message: "Title is required" }]}
-      >
-        <Input placeholder="Enter broadcast title" className="bc-input" />
-      </Form.Item>
+  const BroadcastForm = ({ form, onFinish, loading, iconFile, setIconFile, preview, setPreview, submitLabel = "Submit" }) => {
+    const title = Form.useWatch("title", form);
+    const description = Form.useWatch("description", form);
 
-      <Form.Item
-        label={<span style={modalStyles.label}>Description</span>}
-        name="description"
-        rules={[{ required: true, message: "Description is required" }]}
-      >
-        <Input.TextArea
-          placeholder="Enter broadcast description"
-          rows={4}
-          className="bc-input"
-          style={{ resize: "none" }}
-        />
-      </Form.Item>
-      <Form.Item label={<span style={modalStyles.label}>Icon / Image</span>}>
-        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <Upload {...makeUploadProps(setIconFile, setPreview)}>
-            <Button icon={<UploadOutlined />} style={modalStyles.uploadBtn}>
-              {iconFile ? "Change Icon" : "Upload Icon"}
-            </Button>
-          </Upload>
+    const charCount = (description || "").length;
 
-          {preview && (
-            <Image
-              src={preview}
-              width={56}
-              height={56}
-              style={{
-                borderRadius: 10,
-                objectFit: "cover",
-                border: "1px solid rgba(201,240,123,0.3)",
-              }}
-            />
-          )}
+    return (
+      <Form form={form} layout="vertical" onFinish={onFinish}>
+
+
+        <Form.Item
+          label={<span style={modalStyles.label}>Title</span>}
+          name="title"
+          rules={[{ required: true, message: "Title is required" }]}
+        >
+          <Input placeholder="Enter broadcast title" className="bc-input" />
+        </Form.Item>
+
+        <Form.Item
+          label={
+            <div style={{ display: "flex", justifyContent: "space-between", width: "100%", alignItems: "center" }}>
+              <span style={modalStyles.label}>Description</span>
+              <span style={{
+                fontSize: 11,
+                color: charCount > 100 ? "#ff4d4f" : "rgba(255,255,255,0.35)",
+                fontWeight: 500,
+                background: "rgba(0,0,0,0.2)",
+                padding: "2px 8px",
+                borderRadius: 10
+              }}>
+                {charCount}/100 characters
+              </span>
+            </div>
+          }
+          name="description"
+          rules={[
+            { required: true, message: "Description is required" },
+            {
+              validator: (_, value) => {
+                if ((value || "").length > 100) {
+                  return Promise.reject(new Error("Description cannot exceed 100 characters"));
+                }
+                return Promise.resolve();
+              }
+            }
+          ]}
+        >
+          <Input.TextArea
+            placeholder="Enter broadcast description"
+            rows={4}
+            className="bc-input"
+            style={{ resize: "none" }}
+          />
+        </Form.Item>
+        <Form.Item label={
+          <div style={{ display: "flex", width: "100%", gap: 70 }}>
+            <span style={modalStyles.label}>Icon / Image</span>
+            <span style={modalStyles.label}>Live Preview</span>
+          </div>
+        }>
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-evenly", alignItems: 'center', height: '100%', gap: 10 }}>
+              {preview && (
+                <div style={{
+                  border: "1px solid rgba(201,240,123,0.3)",
+                  borderRadius: 12,
+                  width: 56,
+                  height: 56,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  overflow: "hidden",
+                  background: "rgba(201,240,123,0.05)"
+                }}>
+                  <Image src={preview} alt="broadcast preview"
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                    }}
+                    wrapperStyle={{ width: "100%", height: "100%" }}
+                  />
+                </div>
+              )}
+              <Upload {...makeUploadProps(setIconFile, setPreview)}>
+                <Button icon={<UploadOutlined />} style={modalStyles.uploadBtn}>
+                  {iconFile ? "Change Icon" : "Upload Icon"}
+                </Button>
+              </Upload>
+            </div>
+
+
+            {/* Real-time Preview Card */}
+            <div style={{ width: "100%" }}>
+              <div style={{
+                background: "#0a1a17",
+                borderRadius: "18px",
+                padding: "10px",
+                display: "flex",
+                alignItems: "center",
+                gap: "20px",
+                border: "1px solid rgba(201,240,123,0.1)",
+                boxShadow: "0 12px 40px rgba(0,0,0,0.4)",
+                minHeight: "100px",
+                transition: "all 0.3s ease"
+              }}>
+                <div style={{
+                  width: "64px",
+                  height: "64px",
+                  borderRadius: "50%",
+                  background: "#162823",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                  border: "1px solid rgba(201,240,123,0.05)"
+                }}>
+                  {preview ? (
+                    <Image src={preview} alt="icon" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }} wrapperStyle={{ width: "100%", height: "100%" }} />
+                  ) : (
+                    <RiseOutlined style={{ fontSize: "32px", color: "#c9f07b" }} />
+                  )}
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+                  <h4 style={{ margin: 0, color: "#fff", fontSize: "18px", fontWeight: "600", letterSpacing: "-0.2px" }}>
+                    {title || "Title"}
+                  </h4>
+                  <p style={{
+                    margin: 0,
+                    color: "rgba(255, 255, 255, 0.53)",
+                    fontSize: "14px",
+                    lineHeight: "1.4",
+                    fontWeight: "400",
+                    width: "240px",
+                    wordBreak: "break-word",
+                    whiteSpace: "normal"
+                  }}>
+                    {description || "Description"}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Form.Item>
+
+        <div style={modalStyles.btnRow}>
+          <Button
+            onClick={() => {
+              form.resetFields();
+              clearPreview(setIconFile, preview, setPreview);
+            }}
+            style={modalStyles.cancelBtn}
+          >
+            Clear
+          </Button>
+          <Button
+            htmlType="submit"
+            loading={loading}
+            style={modalStyles.submitBtn}
+            className="bc-submit-btn"
+          >
+            {submitLabel}
+          </Button>
         </div>
-      </Form.Item>
-
-      <div style={modalStyles.btnRow}>
-        <Button
-          onClick={() => {
-            form.resetFields();
-            clearPreview(setIconFile, preview, setPreview);
-          }}
-          style={modalStyles.cancelBtn}
-        >
-          Clear
-        </Button>
-        <Button
-          htmlType="submit"
-          loading={loading}
-          style={modalStyles.submitBtn}
-          className="bc-submit-btn"
-        >
-          {submitLabel}
-        </Button>
-      </div>
-    </Form>
-  );
+      </Form>
+    );
+  };
 
   return (
     <div>
@@ -453,7 +554,7 @@ const Broadcast = () => {
       </div>
 
       <TableHeader
-        showStatusFilter={false}
+        showStatusFilter={true}
         showSearch={false}
         showCreateButton
         onCreate={() => setCreateOpen(true)}
