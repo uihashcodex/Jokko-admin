@@ -30,7 +30,8 @@ const ReusableModal = ({
   PermissionsContent,
   maskClosable = false,
   description,
-  showFooter = true
+  showFooter = true,
+  onFormValuesChange
 }) => {
   const [form] = Form.useForm();
 
@@ -85,6 +86,7 @@ const ReusableModal = ({
             options={field.options}
             placeholder={field.placeholder}
             className="custom-select remodal-select"
+            disabled={field.disabled}
           />
         );
 
@@ -96,6 +98,7 @@ const ReusableModal = ({
             style={{ width: "100%" }}
             options={[...field.options]}
             placeholder={field.placeholder}
+            disabled={field.disabled}
           />
         );
 
@@ -221,6 +224,9 @@ const ReusableModal = ({
             form={form}
             layout="vertical"
             onFinish={onSubmit}
+            onValuesChange={(changed, all) => {
+              onFormValuesChange?.(changed, all, form);
+            }}
           >
 
             {PermissionsContent}

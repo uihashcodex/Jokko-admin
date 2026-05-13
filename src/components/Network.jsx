@@ -167,14 +167,29 @@ const Network = () => {
     });
 
 
+    const getCleanFilters = () =>
+        Object.fromEntries(Object.entries(filters).filter(([_, v]) => v !== ""));
+
+    const formatNetworks = (docs = [], pageNumber = 1, pageLimit = 10) =>
+        docs.map((item, index) => ({
+            id: item._id,
+            sno: (pageNumber - 1) * pageLimit + index + 1,
+            networkname: item.networkName,
+            networksymbol: item.networkSymbol,
+            chainId: item.chainId || "-",
+            rpcUrl: item.rpcUrl,
+            blockExplorerUrl: item.blockExplorerUrl,
+            status: item.verifyStatus == true ? "active" : "inactive",
+            type: item.type,
+            modeStatus: item.modeStatus
+        }));
+
 
 
     const getNetworks = async () => {
         try {
             setLoading(true);
-            const cleanFilters = Object.fromEntries(
-                Object.entries(filters).filter(([_, v]) => v !== "")
-            );
+            const cleanFilters = getCleanFilters();
             console.log("NETWORK FILTER BODY:", {
                 ...cleanFilters,
                 page,
@@ -204,18 +219,7 @@ const Network = () => {
 
                 setTotalUsers(response.data.result.totalDocs);
 
-                const formattedData = docs.map((item, index) => ({
-                    id: item._id,
-                    sno: (page - 1) * 10 + index + 1,
-                    networkname: item.networkName,
-                    networksymbol: item.networkSymbol,
-                    chainId: item.chainId || "-",
-                    rpcUrl: item.rpcUrl,
-                    blockExplorerUrl: item.blockExplorerUrl,
-                    status: item.verifyStatus == true ? "active" : "inactive",
-                    type: item.type,
-                    modeStatus: item.modeStatus
-                }));
+                const formattedData = formatNetworks(docs, page, 10);
 
                 setOriginalData(formattedData);
 
@@ -234,6 +238,28 @@ const Network = () => {
 
 
     };
+
+    const getNetworksForExport = async () => {
+        const response = await axios.post(
+            `${constant.backend_url}/assets/get-all-networks`,
+            {
+                ...getCleanFilters(),
+                page: 1,
+                limit: totalUsers || 100000
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+                }
+            }
+        );
+
+        if (!response.data?.success) return [];
+
+        const docs = response.data?.result?.docs || response.data?.result || [];
+        return formatNetworks(docs, 1, totalUsers || 100000);
+    };
+
     useEffect(() => {
         getNetworks();
     }, [page, filters]);
@@ -501,6 +527,10 @@ const Network = () => {
                     onSearch={(value) => updateFilter("search", value)}
                     onTypeChange={(value) => updateFilter("type", value)}
                     onVerifyChange={(value) => updateFilter("status", value)}
+                    showExportButton={true}
+                    exportFilename="networks"
+                    exportColumns={columns}
+                    getExportData={getNetworksForExport}
                     searchTooltip="Search by Chain Id, Network Symbol,  Network Name"
                     onNetChange={(value) => updateFilter("modeStatus", value)}
                     showNetFilter={true}

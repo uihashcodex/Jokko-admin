@@ -23,7 +23,8 @@ const StaffManagement = () => {
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [roleOptions, setRoleOptions] = useState([]);
-
+    const [deletemodal, setDeletemodal] = useState(false);
+    const [deleteRecord, setDeleteRecord] = useState(null);
 
   const [page, setPage] = useState(1);
 const [total, setTotal] = useState(0);
@@ -71,6 +72,22 @@ sno: (page - 1) * PAGE_SIZE + index + 1,          ...staff,
     } finally {
       setLoading(false);
     }
+  };
+
+  const getStaffForExport = async () => {
+    const response = await getStaffList({
+      page: 1,
+      limit: total || 100000,
+      search: filters.search,
+      status: filters.status,
+    });
+
+    if (!response?.success || !response?.result) return [];
+    return response.result.map((staff, index) => ({
+      key: staff?._id,
+      sno: index + 1,
+      ...staff,
+    }));
   };
 
   const fetchRoleOptions = async () => {
@@ -236,6 +253,42 @@ sno: (page - 1) * PAGE_SIZE + index + 1,          ...staff,
     ];
   };
 
+
+
+
+      const handleDelete = async (userId) => {
+        try {
+            setLoading(true);
+
+            const res = await axios.post(
+                `${constant.backend_url}/admin/delete-staffs`,
+                {
+                    userId
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+                    },
+                }
+            );
+
+            if (res.data?.success) {
+                message.success("Staff Deleted successfully");
+                setDeletemodal(false);
+                fetchStaffList();
+            } else {
+                message.warning(res.data.message || "Delete failed");
+            }
+
+        } catch (error) {
+            console.log(error);
+            message.error("Something went wrong");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+
   const handleSubmit = async (values) => {
     const { password, resetPassword, ...rest } = values;
 
@@ -262,7 +315,7 @@ sno: (page - 1) * PAGE_SIZE + index + 1,          ...staff,
           (updateData.username || "") === (selectedStaff.username || "") &&
           (updateData.email || "") === (selectedStaff.email || "") &&
           (updateData.phone || "") === (selectedStaff.phone || "") &&
-          (updateData.role || "") === (selectedStaff.roleType || "") &&
+          (updateData.roleType || "") === (selectedStaff.roleType || "") &&
           (updateData.status || "") === (selectedStaff.status || "") &&
           !resetPassword;
 
@@ -317,6 +370,10 @@ sno: (page - 1) * PAGE_SIZE + index + 1,          ...staff,
           data={originalData}
           onFilter={setFilteredData}
           showCreateButton={true}
+          showExportButton={true}
+          exportFilename="staff"
+          exportColumns={columns}
+          getExportData={getStaffForExport}
           onCreate={() => {
             setEditing(null);
             setInitialValues({});
@@ -337,12 +394,19 @@ sno: (page - 1) * PAGE_SIZE + index + 1,          ...staff,
   currentPage={page}
   onPageChange={(p) => setPage(p)}
   loading={loading}
-  actionType="update"
+  actionType={["update","Remove"]}
   onUpdate={(record) => {
     setEditing(record.key);
     setInitialValues(record);
     setOpen(true);
+
+    
   }}
+
+      onDelete={(record) => {
+        setDeleteRecord(record);
+        setDeletemodal(true);
+    }}
 />
 
         <ReusableModal
@@ -357,6 +421,45 @@ sno: (page - 1) * PAGE_SIZE + index + 1,          ...staff,
           fields={getFields()}
           loading={submitting}
         />
+
+
+
+            <ReusableModal
+  open={deletemodal}
+  onCancel={() => setDeletemodal(false)}
+  title="Delete Staff"
+  description={"Are you sure you want to delete this Staff?"}
+  showFooter={false}
+  extraContent={
+    <div className="text-center">
+
+      <p className="text-gray-300 text-base">
+        Are you sure you want to delete this Staff?
+      </p>
+
+      <div className="flex justify-between gap-4 mt-6">
+
+        {/* ❌ NO BUTTON FIX */}
+        <button
+          className="px-6 py-2 rounded primaty-bg text-black"
+          onClick={() => setDeletemodal(false)}
+        >
+          No
+        </button>
+
+        {/* ❌ YES BUTTON FIX */}
+        <button
+          className="px-6 py-2 rounded bg-red-600 text-white"
+          onClick={() => handleDelete(deleteRecord?.key)}
+        >
+          Yes
+        </button>
+
+      </div>
+
+    </div>
+  }
+/>
       </div>
     </Spin>
   );

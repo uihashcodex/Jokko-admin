@@ -35,45 +35,46 @@ const ReusableTable = ({
 
 
   const user = JSON.parse(localStorage.getItem("user")) || {};
-const permissions = user?.permissions || [];
+  const permissions = user?.permissions || [];
 
-if (actionType?.includes("view")) {
-  updatedColumns.push({
-    title: "Action",
-    key: "action",
-    render: (_, record) => {
-      const user = JSON.parse(localStorage.getItem("user")) || {};
-      const permissions = user?.permissions || [];
+  if (actionType?.includes("view")) {
+    updatedColumns.push({
+      title: "Action",
+      key: "action",
+      render: (_, record) => {
+        const user = JSON.parse(localStorage.getItem("user")) || {};
+        const permissions = user?.permissions || [];
 
-      const allItems = [
-        { key: "transaction", label: "Transaction", permission: "Transaction" },
-        { key: "wallet", label: "Wallet", permission: "Wallet" },
-        { key: "coinrabbit", label: "CoinRabbit", permission: "Buy/Sell CoinRabbit" },
-        { key: "onramper", label: "OnRamper", permission: "Providers" },
-      ];
+        const allItems = [
+          { key: "transaction", label: "Transaction", permission: "Transaction" },
+          { key: "wallet", label: "Wallet", permission: "Wallet" },
+          { key: "coinrabbit", label: "CoinRabbit", permission: "Buy/Sell CoinRabbit" },
+          { key: "onramper", label: "OnRamper", permission: "Providers" },
+          { key: "oframper", label: "OffRamper", permission: "Providers" },
+        ];
 
-      const items = allItems.filter((item) =>
-        hasAccess(permissions, item.permission)
-      );
+        const items = allItems.filter((item) =>
+          hasAccess(permissions, item.permission)
+        );
 
-      return (
-        <Dropdown
-          menu={{
-            items: items.length > 0 ? items : [{ key: "no-access", label: "No Access", disabled: true }],
-            onClick: ({ key }) => {
-              if (key !== "no-access") onView?.(record, key);
-            },
-          }}
-          trigger={["click"]}
-        >
-          <Button>
-            Select <DownOutlined />
-          </Button>
-        </Dropdown>
-      );
-    },
-  });
-}
+        return (
+          <Dropdown
+            menu={{
+              items: items.length > 0 ? items : [{ key: "no-access", label: "No Access", disabled: true }],
+              onClick: ({ key }) => {
+                if (key !== "no-access") onView?.(record, key);
+              },
+            }}
+            trigger={["click"]}
+          >
+            <Button>
+              Select <DownOutlined />
+            </Button>
+          </Dropdown>
+        );
+      },
+    });
+  }
   if (actionType?.includes("webhook")) {
     updatedColumns.push({
       title: "Webhook",
@@ -271,7 +272,7 @@ if (actionType?.includes("view")) {
           onChange: (page) => onPageChange?.(page),
 
           hideOnSinglePage: true,
-                showSizeChanger: false,
+          showSizeChanger: false,
         }}
         scroll={{ x: "max-content" }}
         className="custom-ant-table tbl"

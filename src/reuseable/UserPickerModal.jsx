@@ -19,6 +19,8 @@ const sharedProps = {
   percent: 0,
 };
 
+const EMPTY_SELECTED_USERS = [];
+
 const UserPickerModal = ({
   open,
   onCancel,
@@ -28,23 +30,60 @@ const UserPickerModal = ({
   subtitle = "Choose recipients",
   submitText = "Add Users",
   topContent,
+  initialSelectedUsers = EMPTY_SELECTED_USERS,
+  userType,
 }) => {
   const [usersLoading, setUsersLoading] = useState(false);
   const [users, setUsers] = useState([]);
   const [userSearch, setUserSearch] = useState("");
   const [userFilter, setUserFilter] = useState("all");
   const [selectedUserIds, setSelectedUserIds] = useState([]);
+  const [userCacheById, setUserCacheById] = useState(new Map());
+  const initialSelectedUserIds = useMemo(
+    () => initialSelectedUsers.map((user) => user.id).filter(Boolean),
+    [initialSelectedUsers]
+  );
+  const constrainedUserType = ["individual", "professional"].includes(userType)
+    ? userType
+    : "";
+  const filterOptions = useMemo(
+    () =>
+      constrainedUserType
+        ? USER_FILTER_OPTIONS.filter((option) => !["individual", "professional"].includes(option.value))
+        : USER_FILTER_OPTIONS,
+    [constrainedUserType]
+  );
 
-  const fetchUsers = useCallback(async () => {
+  const fetchUsers = useCallback(async (searchValue = "", filterValue = "all") => {
     setUsersLoading(true);
+
+    const params = {
+      page: 1,
+      limit: 200,
+    };
+
+    const search = searchValue.trim();
+    if (search) params.search = search;
+
+    if (constrainedUserType) {
+      params.type = constrainedUserType;
+    } else if (["individual", "professional"].includes(filterValue)) {
+      params.type = filterValue;
+    }
+
+    if (filterValue === "active") {
+      params.blockstatus = false;
+    }
+
+    if (filterValue === "inactive") {
+      params.blockstatus = true;
+    }
+
     try {
       const { data } = await axios.get(
-        `${constant.backend_url}/admin/get-all-users`,
+        `${constant.backend_url}/admin/pushnotification-userdetails`,
         {
-          params: {
-            page: 1,
-            limit: 200,
-          },
+          params,
           headers: {
             Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
           },
@@ -67,7 +106,14 @@ const UserPickerModal = ({
           };
         });
 
-        setUsers(rows.filter((user) => user.id));
+        const validRows = rows.filter((user) => user.id);
+
+        setUsers(validRows);
+        setUserCacheById((prev) => {
+          const next = new Map(prev);
+          validRows.forEach((user) => next.set(user.id, user));
+          return next;
+        });
       } else {
         message.error(data.message || "Failed to load users.");
       }
@@ -76,16 +122,28 @@ const UserPickerModal = ({
     } finally {
       setUsersLoading(false);
     }
-  }, []);
+  }, [constrainedUserType]);
 
   useEffect(() => {
     if (open) {
       setUserSearch("");
       setUserFilter("all");
-      setSelectedUserIds([]);
-      fetchUsers();
+      setSelectedUserIds(initialSelectedUserIds);
+      setUserCacheById(new Map(initialSelectedUsers.map((user) => [user.id, user])));
+      fetchUsers("", "all");
     }
-  }, [fetchUsers, open]);
+  }, [fetchUsers, initialSelectedUserIds, initialSelectedUsers, open, constrainedUserType]);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    if (!userSearch && userFilter === "all") return undefined;
+
+    const timer = setTimeout(() => {
+      fetchUsers(userSearch, userFilter);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [fetchUsers, open, userFilter, userSearch]);
 
   const filteredUsers = useMemo(() => {
     const search = userSearch.trim().toLowerCase();
@@ -102,13 +160,19 @@ const UserPickerModal = ({
         user.type?.toLowerCase() === userFilter ||
         user.status === userFilter;
 
-      return matchesSearch && matchesFilter;
+      const matchesConstrainedType =
+        !constrainedUserType || user.type?.toLowerCase() === constrainedUserType;
+
+      return matchesSearch && matchesFilter && matchesConstrainedType;
     });
-  }, [users, userFilter, userSearch]);
+  }, [constrainedUserType, users, userFilter, userSearch]);
 
   const selectedUsers = useMemo(
-    () => users.filter((user) => selectedUserIds.includes(user.id)),
-    [selectedUserIds, users]
+    () =>
+      selectedUserIds
+        .map((id) => userCacheById.get(id))
+        .filter(Boolean),
+    [selectedUserIds, userCacheById]
   );
 
   const visibleUserIds = filteredUsers.map((user) => user.id);
@@ -173,7 +237,7 @@ const UserPickerModal = ({
         <div style={styles.toolbar}>
           <Input.Search
             allowClear
-            placeholder="Search users by name, email, phone"
+            placeholder="Search users by name, email"
             value={userSearch}
             onChange={(e) => setUserSearch(e.target.value)}
             className="up-user-search"
@@ -182,7 +246,7 @@ const UserPickerModal = ({
           <Segmented
             value={userFilter}
             onChange={(value) => setUserFilter(value)}
-            options={USER_FILTER_OPTIONS}
+            options={filterOptions}
             className="up-user-segmented"
           />
         </div>
@@ -211,7 +275,14 @@ const UserPickerModal = ({
           ) : filteredUsers.length ? (
             <Checkbox.Group
               value={selectedUserIds}
-              onChange={(values) => setSelectedUserIds(values)}
+              onChange={(values) => {
+                setSelectedUserIds((prev) =>
+                  Array.from(new Set([
+                    ...prev.filter((id) => !visibleUserIds.includes(id)),
+                    ...values,
+                  ]))
+                );
+              }}
               style={{ width: "100%" }}
             >
               {filteredUsers.map((user) => (

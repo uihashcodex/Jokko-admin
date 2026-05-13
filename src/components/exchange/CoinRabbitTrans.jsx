@@ -8,6 +8,7 @@ import TableHeader from "../../reuseable/TableHeader";
 import ReusableModal from "../../reuseable/ReusableModal";
 import debounce from "lodash.debounce";
 import { message } from "antd";
+import ExportButton from "../../reuseable/ExportButton";
 // import ChartsSection from "../../components/ChartsSection";
 
 const CoinRabbitTrans = () => {
@@ -31,6 +32,9 @@ const CoinRabbitTrans = () => {
     toDate: "",
   });
 
+        const [deletemodal, setDeletemodal] = useState(false);
+    const [deleteRecord, setDeleteRecord] = useState(null);
+
   const processChartData = (data) => {
     const grouped = {};
 
@@ -52,7 +56,8 @@ const CoinRabbitTrans = () => {
   const mapCoinRabbitData = (items = []) => {
     return items.map((item) => ({
 
-      key: item?._id,
+      _id: item?._id || item?.id,
+      key: item?._id || item?.id,
       loan_id: item?.loan_id || "-",
       firstname: item?.firstname || "-",
       user_id: item?.user_id || "-",
@@ -116,6 +121,46 @@ const mappedData = mapCoinRabbitData(docs).map((item, index) => ({
     setLoading(false);
   }
 };
+
+
+
+
+        const handleDelete = async (userId) => {
+        try {
+            setLoading(true);
+
+            const res = await axios.post(
+                `${constant.backend_url}/admin/delete-coinrabbithistory`,
+                {
+                    userId
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+                    },
+                }
+            );
+
+            if (res.data?.success) {
+                message.success("CoinRabbit Deleted successfully");
+                setDeletemodal(false);
+                getAllTransaction();
+            } else {
+                message.warning(res.data.message || "Delete failed");
+            }
+
+        } catch (error) {
+            console.log(error);
+            message.error("Something went wrong");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+
+
+
+
   const getAllTransaction = async (item,index) => {
     const startTime = Date.now();
 
@@ -184,6 +229,44 @@ setAlltrandata(mappedData);
         setLoading(false);
       }, remaining > 0 ? remaining : 0);
     }
+  };
+
+  const getCoinRabbitForExport = async () => {
+    const cleanFilters = Object.fromEntries(
+      Object.entries(filters).filter(
+        ([, value]) => value !== "" && value !== undefined && value !== null
+      )
+    );
+
+    const res = await axios.post(
+      `${constant.backend_url}/admin/get-all-coinrabbit-trans`,
+      {
+        ...cleanFilters,
+        ...(id ? { user_id: id } : {}),
+        page: 1,
+        limit: totalUsers || 100000,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+        },
+      }
+    );
+
+    if (!res.data?.success) return [];
+
+    const docs =
+      res.data?.data?.docs ||
+      res.data?.result?.docs ||
+      res.data?.result ||
+      res.data?.data ||
+      [];
+
+    return mapCoinRabbitData(docs).map((item, index) => ({
+      ...item,
+      sno: index + 1,
+    }));
   };
 
   useEffect(() => {
@@ -271,6 +354,10 @@ setAlltrandata(mappedData);
           showPrivateFilter={false}
           showNetworkFilter={false}
           showStatusFilter={false}
+          showExportButton={true}
+          exportFilename="coinrabbit_history"
+          exportColumns={columns}
+          getExportData={getCoinRabbitForExport}
           showDateFilter={true}
           onSearch={(value) => debouncedSearch(value)}
           searchTooltip="Search by Loan ID, Status"
@@ -285,6 +372,17 @@ setAlltrandata(mappedData);
         />
       )}
 
+      {id && (
+        <div style={{ display: "flex", justifyContent: "flex-end", padding: "0 10px", marginBottom: 12 }}>
+          <ExportButton
+            filename={`coinrabbit_details_${id}`}
+            columns={columns}
+            data={filteredData}
+            getExportData={getCoinRabbitForExport}
+          />
+        </div>
+      )}
+
       <ReusableTable
         columns={columns}
         data={filteredData}
@@ -294,13 +392,54 @@ setAlltrandata(mappedData);
         currentPage={page}
         onPageChange={(p) => setPage(p)}
         loading={loading}
-        actionType={["viewMore"]}
+        actionType={["viewMore","Remove"]}
         onView={(record) => {
           setSelectedTrans(record);
           setModalOpen(true);
         }}
+            onDelete={(record) => {
+        setDeleteRecord(record);
+        setDeletemodal(true);
+    }}
       />
 
+
+            <ReusableModal
+  open={deletemodal}
+  onCancel={() => setDeletemodal(false)}
+  title="Delete CoinRabbit Orders?"
+  description={"Are you sure you want to delete this CoinRabbit Orders?"}
+  showFooter={false}
+  extraContent={
+    <div className="text-center">
+
+      <p className="text-gray-300 text-base">
+        Are you sure you want to delete this CoinRabbit Orders?
+      </p>
+
+      <div className="flex justify-between gap-4 mt-6">
+
+        {/* ❌ NO BUTTON FIX */}
+        <button
+          className="px-6 py-2 rounded primaty-bg text-black"
+          onClick={() => setDeletemodal(false)}
+        >
+          No
+        </button>
+
+        {/* ❌ YES BUTTON FIX */}
+        <button
+          className="px-6 py-2 rounded bg-red-600 text-white"
+          onClick={() => handleDelete(deleteRecord?._id || deleteRecord?.key)}
+        >
+          Yes
+        </button>
+
+      </div>
+
+    </div>
+  }
+/>
       <ReusableModal
         open={modalOpen}
         onCancel={() => setModalOpen(false)}

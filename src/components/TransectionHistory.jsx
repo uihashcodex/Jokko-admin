@@ -13,6 +13,7 @@ import { useMemo } from "react";
 import { message } from "antd";
 import create from "@ant-design/icons/lib/components/IconFont";
 import ChartsSection from "../components/ChartsSection";
+import ExportButton from "../reuseable/ExportButton";
 
 
 const TransectionHistory = () => {
@@ -32,11 +33,58 @@ const TransectionHistory = () => {
   const [networkId, setNetworkId] = useState("");
   const [chartData, setChartData] = useState([]);
 
+
+  const [deletemodal, setDeletemodal] = useState(false);
+  const [deleteRecord, setDeleteRecord] = useState(null);
+
   const formatDateMonth = (dateStr) => {
     const d = new Date(dateStr);
     const day = d.getDate();
     const month = d.toLocaleString("default", { month: "short" });
     return `${day} ${month}`; // 7 Mar
+  };
+
+  const formatTransactionDateTime = (item) => {
+    if (item?.transactionDate && item?.transactionTime) {
+      return {
+        transactionDate: item.transactionDate,
+        transactionTime: item.transactionTime,
+        dateTimeDisplay: `${item.transactionDate} ${item.transactionTime}`,
+
+      };
+    }
+
+    const rawDate = item?.DateTime || item?.createdAt;
+    if (!rawDate) {
+      return {
+        transactionDate: "-",
+        transactionTime: "-",
+        dateTimeDisplay: "-",
+      };
+    }
+
+    const date = new Date(rawDate);
+    if (Number.isNaN(date.getTime())) {
+      return {
+        transactionDate: "-",
+        transactionTime: "-",
+        dateTimeDisplay: "-",
+      };
+    }
+
+    const transactionDate = date.toLocaleDateString("en-CA");
+    const transactionTime = date.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: true,
+    });
+
+    return {
+      transactionDate,
+      transactionTime,
+      dateTimeDisplay: `${transactionDate} ${transactionTime}`,
+    };
   };
 
   const processChartData = () => {
@@ -79,67 +127,73 @@ const TransectionHistory = () => {
     toDate: ""
   });
 
- const getTransation = async () => {
-  try {
-    setLoading(true);
+  const formatTransactions = (transactions = [], pageNumber = 1, pageLimit = PAGE_SIZE) =>
+    transactions.map((item, index) => {
+      const dateTime = formatTransactionDateTime(item);
 
-    const res = await axios.post(
-      `${constant.backend_url}/admin/getAllUsersWalletTransactions?page=${page}&limit=${PAGE_SIZE}`,
-      {
-        user_id: id,
-        search: filters.search,
-      },
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
-        },
-      }
-    );
-
-    if (res.data?.success) {
-      const trandata = res.data.result || [];
-
-      const trans = trandata.map((item, index) => ({
-        key: item._id,
-        id: item._id,
-        sno: (page - 1) * PAGE_SIZE + index + 1,
+      return {
+        key: item?._id,
+        id: item?._id,
+        sno: (pageNumber - 1) * pageLimit + index + 1,
         transactionHash: item?.transactionHash || "-",
         firstname: item?.firstname || "-",
-        networkName: item?.network_id?.networkName || "-",
+        networkName: item?.network_id?.networkName || item?.networkName || "-",
         amount: item?.amount
           ? `${Number(item.amount).toFixed(4)} ${item?.tokenSymbol || ""}`
           : "-",
         from: item?.from || "-",
         to: item?.to || "-",
         tokenSymbol: item?.tokenSymbol || "-",
-        createdAt: item?.createdAt ? item.createdAt.split("T")[0] : "",
+        createdAt: dateTime.transactionDate,
         updatedAt: item?.updatedAt ? item.updatedAt.split("T")[0] : "",
         status: item?.status || "-",
         transType: item?.transType || "-",
-      }));
+        ...dateTime,
+      };
+    });
 
-      setTransactionData(trans);
-      setTotalUsers(res.data.total || 0);
+  const getTransation = async () => {
+    try {
+      setLoading(true);
+
+      const res = await axios.post(
+        `${constant.backend_url}/admin/getAllUsersWalletTransactions?page=${page}&limit=${PAGE_SIZE}`,
+        {
+          user_id: id,
+          search: filters.search,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+          },
+        }
+      );
+
+      if (res.data?.success) {
+        const trandata = res.data.result || [];
+        const trans = formatTransactions(trandata, page, PAGE_SIZE);
+
+        setTransactionData(trans);
+        setTotalUsers(res.data.total || 0);
+      }
+    } catch (error) {
+      if (error?.response?.status === 401) return;
+      console.error(error);
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    if (error?.response?.status === 401) {
-      localStorage.removeItem("adminToken");
-      window.location.href = "/login";
-      return;
+  };
+
+
+
+
+
+  useEffect(() => {
+    if (id) {
+      getTransation();
     }
-
-    console.error(error);
-  } finally {
-    setLoading(false);
-  }
-};
-
-useEffect(() => {
-  if (id) {
-    getTransation();
-  }
-}, [id, page, filters.search]);
+  }, [id, page, filters.search]);
 
   useEffect(() => {
     if (id && transactionData.length > 0) {
@@ -148,12 +202,40 @@ useEffect(() => {
   }, [transactionData, id]);
 
 
+  const handleDelete = async (userId) => {
+    try {
+      setLoading(true);
+
+      const res = await axios.post(
+        `${constant.backend_url}/admin/delete-transaction`,
+        { transactionId: userId }, // ✅ FIX
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+          },
+        }
+      );
+
+      if (res.data?.success) {
+        message.success("Transaction deleted successfully");
+        setDeletemodal(false);
+        getAllTransaction();
+      } else {
+        message.warning(res.data.message || "Delete failed");
+      }
+    } catch (error) {
+      console.log(error);
+      message.error("Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  };
 
 
 
 
 
-  const getAllTransaction = async () => { 
+  const getAllTransaction = async () => {
     const startTime = Date.now();
 
     try {
@@ -164,7 +246,7 @@ useEffect(() => {
       const res = await axios.get(`${constant.backend_url}/admin/get-all-transactions`,
 
         {
-          
+
           params: {
             ...cleanFilters,
             page: page,
@@ -181,24 +263,7 @@ useEffect(() => {
 
         const users = res.data.result || [];
         setTotalUsers(res.data.total);
-
-        // const transres = res.data.result.map((item) => ({
-        const transres = users.map((item) => ({
-          key: item?._id,
-          transactionHash: item?.transactionHash || "-",
-          firstname: item?.firstname || "-",
-          networkName: item?.networkName || "-",
-          // here
-          amount: item?.amount
-            ? `${Number(item.amount).toFixed(4)} ${item?.tokenSymbol || ""}`
-            : "-",
-          from: item?.from || "-",
-          to: item?.to || "-",
-          tokenSymbol: item?.tokenSymbol || "-",
-          createdAt: item?.createdAt ? item?.createdAt.split("T")[0] : "",
-          updatedAt:item?.updatedAt ? item?.updatedAt.split("T")[0] : "", 
-          // status: item?.status          
-        }))
+        const transres = formatTransactions(users, page, PAGE_SIZE);
         console.log(transres, "dsggffgf");
 
         setAlltrandata(transres);
@@ -224,6 +289,45 @@ useEffect(() => {
         setLoading(false);
       }, remaining > 0 ? remaining : 0);
     }
+  };
+
+  const getTransactionsForExport = async () => {
+    if (id) {
+      const res = await axios.post(
+        `${constant.backend_url}/admin/getAllUsersWalletTransactions?page=1&limit=${totalUsers || 100000}`,
+        {
+          user_id: id,
+          search: filters.search,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+          },
+        }
+      );
+
+      if (!res.data?.success) return [];
+      return formatTransactions(res.data.result || [], 1, totalUsers || 100000);
+    }
+
+    const cleanFilters = Object.fromEntries(
+      Object.entries(filters).filter(([_, v]) => v !== "" && v !== undefined)
+    );
+    const res = await axios.get(`${constant.backend_url}/admin/get-all-transactions`, {
+      params: {
+        ...cleanFilters,
+        page: 1,
+        limit: totalUsers || 100000,
+      },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+      },
+    });
+
+    if (!res.data?.success) return [];
+    return formatTransactions(res.data.result || [], 1, totalUsers || 100000);
   };
 
   // useEffect(() => {
@@ -257,6 +361,7 @@ useEffect(() => {
 
 
   const columns = [
+    { title: "S.no", dataIndex: "sno" },
     {
       title: "Transaction Hash", dataIndex: "transactionHash",
       render: (trans) => {
@@ -283,7 +388,9 @@ useEffect(() => {
       }
     },
     { title: "Token Symbol", dataIndex: "tokenSymbol" },
-    { title: "Created At", dataIndex: "createdAt", key: "createdAt" },
+    { title: "Date", dataIndex: "transactionDate", key: "transactionDate" },
+    { title: "Time", dataIndex: "transactionTime", key: "transactionTime" },
+
     // { title: "Updated At", dataIndex: "createdAt", key: "updatedAt" },
     // { title: "Status", dataIndex: "status" },
   ];
@@ -327,7 +434,7 @@ useEffect(() => {
     getNetwork();
   }, []);
 
-// transation chart
+  // transation chart
   const [dashboardData, setDashboardData] = useState({});
 
   const getDashboardData = async () => {
@@ -363,11 +470,11 @@ useEffect(() => {
         <h2 className="text-2xl font-semibold  white">Transaction History</h2>
       </div>
 
-            <div className="mt-5">
-        <ChartsSection dashboardData={ id ? { weeklyTransactions: chartData } : dashboardData } showtransactionChart={true}
-      />
-            </div>
-            
+      <div className="mt-5">
+        <ChartsSection dashboardData={id ? { weeklyTransactions: chartData } : dashboardData} showtransactionChart={true}
+        />
+      </div>
+
 
       {!id && (
         <TableHeader
@@ -376,6 +483,10 @@ useEffect(() => {
           showCreateButton={false}
           showPrivateFilter={false}
           showStatusFilter={false}
+          showExportButton={true}
+          exportFilename="transaction_history"
+          exportColumns={columns}
+          getExportData={getTransactionsForExport}
           onSearch={(value) => debouncedSearch(value)}
           searchTooltip="Search By Hash, Address, Token Symbol, Amount"
           showNetworkFilter={true}
@@ -394,21 +505,76 @@ useEffect(() => {
         />
       )}
 
-    <ReusableTable
-  columns={columns}
-  data={id ? transactionData : filteredTableData}
-  rowKey="key"
-  pageSize={PAGE_SIZE}
-  total={totalUsers}
-  currentPage={page}
-  onPageChange={(p) => setPage(p)}
-  loading={loading}
-  actionType={["viewMore"]}
-  onView={(record) => {
-    setSelectedTrans(record);
-    setModalOpen(true);
-  }}
-/>
+      {id && (
+        <div style={{ display: "flex", justifyContent: "flex-end", padding: "0 10px", marginBottom: 12 }}>
+          <ExportButton
+            filename={`user_transactions_${id}`}
+            columns={columns}
+            data={transactionData}
+            getExportData={getTransactionsForExport}
+          />
+        </div>
+      )}
+
+      <ReusableTable
+        columns={columns}
+        data={id ? transactionData : filteredTableData}
+        rowKey="key"
+        pageSize={PAGE_SIZE}
+        total={totalUsers}
+        currentPage={page}
+        onPageChange={(p) => setPage(p)}
+        loading={loading}
+        actionType={["viewMore", "Remove"]}
+        onView={(record) => {
+          setSelectedTrans(record);
+          setModalOpen(true);
+        }}
+        onDelete={(record) => {
+          setDeleteRecord(record);
+          setDeletemodal(true);
+        }}
+      />
+
+
+
+
+      <ReusableModal
+        open={deletemodal}
+        onCancel={() => setDeletemodal(false)}
+        title="Delete Transcation"
+        description={"Are you sure you want to delete this Transcation?"}
+        showFooter={false}
+        extraContent={
+          <div className="text-center">
+
+            <p className="text-gray-300 text-base">
+              Are you sure you want to delete this Transcation?
+            </p>
+
+            <div className="flex justify-between gap-4 mt-6">
+
+              {/* ❌ NO BUTTON FIX */}
+              <button
+                className="px-6 py-2 rounded primaty-bg text-black"
+                onClick={() => setDeletemodal(false)}
+              >
+                No
+              </button>
+
+              {/* ❌ YES BUTTON FIX */}
+              <button
+                className="px-6 py-2 rounded bg-red-600 text-white"
+                onClick={() => handleDelete(deleteRecord?.key)}
+              >
+                Yes
+              </button>
+
+            </div>
+
+          </div>
+        }
+      />
 
       {/* <ReusableModal
         open={modalOpen}
@@ -501,6 +667,16 @@ useEffect(() => {
             <div className="flex items-center justify-between bg-[#1f252a] p-3 rounded">
               <span className="text-gray-400">Token Symbol</span>
               <span className="text-white">{selectedTrans?.tokenSymbol}</span>
+            </div>
+
+            <div className="flex items-center justify-between bg-[#1f252a] p-3 rounded">
+              <span className="text-gray-400">Date</span>
+              <span className="text-white">{selectedTrans?.transactionDate}</span>
+            </div>
+
+            <div className="flex items-center justify-between bg-[#1f252a] p-3 rounded">
+              <span className="text-gray-400">Time</span>
+              <span className="text-white">{selectedTrans?.transactionTime}</span>
             </div>
 
           </div>

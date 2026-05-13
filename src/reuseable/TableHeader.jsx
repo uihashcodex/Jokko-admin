@@ -1,7 +1,9 @@
 import { Row, Col, Input, Tooltip, DatePicker, Grid } from "antd";
 import SelectField from "./SelectField";
 import ReButton from "./Button";
-import { useState } from "react";
+import ExportButton from "./ExportButton";
+import { useMemo, useState } from "react";
+import dayjs from "dayjs";
 import {
   CloseCircleFilled,
   CalendarOutlined,
@@ -9,9 +11,67 @@ import {
 } from "@ant-design/icons";
 
 const { Search } = Input;
+const DEFAULT_DATE_FIELDS = [
+  "createdAt",
+  "rawCreatedAt",
+  "transactionDate",
+  "DateTime",
+  "date",
+  "updatedAt",
+  "created_at",
+  "updated_at",
+];
+
+const parseDateValue = (value) => {
+  if (!value || value === "-") return null;
+
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value;
+  }
+
+  if (typeof value === "number") {
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+
+  if (typeof value !== "string") return null;
+
+  const trimmedValue = value.trim();
+  const isoDateMatch = trimmedValue.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  const localDateMatch = trimmedValue.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+
+  if (isoDateMatch) {
+    const [, year, month, day] = isoDateMatch;
+    return new Date(Number(year), Number(month) - 1, Number(day));
+  }
+
+  if (localDateMatch) {
+    const [, day, month, year] = localDateMatch;
+    return new Date(Number(year), Number(month) - 1, Number(day));
+  }
+
+  const date = new Date(trimmedValue);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const startOfDay = (date) => {
+  const normalizedDate = new Date(date);
+  normalizedDate.setHours(0, 0, 0, 0);
+  return normalizedDate;
+};
+
+const endOfDay = (date) => {
+  const normalizedDate = new Date(date);
+  normalizedDate.setHours(23, 59, 59, 999);
+  return normalizedDate;
+};
 
 const TableHeader = ({
   data = [],
+  getExportData,
+  exportFilename,
+  exportColumns,
+  showExportButton = false,
   networkOptions = [],
   onFilter,
   onSearch,
@@ -30,6 +90,7 @@ const TableHeader = ({
   showonrampFilter = false,
   showSearch = true,
   onDateChange,
+  dateFieldNames = DEFAULT_DATE_FIELDS,
   searchTooltip,
   onSelect,
   onCreate,
@@ -51,15 +112,44 @@ const TableHeader = ({
   const [mobileOpen, setMobileOpen] = useState(false);
 
 
+  const dateBounds = useMemo(() => {
+    const sourceData = Array.isArray(data) ? data : [];
+    const dates = sourceData
+      .flatMap((item) => dateFieldNames.map((fieldName) => parseDateValue(item?.[fieldName])))
+      .filter(Boolean)
+      .map(startOfDay);
+
+    const today = endOfDay(new Date());
+
+    if (!dates.length) {
+      return {
+        minDate: null,
+        maxDate: today,
+        minPickerDate: undefined,
+        maxPickerDate: dayjs(today),
+      };
+    }
+
+    const minDate = new Date(Math.min(...dates.map((date) => date.getTime())));
+
+    return {
+      minDate,
+      maxDate: today,
+      minPickerDate: dayjs(minDate),
+      maxPickerDate: dayjs(today),
+    };
+  }, [data, dateFieldNames]);
+
   const disabledDate = (current) => {
-  const minDate = new Date("2025-01-01");
-  const today = new Date();
+    if (!current) return false;
 
-  minDate.setHours(0, 0, 0, 0);
-  today.setHours(23, 59, 59, 999);
+    const currentDate = current.toDate();
+    const isBeforeAvailableData =
+      dateBounds.minDate && currentDate < dateBounds.minDate;
+    const isAfterToday = currentDate > dateBounds.maxDate;
 
-  return current && (current.toDate() < minDate || current.toDate() > today);
-};
+    return isBeforeAvailableData || isAfterToday;
+  };
 
 
 
@@ -185,6 +275,9 @@ const TableHeader = ({
                 value={dateRange?.[0] || null}
                 inputReadOnly
                 suffixIcon={dateRange?.length === 2 ? null : <CalendarOutlined />}
+                disabledDate={disabledDate}
+                minDate={dateBounds.minPickerDate}
+                maxDate={dateBounds.maxPickerDate}
                 onOpenChange={(open) => setMobileOpen(open)}
                 onChange={(date) => {
                   if (mobileStep === "start") {
@@ -232,6 +325,8 @@ const TableHeader = ({
           ) : (
             <RangePicker
               disabledDate={disabledDate}
+              minDate={dateBounds.minPickerDate}
+              maxDate={dateBounds.maxPickerDate}
               value={dateRange}
               className="custom-select repicker-modal"
               popupClassName="custom-date-theme"
@@ -258,6 +353,35 @@ const TableHeader = ({
           />
         </Col>
       )}
+
+      {showExportButton && (
+        <Col xs={24} sm={12} md={4} lg={4}>
+          <ExportButton
+            filename={exportFilename || "export"}
+            columns={exportColumns || []}
+            data={data || []}
+            getExportData={getExportData}
+          />
+        </Col>
+      )}
+      {/* {showCreateButton && (
+        <Col xs={24} sm={12} md={4} lg={4}>
+          <Button
+            icon={<PlusOutlined />}
+            onClick={onclick}
+            style={{
+              background: "#c9f07b",
+              borderColor: "#c9f07b",
+              color: "#000",
+              borderRadius: 6,
+              height: 36,
+              fontWeight: 700,
+            }}
+          >
+            Create
+          </Button>
+        </Col>
+      )} */}
 
       {showseletButton && (
         <Col xs={24} sm={12} md={4} lg={4}>

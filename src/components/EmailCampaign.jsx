@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button, Form, Select, Tag, Modal, message, ConfigProvider, Input } from "antd";
-import { RocketOutlined, EditOutlined, UserAddOutlined, PlusOutlined } from "@ant-design/icons";
+import { RocketOutlined, EditOutlined, UserAddOutlined, DeleteOutlined } from "@ant-design/icons";
 import axios from "axios";
 import { constant } from "../const";
 import TableHeader from "../reuseable/TableHeader";
@@ -32,16 +32,28 @@ const EmailCampaign = () => {
   const [selectedRow, setSelectedRow] = useState(null);
 
   const [page, setPage] = useState(1);
-const PAGE_SIZE = 10;
+  const PAGE_SIZE = 10;
 
   const [addUserOpen, setAddUserOpen] = useState(false);
   const [addUserLoading, setAddUserLoading] = useState(false);
   const [selectedCampaignId, setSelectedCampaignId] = useState(undefined);
+  const [selectedUsersByCampaign, setSelectedUsersByCampaign] = useState({});
 
   const [publishingId, setPublishingId] = useState(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const token = localStorage.getItem("adminToken");
   const authHeader = { Authorization: `Bearer ${token}` };
+  const pickerSelectedUsers = useMemo(
+    () => selectedUsersByCampaign[selectedCampaignId] || [],
+    [selectedCampaignId, selectedUsersByCampaign]
+  );
+  const selectedCampaign = useMemo(
+    () => campaigns.find((campaign) => campaign.id === selectedCampaignId),
+    [campaigns, selectedCampaignId]
+  );
+  const pickerUserType = selectedRow?.type || selectedCampaign?.type;
 
   useEffect(() => {
     fetchCampaigns();
@@ -49,6 +61,18 @@ const PAGE_SIZE = 10;
   }, [page]);
 
   // ── fetch campaigns list ──────────────────────────────────────────────────
+  const formatCampaigns = (items = [], pageNumber = page) =>
+    items.map((item, i) => ({
+      ...item,
+      sno: (pageNumber - 1) * PAGE_SIZE + i + 1,
+      id: item._id,
+      event_key: item.content_info?.event_key,
+      campaign_name: item.campaign_name || "-",
+      template_name: item.content_info?.template_name || "-",
+      subject: item.content_info?.subject || "-",
+      recipient_count: item.recipient_count || 0,
+    }));
+
   const fetchCampaigns = async () => {
     setTableLoading(true);
     try {
@@ -57,16 +81,7 @@ const PAGE_SIZE = 10;
         { headers: authHeader }
       );
       if (data.success === true) {
-        const rows = (data.result || data.data || []).map((item, i) => ({
-          ...item,
-          sno: (page - 1) * PAGE_SIZE + i + 1,
-          id: item._id,
-          event_key: item.content_info.event_key,
-          campaign_name: item.campaign_name || "-",
-          template_name: item.content_info.template_name || "-",
-          subject: item.content_info.subject || "-",
-
-        }));
+        const rows = formatCampaigns(data.result || data.data || [], page);
         setCampaigns(rows);
       } else {
         message.error(data.message || "Failed to load campaigns.");
@@ -78,38 +93,48 @@ const PAGE_SIZE = 10;
     }
   };
 
+  const getCampaignsForExport = async () => {
+    const { data } = await axios.get(
+      `${constant.backend_url}/brevo/getCampaigns`,
+      { headers: authHeader }
+    );
+
+    if (data.success !== true) return [];
+    return formatCampaigns(data.result || data.data || [], 1);
+  };
+
 
 
 
 
   // ── fetch email contents filtered by type = "campaign" ───────────────────
-const fetchEmailContents = async () => {
-  setContentLoading(true);
+  const fetchEmailContents = async () => {
+    setContentLoading(true);
 
-  try {
-    const { data } = await axios.get(
-      `${constant.backend_url}/admin/get-emailcontent`,
-      {
-        params: {
-          type: "campaign",
-          page: 1,
-          limit: 10,
-        },
-        headers: authHeader,
+    try {
+      const { data } = await axios.get(
+        `${constant.backend_url}/admin/get-emailcontent`,
+        {
+          params: {
+            type: "campaign",
+            page: 1,
+            limit: 10,
+          },
+          headers: authHeader,
+        }
+      );
+
+      if (data.success) {
+        setEmailContents(data.result || []);
+      } else {
+        message.error(data.message || "Failed to load email contents.");
       }
-    );
-
-    if (data.success) {
-      setEmailContents(data.result || []);
-    } else {
-      message.error(data.message || "Failed to load email contents.");
+    } catch (error) {
+      message.error("Failed to fetch email contents.");
+    } finally {
+      setContentLoading(false);
     }
-  } catch (error) {
-    message.error("Failed to fetch email contents.");
-  } finally {
-    setContentLoading(false);
-  }
-};
+  };
 
   // ── create campaign ───────────────────────────────────────────────────────
   const handleCreate = async (values) => {
@@ -180,7 +205,7 @@ const fetchEmailContents = async () => {
     setAddUserOpen(true);
   };
 
-  const handleAddUser = async ({ userIds, emails }) => {
+  const handleAddUser = async ({ userIds, users }) => {
     if (!selectedCampaignId) {
       message.error("Please select a campaign.");
       return;
@@ -192,15 +217,35 @@ const fetchEmailContents = async () => {
         `${constant.backend_url}/brevo/batchJoinContactList`,
         {
           campaign_id: selectedCampaignId,
-          user_ids: userIds,
-          emails,
+          userIds,
         },
         { headers: authHeader }
       );
+
       if (data.success) {
+        console.log("Campaign user add result:", {
+          total_count: data.total_count,
+          success_count: data.success_count ?? data.added_count,
+          failure_count: data.failure_count ?? data.failed_count,
+          success_emails: data.success_emails ?? data.added_users,
+          failed_emails: data.failed_emails,
+          failed_errors: data.failed_errors,
+        });
+        setSelectedUsersByCampaign((prev) => {
+          const existingUsers = prev[selectedCampaignId] || [];
+          const mergedUsers = Array.from(
+            new Map([...existingUsers, ...users].map((user) => [user.id, user])).values()
+          );
+
+          return {
+            ...prev,
+            [selectedCampaignId]: mergedUsers,
+          };
+        });
         message.success(data.message || "Users added successfully!");
         setAddUserOpen(false);
         setSelectedCampaignId(undefined);
+        fetchCampaigns();
       } else {
         message.error(data.message || "Failed to add users.");
       }
@@ -213,6 +258,11 @@ const fetchEmailContents = async () => {
 
   // ── publish ───────────────────────────────────────────────────────────────
   const handlePublish = async (record) => {
+    if (!record?.recipient_count) {
+      message.error("Please select at least one user");
+      return;
+    }
+
     setPublishingId(record.id);
     try {
       const { data } = await axios.post(
@@ -222,14 +272,56 @@ const fetchEmailContents = async () => {
       );
       if (data.success) {
         message.success(data.message || "Campaign published!");
+        setSelectedUsersByCampaign((prev) => {
+          const next = { ...prev };
+          delete next[record.id];
+          return next;
+        });
         fetchCampaigns();
       } else {
         message.error(data.message || "Failed to publish campaign.");
       }
-    } catch {
-      message.error("Failed to publish campaign.");
+    } catch (error) {
+      message.error(error?.response?.data?.message || "Failed to publish campaign.");
     } finally {
       setPublishingId(null);
+    }
+  };
+
+  // ── delete campaign (hard delete) ─────────────────────────────────────────
+  const openDelete = (record) => {
+    setSelectedRow(record);
+    setDeleteOpen(true);
+  };
+
+  const handleDelete = async () => {
+    try {
+      const campaignId = selectedRow?._id || selectedRow?.id;
+      if (!campaignId) {
+        message.error("Invalid campaign id");
+        return;
+      }
+
+      setDeleteLoading(true);
+
+      const { data } = await axios.delete(
+        `${constant.backend_url}/brevo/deleteCampaign/${campaignId}`,
+        { headers: authHeader }
+      );
+
+      if (data?.success) {
+        message.success(data.message || "Campaign deleted successfully");
+        setDeleteOpen(false);
+        setSelectedRow(null);
+        fetchCampaigns();
+      } else {
+        message.warning(data?.message || "Delete failed");
+      }
+    } catch (error) {
+      console.error(error);
+      message.error("Failed to delete campaign");
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -237,7 +329,7 @@ const fetchEmailContents = async () => {
   const columns = [
     { title: "S.No", dataIndex: "sno", width: 60 },
     { title: "Campaign Name", dataIndex: "campaign_name" },
-    { title: "Template Name", dataIndex: "template_name" },
+    // { title: "Template Name", dataIndex: "template_name" },
     { title: "Event Key", dataIndex: "event_key" },
     { title: "Subject", dataIndex: "subject", render: (v) => v || "-" },
     {
@@ -283,13 +375,27 @@ const fetchEmailContents = async () => {
           >
             Publish
           </Button>
+
+          <Button
+            size="small"
+            icon={<DeleteOutlined />}
+            style={{
+              background: "rgba(255,77,79,0.1)",
+              border: "1px solid rgba(255,77,79,0.4)",
+              color: "#ff4d4f",
+              borderRadius: 6,
+            }}
+            onClick={() => openDelete(record)}
+          >
+            Delete
+          </Button>
         </div>
       ),
     },
   ];
 
   // ── shared modal wrapper ──────────────────────────────────────────────────
-  const CampaignModal = ({ open, onCancel, onFinish, form, title, loading, initialContentKey }) => (
+  const CampaignModal = ({ open, onCancel, onFinish, form, title, loading }) => (
     <ConfigProvider
       theme={{ token: { colorBgElevated: theme.sidebarSettings.backgroundColor } }}
     >
@@ -397,19 +503,20 @@ const fetchEmailContents = async () => {
       </div>
 
       <TableHeader
+        data={campaigns}
         showStatusFilter={false}
         showSearch={false}
-        showCreateButton={false}
+        showExportButton={true}
+        showCreateButton={true}
+        exportFilename="email_campaigns"
+        exportColumns={columns}
+        getExportData={getCampaignsForExport}
+        onCreate={() => setCreateOpen(true)}
+      // showCreateButton={false}
       />
 
-      <div style={pageActionStyles.wrap}>
-        <Button
-          icon={<UserAddOutlined />}
-          onClick={() => openAddUser()}
-          style={pageActionStyles.selectUsers}
-        >
-          Select Users
-        </Button>
+      {/* <div style={pageActionStyles.wrap}>
+
         <Button
           icon={<PlusOutlined />}
           onClick={() => setCreateOpen(true)}
@@ -417,20 +524,20 @@ const fetchEmailContents = async () => {
         >
           Create
         </Button>
-      </div>
+      </div> */}
 
       {/* Campaigns Table */}
-  <ReusableTable
-  columns={columns}
-  data={campaigns}
-  rowKey="id"
-  loading={tableLoading}
-  total={campaigns.length}
-  pageSize={PAGE_SIZE}
-  currentPage={page}
-  onPageChange={(p) => setPage(p)}
-  actionType={[]}
-/>
+      <ReusableTable
+        columns={columns}
+        data={campaigns}
+        rowKey="id"
+        loading={tableLoading}
+        total={campaigns.length}
+        pageSize={PAGE_SIZE}
+        currentPage={page}
+        onPageChange={(p) => setPage(p)}
+        actionType={[]}
+      />
 
       {/* ── Create Campaign Modal ── */}
       <CampaignModal
@@ -458,6 +565,8 @@ const fetchEmailContents = async () => {
         subtitle={selectedRow?.campaign_name || "Choose campaign recipients"}
         submitText="Add Users"
         submitLoading={addUserLoading}
+        initialSelectedUsers={pickerSelectedUsers}
+        userType={pickerUserType}
         onCancel={() => {
           setAddUserOpen(false);
           setSelectedCampaignId(undefined);
@@ -482,6 +591,62 @@ const fetchEmailContents = async () => {
           )
         }
       />
+
+      {/* ── Delete Campaign Modal ── */}
+      <ConfigProvider
+        theme={{ token: { colorBgElevated: theme.sidebarSettings.backgroundColor } }}
+      >
+        <Modal
+          open={deleteOpen}
+          onCancel={() => { setDeleteOpen(false); setSelectedRow(null); }}
+          footer={null}
+          centered
+          width="90%"
+          style={{ maxWidth: 440 }}
+          destroyOnHidden
+          className="custom-modal modal-style"
+          styles={{
+            content: { background: theme.sidebarSettings.backgroundColor, borderRadius: 12 },
+            body: { paddingTop: 20, paddingBottom: 20 },
+          }}
+        >
+          <div style={modalStyles.header}>
+            <div style={modalStyles.iconWrap}>
+              <DeleteOutlined style={{ fontSize: 18, color: "#eb2724c9" }} />
+            </div>
+            <div>
+              <p style={modalStyles.title}>Delete Campaign</p>
+              <p style={modalStyles.subtitle}>This action is permanent.</p>
+            </div>
+          </div>
+
+          <div style={modalStyles.divider} />
+
+          <p style={{ color: "rgba(255,255,255,0.75)" }}>
+            Are you sure you want to delete{" "}
+            <b style={{ color: "#fff" }}>{selectedRow?.campaign_name || "this campaign"}</b>?
+          </p>
+
+          <div style={modalStyles.btnRow}>
+            <Button
+              onClick={() => { setDeleteOpen(false); setSelectedRow(null); }}
+              style={modalStyles.cancelBtn}
+              disabled={deleteLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              danger
+              type="primary"
+              onClick={handleDelete}
+              loading={deleteLoading}
+              style={{ ...modalStyles.submitBtn, background: "#eb2724c9", borderColor: "#eb2724c9", color: "#fff" }}
+            >
+              Delete
+            </Button>
+          </div>
+        </Modal>
+      </ConfigProvider>
 
       {/* Scoped Styles */}
       <style>{`
@@ -623,31 +788,6 @@ const modalStyles = {
     borderRadius: 8,
     height: 40,
     paddingInline: 24,
-  },
-};
-
-const pageActionStyles = {
-  wrap: {
-    display: "flex",
-    justifyContent: "flex-end",
-    gap: 10,
-    margin: "0 10px 16px",
-  },
-  selectUsers: {
-    background: "rgba(24,144,255,0.12)",
-    border: "1px solid rgba(24,144,255,0.4)",
-    color: "#40a9ff",
-    borderRadius: 6,
-    height: 36,
-    fontWeight: 650,
-  },
-  create: {
-    background: "#c9f07b",
-    borderColor: "#c9f07b",
-    color: "#000",
-    borderRadius: 6,
-    height: 36,
-    fontWeight: 700,
   },
 };
 

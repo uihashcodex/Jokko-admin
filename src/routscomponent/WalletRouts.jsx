@@ -14,8 +14,8 @@ import Walletlist from "../components/Walletlist";
 import TransectionHistory from "../components/TransectionHistory";
 import AddressGeneration from "../components/AddressGeneration";
 import Griddemo from "../components/Griddemo";
-import Webhook from "../components/webhooks"; 
-import EmailTemplateManagement from "../components/EmailTemplateManagement"; 
+import Webhook from "../components/webhooks";
+import EmailTemplateManagement from "../components/EmailTemplateManagement";
 import PushNotification from "../components/pushnotification";
 import EmailTemplateManagementnew from "../components/EmailTemplateManagementnew";
 import EmailCampaign from "../components/EmailCampaign";
@@ -29,6 +29,7 @@ import { constant } from "../const";
 import SupportPage from "../components/support";
 import CoinRabbitTrans from "../components/exchange/CoinRabbitTrans";
 import OnramperHistory from "../components/exchange/onramper";
+import OframperHistory from "../components/exchange/oframper";
 
 
 // import CoinRabbittranscations from "../components/exchange/CoinRabbittranscations";
@@ -57,6 +58,12 @@ const WalletRouts = () => {
       <Route path={`/coin-rabbbit-history/:id`} element={<CoinRabbitTrans />} />
       <Route path={`/${constant?.adminRoute}/onramper-history`} element={<OnramperHistory />} />
       <Route path={`/onramper-history/:id`} element={<OnramperHistory />} />
+
+      {/* oframper orders */}
+
+
+      <Route path={`/${constant?.adminRoute}/oframper-history`} element={<OframperHistory />} />
+      <Route path={`/oframper-history/:id`} element={<OframperHistory />} />
 
       <Route path={`/transaction/:id`} element={<TransectionHistory />} />
       <Route path={`/${constant?.adminRoute}/addressgeneration`} element={<AddressGeneration />} />

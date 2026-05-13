@@ -9,13 +9,13 @@ import ReusableModal from "../reuseable/ReusableModal";
 import { message, Tooltip } from "antd";
 import { CopyOutlined } from "@ant-design/icons";
 import create from "@ant-design/icons/lib/components/IconFont";
+import ExportButton from "../reuseable/ExportButton";
 const Walletlist = () => {
 
   const { state } = useLocation();
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const [walletData, setWalletData] = useState([]);
   const [filteredTableData, setFilteredTableData] = useState([]);
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -37,6 +37,10 @@ const Walletlist = () => {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
 
+
+
+      const [deletemodal, setDeletemodal] = useState(false);
+    const [deleteRecord, setDeleteRecord] = useState(null);
   // -----------------------------
   // USER WALLET DETAILS (HISTORY)
   // -----------------------------
@@ -51,8 +55,8 @@ const Walletlist = () => {
       if (res.data?.success) {
 
         const walletsList = res.data.result.wallets.map((item) => ({
-          key: item?._id,
-          walletname: item?.walletName,
+          key: item?._id || item?.id,
+          walletname: item?.walletname || item?.walletName,
           firstname: item?.firstname || "-",
           btcaddress: item?.btcAddress,
           evmaddress: item?.evmAddress,
@@ -64,7 +68,7 @@ const Walletlist = () => {
           status: item?.walletStatus ? "Active" : "Inactive",
                 }));
 
-        setWalletData(walletsList);
+        setFilteredTableData(walletsList);
 
       }
 
@@ -87,6 +91,22 @@ const Walletlist = () => {
   });
 
   const PAGE_SIZE = 10;
+
+  const formatWallets = (wallets = [], pageNumber = 1, pageLimit = PAGE_SIZE) =>
+    wallets.map((item, index) => ({
+      key: item?._id || item?.id,
+      sno: (pageNumber - 1) * pageLimit + index + 1,
+      walletname: item?.walletname || item?.walletName,
+      firstname: item?.firstname || "-",
+      btcaddress: item?.btcAddress,
+      evmaddress: item?.evmAddress,
+      solanaaddress: item?.solAddress,
+      xrpaddress: item?.xrpAddress,
+      trxAddress: item?.trxAddress,
+      status: item?.walletStatus ? "Active" : "Inactive",
+      createdAt: item?.createdAt ? item.createdAt.split("T")[0] : "",
+      rawCreatedAt: item?.createdAt || "",
+    }));
 
   const getAllWallets = async (id, item,index) => {
 
@@ -119,19 +139,7 @@ const Walletlist = () => {
           const walletss = res.data.result || [];
         setTotalUsers(res.data.total);
 
-        // const walletres = res.data.result.map((item) => ({
-  const walletres = walletss.map((item, index) => ({
-  key: item?._id,
-  sno: (page - 1) * PAGE_SIZE + index + 1,
-  walletname: item?.walletName,
-  firstname: item?.firstname || "-",
-  btcaddress: item?.btcAddress,
-  evmaddress: item?.evmAddress,
-  solanaaddress: item?.solAddress,
-  xrpaddress: item?.xrpAddress,
-  trxAddress: item?.trxAddress,
-  status: item?.walletStatus ? "Active" : "Inactive",
-}));
+        const walletres = formatWallets(walletss, page, PAGE_SIZE);
 
         setFilteredTableData(walletres);
         setTotal(res.data.total || 0);
@@ -148,6 +156,26 @@ const Walletlist = () => {
       console.error(error);
     }
   };
+
+  const getWalletsForExport = async () => {
+    const cleanFilters = Object.fromEntries(
+      Object.entries(filters).filter(([_, v]) => v !== "" && v !== undefined)
+    );
+    const res = await axios.get(`${constant.backend_url}/users/get-all-wallets`, {
+      params: {
+        ...cleanFilters,
+        page: 1,
+        limit: total || totalUsers || 100000,
+        userId: id,
+      },
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+      },
+    });
+
+    if (!res.data?.success) return [];
+    return formatWallets(res.data.result || [], 1, total || totalUsers || 100000);
+  };
   
 
   useEffect(() => {
@@ -158,9 +186,43 @@ const Walletlist = () => {
       getAllWallets(id);
     // }
 
-  }, [page, filters]);
+  }, [id, page, filters]);
 
 
+
+
+
+        const handleDelete = async (userId) => {
+        try {
+            setLoading(true);
+
+            const res = await axios.post(
+                `${constant.backend_url}/admin/delete-userswallets`,
+                {
+                    userId
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+                    },
+                }
+            );
+
+            if (res.data?.success) {
+                message.success("Wallet Deleted successfully");
+                setDeletemodal(false);
+                getAllWallets(id);
+            } else {
+                message.warning(res.data.message || "Delete failed");
+            }
+
+        } catch (error) {
+            console.log(error);
+            message.error("Something went wrong");
+        } finally {
+            setLoading(false);
+        }
+    };
 
   const updateFilter = (key, value) => {
     if (key === "status") {
@@ -185,6 +247,7 @@ const Walletlist = () => {
   // TABLE COLUMNS
   // -----------------------------
   const columns = [
+    { title: "S.no", dataIndex: "sno" },
     { title: "Wallet Name", dataIndex: "walletname" },
     { title: "User Name", dataIndex: "firstname" },
 
@@ -301,7 +364,6 @@ const Walletlist = () => {
     { title: "Status", dataIndex: "status" },
   ];
 
-  // const tableData = id ? walletData : filteredTableData;
   const tableData = filteredTableData;
 
     const handleBlockWallet = async (record) => {
@@ -328,23 +390,13 @@ const Walletlist = () => {
 
         const updatedStatus = isCurrentlyActive ? "Inactive" : "Active";
 
-        if (id) {
-          setWalletData(prev =>
-            prev.map(item =>
-              item.key === record.key
-                ? { ...item, status: updatedStatus }
-                : item
-            )
-          );
-        } else {
-          setFilteredTableData(prev =>
-            prev.map(item =>
-              item.key === record.key
-                ? { ...item, status: updatedStatus }
-                : item
-            )
-          );
-        }
+        setFilteredTableData(prev =>
+          prev.map(item =>
+            item.key === record.key
+              ? { ...item, status: updatedStatus }
+              : item
+          )
+        );
 
       }
 
@@ -379,6 +431,10 @@ const Walletlist = () => {
           onSearch={(value) => updateFilter("search", value)}
           onTypeChange={(value) => updateFilter("type", value)}
           onVerifyChange={(value) => updateFilter("status", value)}
+          showExportButton={true}
+          exportFilename="wallet_details"
+          exportColumns={columns}
+          getExportData={getWalletsForExport}
           showDateFilter={true}
           onDateChange={(dates) => {
             setPage(1);
@@ -395,6 +451,17 @@ const Walletlist = () => {
         />
       )}
 
+      {id && (
+        <div style={{ display: "flex", justifyContent: "flex-end", padding: "0 10px", marginBottom: 12 }}>
+          <ExportButton
+            filename={`user_wallets_${id}`}
+            columns={columns}
+            data={tableData}
+            getExportData={getWalletsForExport}
+          />
+        </div>
+      )}
+
       {/* TABLE */}
 
       <ReusableTable
@@ -405,11 +472,55 @@ const Walletlist = () => {
         total={total}
         currentPage={page}
         onPageChange={(p) => setPage(p)}  
-        actionType={["block"]}
+        actionType={["block","Remove"]}
         onBlock={(record) => handleBlockWallet(record)}  
+              onDelete={(record) => {
+        setDeleteRecord(record);
+        setDeletemodal(true);
+    }}
         loading={loading} 
 
       />
+
+
+
+
+            <ReusableModal
+  open={deletemodal}
+  onCancel={() => setDeletemodal(false)}
+  title="Delete Wallet"
+  description={"Are you sure you want to delete this Wallet?"}
+  showFooter={false}
+  extraContent={
+    <div className="text-center">
+
+      <p className="text-gray-300 text-base">
+        Are you sure you want to delete this Wallet?
+      </p>
+
+      <div className="flex justify-between gap-4 mt-6">
+
+        {/* ❌ NO BUTTON FIX */}
+        <button
+          className="px-6 py-2 rounded primaty-bg text-black"
+          onClick={() => setDeletemodal(false)}
+        >
+          No
+        </button>
+
+        {/* ❌ YES BUTTON FIX */}
+        <button
+          className="px-6 py-2 rounded bg-red-600 text-white"
+          onClick={() => handleDelete(deleteRecord?.key)}
+        >
+          Yes
+        </button>
+
+      </div>
+
+    </div>
+  }
+/>
 
       {/* MODAL */}
       <ReusableModal

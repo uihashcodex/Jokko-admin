@@ -16,8 +16,10 @@ const RoleManagement = () => {
   const [editingKey, setEditingKey] = useState(null);
   const [initialValues, setInitialValues] = useState({});
   const [loading, setLoading] = useState(false);
+  const [searchText, setSearchText] = useState("");
 
-
+    const [deletemodal, setDeletemodal] = useState(false);
+    const [deleteRecord, setDeleteRecord] = useState(null);
 
   const [page, setPage] = useState(1);
 const [total, setTotal] = useState(0);
@@ -32,7 +34,16 @@ useEffect(() => {
   fetchRoles();
 }, [page]);
 
-const fetchRoles = async (search = "") => {
+const formatRoles = (roles = [], pageNumber = 1, pageLimit = PAGE_SIZE) =>
+  roles.map((role, index) => ({
+    key: role._id || role.id,
+    roleId: role._id || role.id,
+    sno: (pageNumber - 1) * pageLimit + index + 1,
+    name: role.role_name || role.name || "",
+    permissions: Array.isArray(role.permissions) ? role.permissions : [],
+  }));
+
+const fetchRoles = async (search = searchText, pageNumber = page, pageLimit = PAGE_SIZE) => {
   try {
     setLoading(true);
 
@@ -41,8 +52,8 @@ const fetchRoles = async (search = "") => {
       {
         params: {
           search,
-          page,
-          limit: PAGE_SIZE,
+          page: pageNumber,
+          limit: pageLimit,
         },
         headers: {
           Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
@@ -52,14 +63,7 @@ const fetchRoles = async (search = "") => {
     );
 
     const rolesArray = response.data?.result || [];
-
-    const formattedData = rolesArray.map((role, index) => ({
-      key: role._id || role.id,
-      roleId: role._id || role.id,
-      sno: (page - 1) * PAGE_SIZE + index + 1,
-      name: role.role_name || role.name || "",
-      permissions: Array.isArray(role.permissions) ? role.permissions : [],
-    }));
+    const formattedData = formatRoles(rolesArray, pageNumber, pageLimit);
 
     setData(formattedData);
     setTotal(response.data?.total || 0);
@@ -72,10 +76,28 @@ const fetchRoles = async (search = "") => {
   }
 };
 
+const getRolesForExport = async () => {
+  const response = await axios.get(`${constant.backend_url}/management/roles/list`, {
+    params: {
+      search: searchText,
+      page: 1,
+      limit: total || 100000,
+    },
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+      "Content-Type": "application/json",
+    },
+  });
+
+  return formatRoles(response.data?.result || [], 1, total || 100000);
+};
+
   const debouncedSearch = useMemo(
     () =>
       debounce((value) => {
-        fetchRoles(value);
+        setSearchText(value);
+        setPage(1);
+        fetchRoles(value, 1);
       }, 600),
     []
   );
@@ -141,6 +163,40 @@ const fetchRoles = async (search = "") => {
       },
     },
   ];
+
+
+
+        const handleDelete = async (userId) => {
+        try {
+            setLoading(true);
+
+            const res = await axios.post(
+                `${constant.backend_url}/admin/delete-roles`,
+                {
+                    userId
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+                    },
+                }
+            );
+
+            if (res.data?.success) {
+                message.success("Roles Deleted successfully");
+                setDeletemodal(false);
+                fetchRoles();
+            } else {
+                message.warning(res.data.message || "Delete failed");
+            }
+
+        } catch (error) {
+            console.log(error);
+            message.error("Something went wrong");
+        } finally {
+            setLoading(false);
+        }
+    };
 
   const handleSubmit = async (values) => {
     try {
@@ -244,6 +300,10 @@ const fetchRoles = async (search = "") => {
         data={data}
         showCreateButton={true}
         showStatusFilter={false}
+        showExportButton={true}
+        exportFilename="roles"
+        exportColumns={columns}
+        getExportData={getRolesForExport}
         onSearch={(value) => debouncedSearch(value)}
          searchTooltip="Search by Role Name"
         onCreate={() => {
@@ -253,6 +313,7 @@ const fetchRoles = async (search = "") => {
         }}
       />
 
+
  <ReusableTable
   columns={columns}
   data={data}
@@ -261,7 +322,7 @@ const fetchRoles = async (search = "") => {
   total={total}
   currentPage={page}
   onPageChange={(p) => setPage(p)}
-  actionType={["update"]}
+  actionType={["update","Remove"]}
   onUpdate={(record) => {
     setEditingKey(record.roleId || record.key);
     setInitialValues({
@@ -271,6 +332,51 @@ const fetchRoles = async (search = "") => {
     setOpen(true);
   }}
   loading={loading}
+
+
+      onDelete={(record) => {
+        setDeleteRecord(record);
+        setDeletemodal(true);
+    }}
+/>
+
+
+
+            <ReusableModal
+  open={deletemodal}
+  onCancel={() => setDeletemodal(false)}
+  title="Delete Staff"
+  description={"Are you sure you want to delete this Staff?"}
+  showFooter={false}
+  extraContent={
+    <div className="text-center">
+
+      <p className="text-gray-300 text-base">
+        Are you sure you want to delete this Staff?
+      </p>
+
+      <div className="flex justify-between gap-4 mt-6">
+
+        {/* ❌ NO BUTTON FIX */}
+        <button
+          className="px-6 py-2 rounded primaty-bg text-black"
+          onClick={() => setDeletemodal(false)}
+        >
+          No
+        </button>
+
+        {/* ❌ YES BUTTON FIX */}
+        <button
+          className="px-6 py-2 rounded bg-red-600 text-white"
+          onClick={() => handleDelete(deleteRecord?.key)}
+        >
+          Yes
+        </button>
+
+      </div>
+
+    </div>
+  }
 />
       <ReusableModal
         open={open}

@@ -5,6 +5,9 @@ import { message } from "antd";
 import axios from "axios";
 import debounce from "lodash.debounce";
 import { constant } from "../const";
+import ReusableModal from "../reuseable/ReusableModal";
+
+
 
 const PAGE_SIZE = 10;
 
@@ -23,6 +26,10 @@ const BuySellFiatAsset = () => {
   const [loading, setLoading] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();
 
+
+      const [deletemodal, setDeletemodal] = useState(false);
+    const [deleteRecord, setDeleteRecord] = useState(null);
+
   const [filters, setFilters] = useState({
     search: "",
     type: "",
@@ -36,6 +43,32 @@ const BuySellFiatAsset = () => {
     ],
     []
   );
+
+  const formatFiatAssets = (docs = [], pageNumber = 1, pageLimit = PAGE_SIZE) =>
+    docs.map((item, index) => ({
+      id: item?._id || item?.id || index,
+      sno: (pageNumber - 1) * pageLimit + index + 1,
+      tokenName:
+        item?.tokenName ||
+        item?.name ||
+        item?.fiatName ||
+        item?.currencyName ||
+        "-",
+      tokenSymbol:
+        item?.tokenSymbol ||
+        item?.symbol ||
+        item?.fiatSymbol ||
+        item?.currencySymbol ||
+        "-",
+      code: item?.code || item?.currencyCode || item?.fiatCode || "-",
+      type: item?.type || "-",
+      verifyStatus:
+        typeof item?.verifyStatus === "boolean"
+          ? item.verifyStatus
+            ? "active"
+            : "inactive"
+          : item?.verifyStatus || item?.status || "-",
+    }));
 
   const updateFilter = (key, value) => {
     setPage(1);
@@ -83,30 +116,7 @@ const BuySellFiatAsset = () => {
           response.data?.result?.total ||
           docs.length;
 
-        const formattedData = docs.map((item, index) => ({
-          id: item?._id || item?.id || index,
-          sno: (page - 1) * PAGE_SIZE + index + 1,
-          tokenName:
-            item?.tokenName ||
-            item?.name ||
-            item?.fiatName ||
-            item?.currencyName ||
-            "-",
-          tokenSymbol:
-            item?.tokenSymbol ||
-            item?.symbol ||
-            item?.fiatSymbol ||
-            item?.currencySymbol ||
-            "-",
-          code: item?.code || item?.currencyCode || item?.fiatCode || "-",
-          type: item?.type || "-",
-          verifyStatus:
-            typeof item?.verifyStatus === "boolean"
-              ? item.verifyStatus
-                ? "active"
-                : "inactive"
-              : item?.verifyStatus || item?.status || "-",
-        }));
+        const formattedData = formatFiatAssets(docs, page, PAGE_SIZE);
 
         setOriginalData(formattedData);
         setTotal(totalCount);
@@ -130,6 +140,41 @@ const BuySellFiatAsset = () => {
         setLoading(false);
       }, Math.max(minTime - elapsed, 0));
     }
+  };
+
+  const getFiatAssetsForExport = async () => {
+    const cleanFilters = Object.fromEntries(
+      Object.entries(filters).filter(([_, v]) => v !== "")
+    );
+    const totalPages = Math.max(1, Math.ceil((total || 0) / PAGE_SIZE));
+    const rows = [];
+
+    for (let pageNumber = 1; pageNumber <= totalPages; pageNumber += 1) {
+      const response = await axios.post(
+        `${constant.backend_url}/admin/buysell-fiatAsset`,
+        {
+          ...cleanFilters,
+          page: pageNumber,
+          limit: PAGE_SIZE,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+          },
+          validateStatus: () => true,
+        }
+      );
+
+      if (!response.data?.success) break;
+      const docs = Array.isArray(response.data?.result)
+        ? response.data.result
+        : response.data?.result?.docs || [];
+
+      rows.push(...formatFiatAssets(docs, pageNumber, PAGE_SIZE));
+    }
+
+    return rows;
   };
 
   useEffect(() => {
@@ -192,6 +237,41 @@ const BuySellFiatAsset = () => {
     }
   };
 
+
+
+
+        const handleDelete = async (userId) => {
+        try {
+            setLoading(true);
+
+            const res = await axios.post(
+                `${constant.backend_url}/admin/delete-fiatAsset`,
+                {
+                    userId
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+                    },
+                }
+            );
+
+            if (res.data?.success) {
+                message.success("Wallet Deleted successfully");
+                setDeletemodal(false);
+                getBuySellFiatAssets();
+            } else {
+                message.warning(res.data.message || "Delete failed");
+            }
+
+        } catch (error) {
+            console.log(error);
+            message.error("Something went wrong");
+        } finally {
+            setLoading(false);
+        }
+    };
+
   return (
     <div
       style={{
@@ -217,6 +297,10 @@ const BuySellFiatAsset = () => {
           showCreateButton={false}
           showStatusFilter={true}
           showSearch={true}
+          showExportButton={true}
+          exportFilename="buysell_fiat_assets"
+          exportColumns={columns}
+          getExportData={getFiatAssetsForExport}
           networkOptions={typeOptions}
           onSearch={(value) => debouncedSearch(value)}
 onVerifyChange={(value) =>
@@ -242,9 +326,50 @@ onVerifyChange={(value) =>
           currentPage={page}
           onPageChange={(currentPage) => setPage(currentPage)}
           loading={loading}
-          actionType={["status"]}
+          actionType={["status","Remove"]}
           onStatusChange={handleStatusChange}
+            onDelete={(record) => {
+        setDeleteRecord(record);
+        setDeletemodal(true);
+    }}
         />
+
+
+                    <ReusableModal
+  open={deletemodal}
+  onCancel={() => setDeletemodal(false)}
+  title="Delete Fiat Asset?"
+  description={"Are you sure you want to delete this Fiat Asset?"}
+  showFooter={false}
+  extraContent={
+    <div className="text-center">
+
+      <p className="text-gray-300 text-base">
+        Are you sure you want to delete this Fiat Asset?
+      </p>
+
+      <div className="flex justify-between gap-4 mt-6">
+
+        {/* ❌ NO BUTTON FIX */}
+        <button
+          className="px-6 py-2 rounded primaty-bg text-black"
+          onClick={() => setDeletemodal(false)}
+        >
+          No
+        </button>
+
+        {/* ❌ YES BUTTON FIX */}
+        <button
+          className="px-6 py-2 rounded bg-red-600 text-white"
+onClick={() => handleDelete(deleteRecord?.id)}        >
+          Yes
+        </button>
+
+      </div>
+
+    </div>
+  }
+/>
       </>
     </div>
   );

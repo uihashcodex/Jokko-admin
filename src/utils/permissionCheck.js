@@ -16,8 +16,11 @@ export const PERMISSION_ROUTE_MAP = {
   "Staff Management": "/staffmanagement",
   Env: "/env",
   Broadcast: "/broadcast",
-  Providers: "/onramper-history",
+  "Onramper Orders": "/onramper-history",
+  "Oframper Orders": "/oframper-history",
   "CoinRabbit History": "/coin-rabbbit-history",
+
+
   "Fiat Assets": "/buy-sell-fiat-asset",
   "Buy/Sell Crypto": "/buy-sell-crypto",
   "Buy/Sell Network": "/buy-sell-networks",

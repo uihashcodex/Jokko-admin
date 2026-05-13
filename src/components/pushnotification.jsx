@@ -1,53 +1,196 @@
-import { useState } from "react";
-import { Button, Form, Input, message, Tag } from "antd";
-import { SendOutlined, BellOutlined, UserAddOutlined } from "@ant-design/icons";
+import { useEffect, useMemo, useState } from "react";
+import { message, Tag } from "antd";
+import { BellOutlined } from "@ant-design/icons";
 import axios from "axios";
 import { constant } from "../const";
+import ReusableTable from "../reuseable/ReusableTable";
+import DeleteAction from "../reuseable/DeleteAction";
+import TableHeader from "../reuseable/TableHeader";
+import ReusableModal from "../reuseable/ReusableModal";
+import { Button, Form, Input } from "antd";
+import { SendOutlined, UserAddOutlined } from "@ant-design/icons";
+
 import UserPickerModal from "../reuseable/UserPickerModal";
 
 const { TextArea } = Input;
 
+
 const PushNotification = () => {
+  const [open, setOpen] = useState(false);
+  const [sendLoading, setSendLoading] = useState(false);
+  const [listLoading, setListLoading] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const pageSize = 10;
+
   const [form] = Form.useForm();
-  const [loading, setLoading] = useState(false);
   const [userPickerOpen, setUserPickerOpen] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState([]);
 
-  const handleSend = async (values) => {
-    setLoading(true);
-    try {
-      const selectedEmails = selectedUsers
-        .map((user) => user.email)
-        .filter((email) => email && email !== "-");
+  const authHeader = useMemo(
+    () => ({
+      Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+    }),
+    []
+  );
 
-      // TODO: wire up to your API endpoint
+  const fetchNotifications = async (nextPage = page) => {
+    setListLoading(true);
+    try {
+      const { data } = await axios.get(
+        `${constant.backend_url}/admin/push-notifications?page=${nextPage}&limit=${pageSize}`,
+        { headers: authHeader }
+      );
+
+      if (data?.success) {
+        const items = data?.result?.items || [];
+        setNotifications(items.map((n) => ({ ...n, key: n._id })));
+        setTotal(data?.result?.total || 0);
+        setPage(data?.result?.page || nextPage);
+      } else {
+        message.error(data?.message || "Failed to load notifications");
+      }
+    } catch (e) {
+      message.error("Failed to load notifications");
+    } finally {
+      setListLoading(false);
+    }
+  };
+
+  const getNotificationsForExport = async () => {
+    const { data } = await axios.get(
+      `${constant.backend_url}/admin/push-notifications?page=1&limit=${total || 100000}`,
+      { headers: authHeader }
+    );
+
+    if (!data?.success) return [];
+    return (data?.result?.items || []).map((n) => ({ ...n, key: n._id }));
+  };
+
+  useEffect(() => {
+    fetchNotifications(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleSend = async (values) => {
+    const userIds = selectedUsers.map((user) => user.id).filter(Boolean);
+
+    if (!userIds.length) {
+      message.error("Please select at least one user.");
+      return;
+    }
+
+    setSendLoading(true);
+    try {
       const { data } = await axios.post(
         `${constant.backend_url}/admin/send-batch`,
         {
-          ...values,
-          user_ids: selectedUsers.map((user) => user.id),
-          emails: selectedEmails,
+          title: values.title,
+          body: values.body,
+          user_id: userIds,
         },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
-          },
-        }
+        { headers: authHeader }
       );
-      // message.success("Push notification sent successfully!");
-      if (data.success === true) {
-        message.success(data.message);
+
+      if (data?.success === true) {
+        const result = data?.data || {};
+        console.log("Push notification send result:", result);
+        message.success(
+          "Notification sent successfully"
+        );
+        setOpen(false);
+        fetchNotifications(1);
         form.resetFields();
         setSelectedUsers([]);
       } else {
-        message.error(data.message);
+        message.error(data?.message || "Failed to send notification.");
       }
     } catch {
       message.error("Failed to send notification.");
     } finally {
-      setLoading(false);
+      setSendLoading(false);
     }
   };
+
+  const handleDeleteNotification = async (notificationId) => {
+    try {
+      const { data } = await axios.post(
+        `${constant.backend_url}/admin/delete-push-notification`,
+        { notificationId },
+        { headers: authHeader }
+      );
+
+      if (data?.success) {
+        message.success(data?.message || "Deleted");
+        fetchNotifications(page);
+      } else {
+        message.error(data?.message || "Delete failed");
+      }
+    } catch (e) {
+      message.error("Delete failed");
+    }
+  };
+
+  const listColumns = [
+    {
+      title: "Date & Time",
+      dataIndex: "createdAt",
+      key: "createdAt",
+      render: (v) => (v ? new Date(v).toLocaleString() : "-"),
+    },
+    { title: "Title", dataIndex: "title", key: "title" },
+    { title: "Body", dataIndex: "body", key: "body" },
+    {
+      title: "Status",
+      dataIndex: "status",
+      key: "status",
+      render: (v) => {
+        const val = String(v || "").toLowerCase();
+        const color = val === "sent" ? "green" : val === "failed" ? "red" : "gold";
+        return <Tag color={color}>{val || "-"}</Tag>;
+      },
+    },
+    // {
+    //   title: "User Id",
+    //   dataIndex: "user_id",
+    //   key: "user_id",
+    //   render: (v) => (v ? String(v) : "-"),
+    // },
+    {
+      title: "Action",
+      key: "action",
+      render: (_, record) => (
+        <DeleteAction
+          title="Delete Notification"
+          description={
+            <div>
+              This will permanently delete this notification record from the database.
+            </div>
+          }
+          confirmText="Delete"
+          onConfirm={() => handleDeleteNotification(record?._id)}
+        />
+      ),
+    },
+  ];
+
+  const modalFields = [
+    {
+      label: "Title",
+      name: "title",
+      type: "text",
+      placeholder: "e.g. Maintenance Notice",
+      rules: [{ required: true, message: "Title is required" }],
+    },
+    {
+      label: "Content",
+      name: "body",
+      type: "textarea",
+      placeholder: "Write the notification message…",
+      rules: [{ required: true, message: "Content is required" }],
+    },
+  ];
 
   return (
     <div>
@@ -60,6 +203,21 @@ const PushNotification = () => {
         </div>
       </div>
 
+      <TableHeader
+        data={notifications}
+        showSearch={false}
+        showStatusFilter={false}
+        showPrivateFilter={false}
+        showNetFilter={false}
+        showNetworkFilter={false}
+        showDateFilter={false}
+        showCreateButton={true}
+        onCreate={() => setOpen(true)}
+        showExportButton={true}
+        exportFilename="push_notifications"
+        exportColumns={listColumns.filter((c) => c.dataIndex)}
+        getExportData={getNotificationsForExport}
+      />
       {/* Notification Composer Card */}
       <div style={styles.card}>
         {/* Card Header */}
@@ -75,8 +233,17 @@ const PushNotification = () => {
           </div>
         </div>
 
-        <div style={styles.divider} />
 
+        <ReusableModal
+          open={open}
+          onCancel={() => setOpen(false)}
+          onSubmit={handleSend}
+          title="Create Push Notification"
+          description="Send a push notification to all users who have an active device token."
+          fields={modalFields}
+          initialValues={{}}
+          maskClosable={false}
+        />
         {/* Form */}
         <Form
           form={form}
@@ -101,7 +268,7 @@ const PushNotification = () => {
             </span>
           </div>
 
-          {selectedUsers.length > 0 && (
+          {/* {selectedUsers.length > 0 && (
             <div style={styles.selectedUserPreview}>
               {selectedUsers.slice(0, 4).map((user) => (
                 <Tag key={user.id} color="green" style={{ marginBottom: 6 }}>
@@ -112,7 +279,7 @@ const PushNotification = () => {
                 <Tag color="blue">+{selectedUsers.length - 4} more</Tag>
               )}
             </div>
-          )}
+          )} */}
 
           {/* Title Field */}
           <Form.Item
@@ -150,7 +317,10 @@ const PushNotification = () => {
             <div style={styles.btnRow}>
               <Button
                 htmlType="reset"
-                onClick={() => form.resetFields()}
+                onClick={() => {
+                  form.resetFields();
+                  setSelectedUsers([]);
+                }}
                 style={styles.clearBtn}
               >
                 Clear
@@ -158,7 +328,7 @@ const PushNotification = () => {
               <Button
                 type="primary"
                 htmlType="submit"
-                loading={loading}
+                loading={sendLoading}
                 icon={<SendOutlined />}
                 style={styles.sendBtn}
                 className="pn-send-btn"
@@ -169,17 +339,31 @@ const PushNotification = () => {
           </Form.Item>
         </Form>
       </div>
-
       <UserPickerModal
         open={userPickerOpen}
         title="Select Users"
         subtitle="Push notification recipients"
         submitText="Use Selected Users"
+        initialSelectedUsers={selectedUsers}
         onCancel={() => setUserPickerOpen(false)}
         onSubmit={({ users }) => {
           setSelectedUsers(users);
           setUserPickerOpen(false);
         }}
+      />
+      <ReusableTable
+        columns={listColumns}
+        data={notifications}
+        loading={listLoading}
+        rowKey="key"
+        pageSize={pageSize}
+        total={total}
+        currentPage={page}
+        onPageChange={(p) => {
+          setPage(p);
+          fetchNotifications(p);
+        }}
+        actionType={[]}
       />
 
       {/* Scoped styles */}
@@ -214,7 +398,7 @@ const PushNotification = () => {
           transform: scale(0.98);
         }
       `}</style>
-    </div>
+    </div >
   );
 };
 
@@ -226,7 +410,8 @@ const styles = {
     padding: "28px 32px",
     maxWidth: 680,
     boxShadow: "0 8px 32px rgba(0,0,0,0.35)",
-    margin: "auto"
+    margin: "auto",
+    marginBottom: 40,
   },
   cardHeader: {
     display: "flex",

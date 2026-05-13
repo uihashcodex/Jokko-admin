@@ -4,6 +4,8 @@ import TableHeader from "../reuseable/TableHeader";
 import { message } from "antd";
 import axios from "axios";
 import { constant } from "../const";
+import ReusableModal from "../reuseable/ReusableModal";
+
 
 const PAGE_SIZE = 10;
 
@@ -13,6 +15,9 @@ const BuySellNetworks = () => {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();
+
+      const [deletemodal, setDeletemodal] = useState(false);
+    const [deleteRecord, setDeleteRecord] = useState(null);
 
   const [filters, setFilters] = useState({
     search: "",
@@ -29,6 +34,15 @@ const BuySellNetworks = () => {
   const authHeader = {
     Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
   };
+
+  const formatNetworks = (docs = [], pageNumber = 1, pageLimit = PAGE_SIZE) =>
+    docs.map((item, index) => ({
+      id: item._id,
+      sno: (pageNumber - 1) * pageLimit + index + 1,
+      tokenName: item.networkName || "-",
+      networkSymbol: item.networkSymbol || "-",
+      verifyStatus: item.verifyStatus === true ? "active" : "inactive",
+    }));
 
   const updateFilter = (key, value) => {
     setFilters((prev) => ({
@@ -60,14 +74,7 @@ const BuySellNetworks = () => {
 
       if (data.success) {
         const docs = data.result || [];
-
-        const formatted = docs.map((item, index) => ({
-          id: item._id,
-          sno: (page - 1) * PAGE_SIZE + index + 1,
-          tokenName: item.networkName || "-",
-          networkSymbol: item.networkSymbol || "-",
-          verifyStatus: item.verifyStatus === true ? "active" : "inactive",
-        }));
+        const formatted = formatNetworks(docs, page, PAGE_SIZE);
 
         setTableData(formatted);
         setTotal(data.total || 0);
@@ -75,16 +82,39 @@ const BuySellNetworks = () => {
         messageApi.error(data.message || "Failed to fetch networks.");
       }
     } catch (error) {
-      if (error?.response?.status === 401) {
-        localStorage.removeItem("adminToken");
-        window.location.href = "/login";
-        return;
-      }
-
+      if (error?.response?.status === 401) return;
       messageApi.error("Failed to fetch networks.");
     } finally {
       setLoading(false);
     }
+  };
+
+  const getNetworksForExport = async () => {
+    const totalPages = Math.max(1, Math.ceil((total || 0) / PAGE_SIZE));
+    const rows = [];
+
+    for (let pageNumber = 1; pageNumber <= totalPages; pageNumber += 1) {
+      const payload = {
+        page: pageNumber,
+        limit: PAGE_SIZE,
+        search: filters.search,
+      };
+
+      if (filters.verifyStatus) {
+        payload.status = filters.verifyStatus === "active" ? "true" : "false";
+      }
+
+      const { data } = await axios.post(
+        `${constant.backend_url}/admin/buysell-getnetworks`,
+        payload,
+        { headers: authHeader }
+      );
+
+      if (!data.success) break;
+      rows.push(...formatNetworks(data.result || [], pageNumber, PAGE_SIZE));
+    }
+
+    return rows;
   };
 
   useEffect(() => {
@@ -113,15 +143,46 @@ const BuySellNetworks = () => {
         messageApi.error(data.message || "Failed to update status.");
       }
     } catch (error) {
-      if (error?.response?.status === 401) {
-        localStorage.removeItem("adminToken");
-        window.location.href = "/login";
-        return;
-      }
-
+      if (error?.response?.status === 401) return;
       messageApi.error("Failed to update status.");
     }
   };
+
+
+
+
+        const handleDelete = async (userId) => {
+        try {
+            setLoading(true);
+
+            const res = await axios.post(
+                `${constant.backend_url}/admin/delete-network`,
+                {
+                    userId
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+                    },
+                }
+            );
+
+            if (res.data?.success) {
+                message.success("Buy/Sell Network Deleted successfully");
+                setDeletemodal(false);
+                fetchNetworks();
+            } else {
+                message.warning(res.data.message || "Delete failed");
+            }
+
+        } catch (error) {
+            console.log(error);
+            message.error("Something went wrong");
+        } finally {
+            setLoading(false);
+        }
+    };
+
 
   return (
     <div style={{ display: "flex", justifyContent: "center", flexDirection: "column", width: "100%" }}>
@@ -138,6 +199,10 @@ const BuySellNetworks = () => {
         showCreateButton={false}
         showStatusFilter={true}
         showSearch={true}
+        showExportButton={true}
+        exportFilename="buysell_networks"
+        exportColumns={columns}
+        getExportData={getNetworksForExport}
         onSearch={(value) => updateFilter("search", value)}
         onVerifyChange={(value) => updateFilter("verifyStatus", value)}
         searchTooltip="Search by Network Name, Symbol"
@@ -152,9 +217,50 @@ const BuySellNetworks = () => {
         currentPage={page}
         onPageChange={(p) => setPage(p)}
         loading={loading}
-        actionType={["status"]}
+        actionType={["status","Remove"]}
+               onDelete={(record) => {
+        setDeleteRecord(record);
+        setDeletemodal(true);
+    }}
         onStatusChange={handleStatusChange}
       />
+
+
+                          <ReusableModal
+  open={deletemodal}
+  onCancel={() => setDeletemodal(false)}
+  title="Delete Buy/sell Network?"
+  description={"Are you sure you want to delete this Buy/sell Network?"}
+  showFooter={false}
+  extraContent={
+    <div className="text-center">
+
+      <p className="text-gray-300 text-base">
+        Are you sure you want to delete this Buy/sell Network?
+      </p>
+
+      <div className="flex justify-between gap-4 mt-6">
+
+        {/* ❌ NO BUTTON FIX */}
+        <button
+          className="px-6 py-2 rounded primaty-bg text-black"
+          onClick={() => setDeletemodal(false)}
+        >
+          No
+        </button>
+
+        {/* ❌ YES BUTTON FIX */}
+        <button
+          className="px-6 py-2 rounded bg-red-600 text-white"
+onClick={() => handleDelete(deleteRecord?.id)}        >
+          Yes
+        </button>
+
+      </div>
+
+    </div>
+  }
+/>
     </div>
   );
 };

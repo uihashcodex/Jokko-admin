@@ -5,10 +5,13 @@ import {
 import {
   NotificationOutlined, EditOutlined, DeleteOutlined, UploadOutlined
 } from "@ant-design/icons";
+import DeleteAction from "../reuseable/DeleteAction";
+
 import axios from "axios";
 import { constant } from "../const";
 import TableHeader from "../reuseable/TableHeader";
 import ReusableTable from "../reuseable/ReusableTable";
+import ReusableModal from "../reuseable/ReusableModal";
 import theme from "../config/theme";
 
 const Broadcast = () => {
@@ -25,7 +28,6 @@ const Broadcast = () => {
   const [updateLoading, setUpdateLoading] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
 
-  const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteRecord, setDeleteRecord] = useState(null);
 
@@ -59,108 +61,129 @@ const Broadcast = () => {
   };
 
   // ── fetch ─────────────────────────────────────────────────────────────────
-const fetchBroadcasts = async () => {
-  setTableLoading(true);
-  try {
-    const params = {
-      page,
-      limit:PAGE_SIZE,
-    };
+  const formatBroadcasts = (items = [], pageNumber = page, forExport = false) =>
+    items.map((item, i) => ({
+      ...item,
+      id: item._id,
+      sno: (pageNumber - 1) * PAGE_SIZE + i + 1,
+      verifyStatus: forExport ? (item.verifyStatus ? "Active" : "In Active") : item.verifyStatus,
+      createdAt: forExport && item.createdAt ? item.createdAt.split("T")[0] : item.createdAt,
+    }));
 
-    if (filters.status) {
-      params.status = filters.status === "active" ? "true" : "false";
+  const fetchBroadcasts = async () => {
+    setTableLoading(true);
+    try {
+      const params = {
+        page,
+        limit: PAGE_SIZE,
+      };
+
+      if (filters.status) {
+        params.status = filters.status === "active" ? "true" : "false";
+      }
+
+      const { data } = await axios.get(
+        `${constant.backend_url}/admin/get-broadcast`,
+        {
+          params,
+          headers: authHeader,
+        }
+      );
+
+      if (data.success) {
+        const rows = formatBroadcasts(data.result || [], page);
+
+        setBroadcasts(rows);
+        setTotal(data.pagination?.total || 0);
+      } else {
+        message.error(data.message || "Failed to load broadcasts.");
+      }
+    } catch (error) {
+      message.error("Failed to fetch broadcasts.");
+    } finally {
+      setTableLoading(false);
     }
+  };
 
+  const getBroadcastsForExport = async () => {
     const { data } = await axios.get(
       `${constant.backend_url}/admin/get-broadcast`,
       {
-        params,
+        params: {
+          page: 1,
+          limit: total || 100000,
+        },
         headers: authHeader,
       }
     );
 
-    if (data.success) {
-      const rows = (data.result || []).map((item, i) => ({
-        ...item,
-        id: item._id,
-     sno: (page - 1) * PAGE_SIZE + i + 1,
-      }));
-
-      setBroadcasts(rows);
-setTotal(data.pagination?.total || 0);    
-} else {
-      message.error(data.message || "Failed to load broadcasts.");
-    }
-  } catch (error) {
-    message.error("Failed to fetch broadcasts.");
-  } finally {
-    setTableLoading(false);
-  }
-};
+    if (!data.success) return [];
+    return formatBroadcasts(data.result || [], 1, true);
+  };
   // ── create ────────────────────────────────────────────────────────────────
-const handleCreate = async (values) => {
-  if (!createIconFile) {
-    message.error("Icon image is required");
-    return;
-  }
-
-  setCreateLoading(true);
-
-  try {
-    const formData = new FormData();
-    formData.append("title", values.title);
-    formData.append("description", values.description);
-    formData.append("icon", createIconFile); 
-
-    const { data } = await axios.post(
-      `${constant.backend_url}/admin/add-broadcast`,
-      formData,
-      {
-        headers: {
-          ...authHeader,
-          "Content-Type": "multipart/form-data",
-        },
-      }
-    );
-
-    if (data.success) {
-      message.success(data.message || "Broadcast created!");
-      
-      // reset
-      setCreateOpen(false);
-      createForm.resetFields();
-      setCreateIconFile(null);
-      setCreatePreview(null);
-
-      fetchBroadcasts();
-    } else {
-      message.error(data.message || "Failed to create broadcast.");
+  const handleCreate = async (values) => {
+    if (!createIconFile) {
+      message.error("Icon image is required");
+      return;
     }
 
-  } catch (error) {
-    // 🔥 BACKEND ERROR MESSAGE SHOW
-    const errMsg =
-      error?.response?.data?.message ||
-      error?.response?.data?.error ||
-      "Something went wrong";
+    setCreateLoading(true);
 
-    message.error(errMsg);
-  } finally {
-    setCreateLoading(false);
-  }
-};
+    try {
+      const formData = new FormData();
+      formData.append("title", values.title);
+      formData.append("description", values.description);
+      formData.append("icon", createIconFile);
+
+      const { data } = await axios.post(
+        `${constant.backend_url}/admin/add-broadcast`,
+        formData,
+        {
+          headers: {
+            ...authHeader,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      if (data.success) {
+        message.success(data.message || "Broadcast created!");
+
+        // reset
+        setCreateOpen(false);
+        createForm.resetFields();
+        setCreateIconFile(null);
+        setCreatePreview(null);
+
+        fetchBroadcasts();
+      } else {
+        message.error(data.message || "Failed to create broadcast.");
+      }
+
+    } catch (error) {
+      // 🔥 BACKEND ERROR MESSAGE SHOW
+      const errMsg =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        "Something went wrong";
+
+      message.error(errMsg);
+    } finally {
+      setCreateLoading(false);
+    }
+  };
   // ── update ────────────────────────────────────────────────────────────────
-const openUpdate = (record) => {
-  setSelectedRow(record);
-  setUpdatePreview(getImageUrl(record.icon) || null);
-  setUpdateIconFile(null);
-  updateForm.setFieldsValue({
-    broadcastId: record._id,
-    title: record.title,
-    description: record.description,
-  });
-  setUpdateOpen(true);
-};
+  const openUpdate = (record) => {
+    setSelectedRow(record);
+    setUpdatePreview(getImageUrl(record.icon) || null);
+    setUpdateIconFile(null);
+    updateForm.setFieldsValue({
+      broadcastId: record._id,
+      title: record.title,
+      description: record.description,
+    });
+    setUpdateOpen(true);
+  };
 
   console.log("openUpdateopenUpdate", openUpdate)
 
@@ -168,7 +191,7 @@ const openUpdate = (record) => {
     setUpdateLoading(true);
     try {
       const formData = new FormData();
-      formData.append("broadcastId",selectedRow._id)
+      formData.append("broadcastId", selectedRow._id)
       formData.append("title", values.title);
       formData.append("description", values.description);
       if (updateIconFile) formData.append("icon", updateIconFile);
@@ -203,16 +226,16 @@ const openUpdate = (record) => {
     try {
       const { data } = await axios.post(
         `${constant.backend_url}/admin/delete-broadcast`,
-         {
-               broadcastId: deleteRecord.id,
-          },
-        { headers: authHeader,
-        
-         }
+        {
+          broadcastId: deleteRecord.id,
+        },
+        {
+          headers: authHeader,
+
+        }
       );
       if (data.success) {
         message.success(data.message || "Broadcast deleted!");
-        setDeleteOpen(false);
         setDeleteRecord(null);
         fetchBroadcasts();
       } else {
@@ -226,125 +249,131 @@ const openUpdate = (record) => {
   };
 
   // ── icon upload helper ────────────────────────────────────────────────────
-const makeUploadProps = (setFile, setPreview) => ({
-  beforeUpload: (file) => {
-    const isImage = file.type && file.type.startsWith("image/");
-    if (!isImage) {
-      message.error("Please upload an image file.");
-      return Upload.LIST_IGNORE;
+  const makeUploadProps = (setFile, setPreview) => ({
+    beforeUpload: (file) => {
+      const isImage = file.type && file.type.startsWith("image/");
+      if (!isImage) {
+        message.error("Please upload an image file.");
+        return Upload.LIST_IGNORE;
+      }
+
+      setFile(file);
+      setPreview(URL.createObjectURL(file));
+      return false;
+    },
+    maxCount: 1,
+    showUploadList: false,
+  });
+
+  const getImageUrl = (icon) => {
+    if (!icon) return "";
+
+    let imageUrl = String(icon).trim();
+    imageUrl = imageUrl.replace("/testapi", "/jokkoapi");
+
+    console.log(imageUrl, "fsdfsdfsd")
+
+    if (imageUrl.startsWith("http")) {
+      return imageUrl;
     }
 
-    setFile(file);
-    setPreview(URL.createObjectURL(file));
-    return false;
-  },
-  maxCount: 1,
-  showUploadList: false,
-});
+    return `${constant.image_url}${imageUrl.startsWith("/") ? "" : "/"}${imageUrl}`;
+  };
 
-const getImageUrl = (icon) => {
-  if (!icon) return "";
 
-  let imageUrl = String(icon).trim();
-  imageUrl = imageUrl.replace("/testapi", "/jokkoapi");
-
-  console.log(imageUrl, "fsdfsdfsd")
-
-  if (imageUrl.startsWith("http")) {
-    return imageUrl;
-  }
-
-  return `${constant.image_url}${imageUrl.startsWith("/") ? "" : "/"}${imageUrl}`;
-};
-
-  
   // ── table columns ─────────────────────────────────────────────────────────
-const columns = [
-  { title: "S.No", dataIndex: "sno", width: 60 },
-{
-  title: "Icon",
-  dataIndex: "icon",
-  width: 100,
-  render: (v) => {
-    const imageUrl = getImageUrl(v);
+  const columns = [
+    { title: "S.No", dataIndex: "sno", width: 60 },
+    {
+      title: "Icon",
+      dataIndex: "icon",
+      width: 100,
+      render: (v) => {
+        const imageUrl = getImageUrl(v);
 
-    return imageUrl ? (
-      <Image
-        src={imageUrl}
-        width={40}
-        height={40}
-        style={{ borderRadius: 8, objectFit: "cover" }}
-        fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
-      />
-    ) : (
-      <div style={styles.iconPlaceholder}>
-        <NotificationOutlined style={{ color: "#c9f07b", fontSize: 18 }} />
-      </div>
-    );
-  },
-},
-  { title: "Title", dataIndex: "title" },
-  {
-    title: "Description",
-    dataIndex: "description",
-    render: (v) => (v ? (v.length > 60 ? `${v.slice(0, 60)}…` : v) : "-"),
-  },
-  {
-    title: "Status",
-    dataIndex: "verifyStatus",
-    render: (v) => {
-      const isActive = v === true || v === "active" || v === "true";
-
-      return (
-      <Tag color={isActive ? "green" : "red"}>
-        {isActive ? "Active" : "Inactive"}
-      </Tag>
-      );
+        return imageUrl ? (
+          <Image
+            src={imageUrl}
+            width={40}
+            height={40}
+            style={{ borderRadius: 8, objectFit: "cover" }}
+            fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+          />
+        ) : (
+          <div style={styles.iconPlaceholder}>
+            <NotificationOutlined style={{ color: "#c9f07b", fontSize: 18 }} />
+          </div>
+        );
+      },
     },
-  },
-  {
-    title: "Created At",
-    dataIndex: "createdAt",
-    render: (v) => (v ? v.split("T")[0] : "-"),
-  },
-  {
-    title: "Actions",
-    key: "actions",
-    fixed: "right",
-    render: (_, record) => (
-      <div style={{ display: "flex", gap: 8 }}>
-        <Button
-          size="small"
-          icon={<EditOutlined />}
-          onClick={() => openUpdate(record)}
-          style={btnStyles.update}
-        >
-          Update
-        </Button>
-        <Button
-          size="small"
-          icon={<DeleteOutlined />}
-          onClick={() => {
-            setDeleteRecord(record);
-            setDeleteOpen(true);
-          }}
-          style={btnStyles.delete}
-        >
-          Delete
-        </Button>
-      </div>
-    ),
-  },
-];
+    { title: "Title", dataIndex: "title" },
+    {
+      title: "Description",
+      dataIndex: "description",
+      render: (v) => (v ? (v.length > 60 ? `${v.slice(0, 60)}…` : v) : "-"),
+    },
+    {
+      title: "Status",
+      dataIndex: "verifyStatus",
+      render: (v) => {
+        const isActive = v === true || v === "active" || v === "true";
+
+        return (
+          <Tag color={isActive ? "green" : "red"}>
+            {isActive ? "Active" : "Inactive"}
+          </Tag>
+        );
+      },
+    },
+    {
+      title: "Created At",
+      dataIndex: "createdAt",
+      render: (v) => (v ? v.split("T")[0] : "-"),
+    },
+    {
+      title: "Actions",
+      key: "actions",
+      fixed: "right",
+      render: (_, record) => (
+        <div style={{ display: "flex", gap: 8 }}>
+          <Button
+            size="small"
+            icon={<EditOutlined />}
+            onClick={() => openUpdate(record)}
+            style={btnStyles.update}
+          >
+            Update
+          </Button>
+          <DeleteAction
+            buttonVariant="solid"
+            title="Delete Broadcast"
+            description={
+              <>
+                Are you sure you want to delete{" "}
+                <strong style={{ color: "#fff" }}>{record?.title}</strong>? This cannot be undone.
+              </>
+            }
+            loading={deleteLoading && deleteRecord?.id === record?.id}
+            onOpen={() => setDeleteRecord(record)}
+            onConfirm={async () => {
+              setDeleteRecord(record);
+              await handleDelete();
+            }}
+            onClose={() => setDeleteRecord(null)}
+          />
+        </div>
+      ),
+    },
+  ];
 
 
-const clearPreview = (setFile, preview, setPreview) => {
-  if (preview && preview.startsWith("blob:")) {
-    URL.revokeObjectURL(preview);
-  }
-  setFile(null);
-  setPreview(null);
-};
+  const clearPreview = (setFile, preview, setPreview) => {
+    if (preview && preview.startsWith("blob:")) {
+      URL.revokeObjectURL(preview);
+    }
+    setFile(null);
+    setPreview(null);
+  };
 
   // ── shared form body (used in both create & update modals) ────────────────
   const BroadcastForm = ({ form, onFinish, loading, iconFile, setIconFile, preview, setPreview, submitLabel = "Submit" }) => (
@@ -369,39 +398,39 @@ const clearPreview = (setFile, preview, setPreview) => {
           style={{ resize: "none" }}
         />
       </Form.Item>
-<Form.Item label={<span style={modalStyles.label}>Icon / Image</span>}>
-  <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-    <Upload {...makeUploadProps(setIconFile, setPreview)}>
-      <Button icon={<UploadOutlined />} style={modalStyles.uploadBtn}>
-        {iconFile ? "Change Icon" : "Upload Icon"}
-      </Button>
-    </Upload>
+      <Form.Item label={<span style={modalStyles.label}>Icon / Image</span>}>
+        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <Upload {...makeUploadProps(setIconFile, setPreview)}>
+            <Button icon={<UploadOutlined />} style={modalStyles.uploadBtn}>
+              {iconFile ? "Change Icon" : "Upload Icon"}
+            </Button>
+          </Upload>
 
-    {preview && (
-      <Image
-        src={preview}
-        width={56}
-        height={56}
-        style={{
-          borderRadius: 10,
-          objectFit: "cover",
-          border: "1px solid rgba(201,240,123,0.3)",
-        }}
-      />
-    )}
-  </div>
-</Form.Item>
+          {preview && (
+            <Image
+              src={preview}
+              width={56}
+              height={56}
+              style={{
+                borderRadius: 10,
+                objectFit: "cover",
+                border: "1px solid rgba(201,240,123,0.3)",
+              }}
+            />
+          )}
+        </div>
+      </Form.Item>
 
       <div style={modalStyles.btnRow}>
- <Button
-  onClick={() => {
-    form.resetFields();
-    clearPreview(setIconFile, preview, setPreview);
-  }}
-  style={modalStyles.cancelBtn}
->
-  Clear
-</Button>
+        <Button
+          onClick={() => {
+            form.resetFields();
+            clearPreview(setIconFile, preview, setPreview);
+          }}
+          style={modalStyles.cancelBtn}
+        >
+          Clear
+        </Button>
         <Button
           htmlType="submit"
           loading={loading}
@@ -424,23 +453,22 @@ const clearPreview = (setFile, preview, setPreview) => {
       </div>
 
       <TableHeader
-        showStatusFilter={true}
+        showStatusFilter={false}
         showSearch={false}
         showCreateButton
-        onVerifyChange={(value) => updateFilter("status", value)}
         onCreate={() => setCreateOpen(true)}
       />
-<ReusableTable
-  columns={columns}
-  data={broadcasts}
-  rowKey="id"
-  loading={tableLoading}
-  total={total}
-  pageSize={PAGE_SIZE}
-  currentPage={page}
-  onPageChange={(p) => setPage(p)}
-  actionType={[]}
-/>
+      <ReusableTable
+        columns={columns}
+        data={broadcasts}
+        rowKey="id"
+        loading={tableLoading}
+        total={total}
+        pageSize={PAGE_SIZE}
+        currentPage={page}
+        onPageChange={(p) => setPage(p)}
+        actionType={[]}
+      />
 
       {/* ── Create Modal ── */}
       <ConfigProvider theme={{ token: { colorBgElevated: theme.sidebarSettings.backgroundColor } }}>
@@ -520,48 +548,6 @@ const clearPreview = (setFile, preview, setPreview) => {
         </Modal>
       </ConfigProvider>
 
-      {/* ── Delete Confirm Modal ── */}
-      <ConfigProvider theme={{ token: { colorBgElevated: theme.sidebarSettings.backgroundColor } }}>
-        <Modal
-          open={deleteOpen}
-          onCancel={() => { setDeleteOpen(false); setDeleteRecord(null); }}
-          footer={null}
-          centered
-          width={400}
-          destroyOnHidden
-          className="custom-modal modal-style"
-          styles={{
-            content: { background: theme.sidebarSettings.backgroundColor, borderRadius: 12 },
-            body: { paddingTop: 20, paddingBottom: 20 },
-          }}
-        >
-          <div style={{ textAlign: "center", padding: "8px 0 16px" }}>
-            <DeleteOutlined style={{ fontSize: 36, color: "#ff4d4f", marginBottom: 12 }} />
-            <p style={{ color: "#fff", fontWeight: 700, fontSize: 16, margin: "0 0 6px" }}>
-              Delete Broadcast
-            </p>
-            <p style={{ color: "rgba(255,255,255,0.5)", fontSize: 13, margin: 0 }}>
-              Are you sure you want to delete <strong style={{ color: "#fff" }}>{deleteRecord?.title}</strong>? This cannot be undone.
-            </p>
-          </div>
-          <div style={{ display: "flex", justifyContent: "center", gap: 12, marginTop: 16 }}>
-            <Button
-              onClick={() => { setDeleteOpen(false); setDeleteRecord(null); }}
-              style={modalStyles.cancelBtn}
-            >
-              Cancel
-            </Button>
-            <Button
-              loading={deleteLoading}
-              onClick={handleDelete}
-              style={{ ...modalStyles.submitBtn, background: "#ff4d4f", borderColor: "#ff4d4f" }}
-            >
-              Delete
-            </Button>
-          </div>
-        </Modal>
-      </ConfigProvider>
-
       <style>{`
         .bc-input {
           background-color: #0e2e2a !important;
@@ -596,9 +582,9 @@ const btnStyles = {
     borderRadius: 6,
   },
   delete: {
-    background: "rgba(255,77,79,0.1)",
-    border: "1px solid rgba(255,77,79,0.4)",
-    color: "#ff4d4f",
+    background: "#eb2724c9",
+    border: "none",
+    color: "#fff",
     borderRadius: 6,
   },
 };

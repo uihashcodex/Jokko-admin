@@ -1,86 +1,203 @@
-import { useEffect, useState } from "react";
-import { Button, Form, Input, Spin, message } from "antd";
-import { PlusOutlined, SaveOutlined, SettingOutlined, DeleteOutlined } from "@ant-design/icons";
+import { useCallback, useEffect, useState } from "react";
+import { Button, Form, Input, Popconfirm, Spin, message } from "antd";
+import { DeleteOutlined, SaveOutlined, SettingOutlined } from "@ant-design/icons";
 import axios from "axios";
 import { constant } from "../const";
 import theme from "../config/theme";
 
-const DEFAULT_ENV = {
+const EMPTY_CREDENTIALS = {
   onramper: {
-    url: "https://api-stg.onramper.com",
-    apikey: "11111324324fdsfdsfdfds11",
-    secretKey: "onramper_secret",
-    webhook: "https://yourdomain.com/onramper/webhook",
+    url: "",
+    apikey: "",
+    secretKey: "",
+    webhook: "",
   },
-  transfi: [
-    {
-      url: "https://sandbox-api.transfi.com",
-      apikey: "transfi_api_key",
-      secretKey: "transfi_secret",
-      webhook: "https://yourdomain.com/transfi/webhook",
-      mid: "MID123456",
-    },
-  ],
+  transfi: {
+    url: "",
+    apikey: "",
+    secretKey: "",
+    webhook: "",
+    mid: "",
+  },
   fonbnk: {
-    url: "https://api.fonbnk.com",
-    apikey: "fonbnk_api_key",
-    secretKey: "fonbnk_secret",
-    webhook: "https://yourdomain.com/fonbnk/webhook",
+    url: "",
+    apikey: "",
+    secretKey: "",
+    webhook: "",
   },
+};
+
+const PROVIDERS = [
+  {
+    key: "onramper",
+    title: "Onramper",
+    fields: ["url", "apikey", "secretKey", "webhook"],
+  },
+  {
+    key: "transfi",
+    title: "TransFi",
+    fields: ["url", "apikey", "secretKey", "webhook", "mid"],
+  },
+  {
+    key: "fonbnk",
+    title: "Fonbnk",
+    fields: ["url", "apikey", "secretKey", "webhook"],
+  },
+];
+
+const FIELD_LABELS = {
+  url: "URL",
+  apikey: "API Key",
+  secretKey: "Secret Key",
+  webhook: "Webhook",
+  mid: "MID",
+};
+
+const FIELD_PLACEHOLDERS = {
+  url: "https://api.example.com",
+  apikey: "Enter API key",
+  secretKey: "Enter secret key",
+  webhook: "https://yourdomain.com/webhook",
+  mid: "MID123456",
+};
+
+const mergeCredentials = (data = {}) => ({
+  onramper: {
+    ...EMPTY_CREDENTIALS.onramper,
+    ...(data.onramper || {}),
+  },
+  transfi: {
+    ...EMPTY_CREDENTIALS.transfi,
+    ...(Array.isArray(data.transfi) ? data.transfi[0] : data.transfi || {}),
+  },
+  fonbnk: {
+    ...EMPTY_CREDENTIALS.fonbnk,
+    ...(data.fonbnk || {}),
+  },
+});
+
+const getCredentialsPayload = (responseData = {}) => {
+  const payload = responseData.data || responseData.result || responseData;
+  if (payload?.onramper || payload?.transfi || payload?.fonbnk) return payload;
+  return null;
 };
 
 const Env = () => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [deletingField, setDeletingField] = useState("");
+  const [credId, setCredId] = useState(null);
+  const [hasCredentials, setHasCredentials] = useState(false);
 
-  const authHeader = {
-    Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
-  };
+  const fetchCredentials = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { data } = await axios.get(`${constant.backend_url}/admin/cred-get`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+        },
+      });
+
+      const payload = getCredentialsPayload(data);
+
+      if (data?.success && payload) {
+        form.setFieldsValue(mergeCredentials(payload));
+        setCredId(payload._id || payload.id || payload.credId || null);
+        setHasCredentials(true);
+      } else {
+        form.setFieldsValue(EMPTY_CREDENTIALS);
+        setCredId(null);
+        setHasCredentials(false);
+      }
+    } catch (error) {
+      form.setFieldsValue(EMPTY_CREDENTIALS);
+      setCredId(null);
+      setHasCredentials(false);
+
+      if (error?.response?.status !== 404) {
+        message.error("Failed to fetch credentials");
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [form]);
 
   useEffect(() => {
-    const fetchEnv = async () => {
-      setLoading(true);
-      try {
-        const { data } = await axios.get(`${constant.backend_url}/admin/get-env`, {
+    fetchCredentials();
+  }, [fetchCredentials]);
+
+  const handleSave = async (values) => {
+    setSaving(true);
+    try {
+      const endpoint = hasCredentials ? "cred-update" : "cred-create";
+      const { data } = await axios.post(
+        `${constant.backend_url}/admin/${endpoint}`,
+        values,
+        {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
           },
-        });
-
-        if (data?.success && data?.result) {
-          form.setFieldsValue(data.result);
-        } else {
-          form.setFieldsValue(DEFAULT_ENV);
         }
-      } catch {
-        form.setFieldsValue(DEFAULT_ENV);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchEnv();
-  }, [form]);
-
-  const handleUpdate = async (values) => {
-    setSaving(true);
-    try {
-      const { data } = await axios.post(
-        `${constant.backend_url}/admin/update-env`,
-        values,
-        { headers: authHeader }
       );
 
       if (data?.success) {
-        message.success(data.message || "Environment updated successfully");
+        message.success(data.message || "Credentials saved successfully");
+
+        const payload = getCredentialsPayload(data);
+        if (payload) {
+          form.setFieldsValue(mergeCredentials(payload));
+          setCredId(payload._id || payload.id || payload.credId || credId);
+        }
+        setHasCredentials(true);
+        fetchCredentials();
       } else {
-        message.error(data?.message || "Failed to update environment");
+        message.error(data?.message || "Failed to save credentials");
       }
-    } catch {
-      message.error("Failed to update environment");
+    } catch (error) {
+      message.error(error?.response?.data?.message || "Failed to save credentials");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDeleteField = async (provider, field) => {
+    if (!credId) {
+      form.setFieldValue([provider, field], "");
+      message.warning("Save credentials before deleting stored fields");
+      return;
+    }
+
+    const fieldKey = `${provider}.${field}`;
+    setDeletingField(fieldKey);
+
+    try {
+      const { data } = await axios.post(
+        `${constant.backend_url}/admin/cred-delete`,
+        {
+          credId,
+          [provider]: {
+            [field]: true,
+          },
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+          },
+        }
+      );
+
+      if (data?.success) {
+        message.success(data.message || "Field deleted successfully");
+        form.setFieldValue([provider, field], "");
+        fetchCredentials();
+      } else {
+        message.error(data?.message || "Failed to delete field");
+      }
+    } catch (error) {
+      message.error(error?.response?.data?.message || "Failed to delete field");
+    } finally {
+      setDeletingField("");
     }
   };
 
@@ -88,7 +205,7 @@ const Env = () => {
     <div>
       <div className="mb-5 w-full rounded-lg bg-cover bg-center flex items-center header-content-img">
         <div className="display-3 w-full">
-          <h1 className="text-white p-7 font-bold text-2xl">Env</h1>
+          <h1 className="text-white p-7 font-bold text-2xl">Credentials</h1>
         </div>
       </div>
 
@@ -96,67 +213,34 @@ const Env = () => {
         <Form
           form={form}
           layout="vertical"
-          initialValues={DEFAULT_ENV}
-          onFinish={handleUpdate}
+          initialValues={EMPTY_CREDENTIALS}
+          onFinish={handleSave}
           style={styles.form}
         >
-          <ProviderSection title="Onramper">
-            <ProviderFields namePrefix={["onramper"]} />
-          </ProviderSection>
-
-          <ProviderSection title="TransFi">
-            <Form.List name="transfi">
-              {(fields, { add, remove }) => (
-                <div style={{ display: "grid", gap: 14 }}>
-                  {fields.map((field, index) => (
-                    <div key={field.key} style={styles.transfiItem}>
-                      <div style={styles.transfiHeader}>
-                        <span style={styles.transfiTitle}>TransFi Config {index + 1}</span>
-                        {fields.length > 1 && (
-                          <Button
-                            icon={<DeleteOutlined />}
-                            onClick={() => remove(field.name)}
-                            style={styles.removeBtn}
-                          >
-                            Remove
-                          </Button>
-                        )}
-                      </div>
-                      <ProviderFields namePrefix={[field.name]} includeMid />
-                    </div>
-                  ))}
-
-                  <Button
-                    icon={<PlusOutlined />}
-                    onClick={() =>
-                      add({
-                        url: "",
-                        apikey: "",
-                        secretKey: "",
-                        webhook: "",
-                        mid: "",
-                      })
-                    }
-                    style={styles.addBtn}
-                  >
-                    Add TransFi Config
-                  </Button>
-                </div>
-              )}
-            </Form.List>
-          </ProviderSection>
-
-          <ProviderSection title="Fonbnk">
-            <ProviderFields namePrefix={["fonbnk"]} />
-          </ProviderSection>
+          {PROVIDERS.map((provider) => (
+            <ProviderSection key={provider.key} title={provider.title}>
+              <div style={styles.grid}>
+                {provider.fields.map((field) => (
+                  <EnvField
+                    key={`${provider.key}.${field}`}
+                    provider={provider.key}
+                    field={field}
+                    onDelete={handleDeleteField}
+                    deleting={deletingField === `${provider.key}.${field}`}
+                  />
+                ))}
+              </div>
+            </ProviderSection>
+          ))}
 
           <div style={styles.footer}>
             <Button
               htmlType="button"
-              onClick={() => form.setFieldsValue(DEFAULT_ENV)}
+              onClick={fetchCredentials}
+              disabled={saving || loading}
               style={styles.resetBtn}
             >
-              Reset
+              Reload
             </Button>
             <Button
               htmlType="submit"
@@ -164,7 +248,7 @@ const Env = () => {
               icon={<SaveOutlined />}
               style={styles.saveBtn}
             >
-              Update Env
+              {hasCredentials ? "Update Credentials" : "Create Credentials"}
             </Button>
           </div>
         </Form>
@@ -207,25 +291,37 @@ const ProviderSection = ({ title, children }) => (
   </section>
 );
 
-const ProviderFields = ({ namePrefix, includeMid = false }) => (
-  <div style={styles.grid}>
-    <EnvField label="URL" name={[...namePrefix, "url"]} placeholder="https://api.example.com" />
-    <EnvField label="API Key" name={[...namePrefix, "apikey"]} placeholder="Enter API key" />
-    <EnvField label="Secret Key" name={[...namePrefix, "secretKey"]} placeholder="Enter secret key" />
-    <EnvField label="Webhook" name={[...namePrefix, "webhook"]} placeholder="https://yourdomain.com/webhook" />
-    {includeMid && <EnvField label="MID" name={[...namePrefix, "mid"]} placeholder="MID123456" />}
-  </div>
-);
+const EnvField = ({ provider, field, onDelete, deleting }) => {
+  const label = FIELD_LABELS[field];
 
-const EnvField = ({ label, name, placeholder }) => (
-  <Form.Item
-    label={<span style={styles.label}>{label}</span>}
-    name={name}
-    rules={[{ required: true, message: `${label} is required` }]}
-  >
-    <Input placeholder={placeholder} className="env-input" />
-  </Form.Item>
-);
+  return (
+    <div style={styles.fieldWrap}>
+      <Form.Item
+        label={<span style={styles.label}>{label}</span>}
+        name={[provider, field]}
+        rules={[{ required: true, message: `${label} is required` }]}
+        style={styles.fieldItem}
+      >
+        <Input placeholder={FIELD_PLACEHOLDERS[field]} className="env-input" />
+      </Form.Item>
+      <Popconfirm
+        title={`Delete ${label}?`}
+        description="This will remove only this stored field."
+        okText="Delete"
+        cancelText="Cancel"
+        onConfirm={() => onDelete(provider, field)}
+      >
+        <Button
+          icon={<DeleteOutlined />}
+          loading={deleting}
+          disabled={deleting}
+          danger
+          style={styles.deleteBtn}
+        />
+      </Popconfirm>
+    </div>
+  );
+};
 
 const styles = {
   form: {
@@ -274,45 +370,29 @@ const styles = {
   },
   grid: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+    gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
     gap: "4px 16px",
+  },
+  fieldWrap: {
+    display: "grid",
+    gridTemplateColumns: "1fr 42px",
+    alignItems: "end",
+    gap: 8,
+  },
+  fieldItem: {
+    marginBottom: 14,
   },
   label: {
     color: "rgba(255,255,255,0.82)",
     fontWeight: 650,
     fontSize: 13,
   },
-  transfiItem: {
-    border: "1px solid rgba(255,255,255,0.08)",
-    borderRadius: 10,
-    padding: 14,
-    background: "rgba(0,0,0,0.12)",
-  },
-  transfiHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: 12,
-    marginBottom: 12,
-  },
-  transfiTitle: {
-    color: "#fff",
-    fontWeight: 700,
-  },
-  addBtn: {
-    justifySelf: "start",
-    background: "rgba(201,240,123,0.1)",
-    border: "1px solid rgba(201,240,123,0.35)",
-    color: "#c9f07b",
+  deleteBtn: {
+    height: 42,
+    width: 42,
+    marginBottom: 14,
     borderRadius: 8,
-    height: 40,
-  },
-  removeBtn: {
     background: "rgba(255,77,79,0.1)",
-    border: "1px solid rgba(255,77,79,0.4)",
-    color: "#ff4d4f",
-    borderRadius: 8,
-    height: 36,
   },
   footer: {
     display: "flex",
