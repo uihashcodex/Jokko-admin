@@ -1,23 +1,18 @@
-import { useState, useEffect } from "react";
-import { Button, Form, Select, Tag, Modal, message, ConfigProvider, Input, Spin } from "antd";
+import { useState, useEffect, useMemo } from "react";
+import { Button, Form, Select, Tag, Modal, message, ConfigProvider, Input } from "antd";
 import { RocketOutlined, EditOutlined, UserAddOutlined, DeleteOutlined } from "@ant-design/icons";
 import axios from "axios";
 import { constant } from "../const";
 import TableHeader from "../reuseable/TableHeader";
 import ReusableTable from "../reuseable/ReusableTable";
+import UserPickerModal from "../reuseable/UserPickerModal";
 import theme from "../config/theme";
 import { capitalize } from "../utils/capitalize";
-import ExportButton from "../reuseable/ExportButton";
 
 const TYPE_OPTIONS = [
   { label: "Professional", value: "professional" },
   { label: "Individual", value: "individual" },
 ];
-
-const sharedProps = {
-  spinning: true,
-  percent: 0,
-};
 
 const EmailCampaign = () => {
   const [createForm] = Form.useForm();
@@ -37,11 +32,12 @@ const EmailCampaign = () => {
   const [selectedRow, setSelectedRow] = useState(null);
 
   const [page, setPage] = useState(1);
-const PAGE_SIZE = 10;
+  const PAGE_SIZE = 10;
 
   const [addUserOpen, setAddUserOpen] = useState(false);
   const [addUserLoading, setAddUserLoading] = useState(false);
-  const [addUserForm] = Form.useForm();
+  const [selectedCampaignId, setSelectedCampaignId] = useState(undefined);
+  const [selectedUsersByCampaign, setSelectedUsersByCampaign] = useState({});
 
   const [publishingId, setPublishingId] = useState(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -49,6 +45,15 @@ const PAGE_SIZE = 10;
 
   const token = localStorage.getItem("adminToken");
   const authHeader = { Authorization: `Bearer ${token}` };
+  const pickerSelectedUsers = useMemo(
+    () => selectedUsersByCampaign[selectedCampaignId] || [],
+    [selectedCampaignId, selectedUsersByCampaign]
+  );
+  const selectedCampaign = useMemo(
+    () => campaigns.find((campaign) => campaign.id === selectedCampaignId),
+    [campaigns, selectedCampaignId]
+  );
+  const pickerUserType = selectedRow?.type || selectedCampaign?.type;
 
   useEffect(() => {
     fetchCampaigns();
@@ -65,6 +70,7 @@ const PAGE_SIZE = 10;
       campaign_name: item.campaign_name || "-",
       template_name: item.content_info?.template_name || "-",
       subject: item.content_info?.subject || "-",
+      recipient_count: item.recipient_count || 0,
     }));
 
   const fetchCampaigns = async () => {
@@ -102,33 +108,33 @@ const PAGE_SIZE = 10;
 
 
   // ── fetch email contents filtered by type = "campaign" ───────────────────
-const fetchEmailContents = async () => {
-  setContentLoading(true);
+  const fetchEmailContents = async () => {
+    setContentLoading(true);
 
-  try {
-    const { data } = await axios.get(
-      `${constant.backend_url}/admin/get-emailcontent`,
-      {
-        params: {
-          type: "campaign",
-          page: 1,
-          limit: 10,
-        },
-        headers: authHeader,
+    try {
+      const { data } = await axios.get(
+        `${constant.backend_url}/admin/get-emailcontent`,
+        {
+          params: {
+            type: "campaign",
+            page: 1,
+            limit: 10,
+          },
+          headers: authHeader,
+        }
+      );
+
+      if (data.success) {
+        setEmailContents(data.result || []);
+      } else {
+        message.error(data.message || "Failed to load email contents.");
       }
-    );
-
-    if (data.success) {
-      setEmailContents(data.result || []);
-    } else {
-      message.error(data.message || "Failed to load email contents.");
+    } catch (error) {
+      message.error("Failed to fetch email contents.");
+    } finally {
+      setContentLoading(false);
     }
-  } catch (error) {
-    message.error("Failed to fetch email contents.");
-  } finally {
-    setContentLoading(false);
-  }
-};
+  };
 
   // ── create campaign ───────────────────────────────────────────────────────
   const handleCreate = async (values) => {
@@ -193,27 +199,58 @@ const fetchEmailContents = async () => {
   };
 
   // ── add user ──────────────────────────────────────────────────────────────
-  const openAddUser = (record) => {
+  const openAddUser = (record = null) => {
     setSelectedRow(record);
+    setSelectedCampaignId(record?.id);
     setAddUserOpen(true);
   };
 
-  const handleAddUser = async () => {
+  const handleAddUser = async ({ userIds, users }) => {
+    if (!selectedCampaignId) {
+      message.error("Please select a campaign.");
+      return;
+    }
+
     setAddUserLoading(true);
     try {
       const { data } = await axios.post(
         `${constant.backend_url}/brevo/batchJoinContactList`,
-        { campaign_id: selectedRow.id },
+        {
+          campaign_id: selectedCampaignId,
+          userIds,
+        },
         { headers: authHeader }
       );
+
       if (data.success) {
-        message.success(data.message || "User added successfully!");
+        console.log("Campaign user add result:", {
+          total_count: data.total_count,
+          success_count: data.success_count ?? data.added_count,
+          failure_count: data.failure_count ?? data.failed_count,
+          success_emails: data.success_emails ?? data.added_users,
+          failed_emails: data.failed_emails,
+          failed_errors: data.failed_errors,
+        });
+        setSelectedUsersByCampaign((prev) => {
+          const existingUsers = prev[selectedCampaignId] || [];
+          const mergedUsers = Array.from(
+            new Map([...existingUsers, ...users].map((user) => [user.id, user])).values()
+          );
+
+          return {
+            ...prev,
+            [selectedCampaignId]: mergedUsers,
+          };
+        });
+        message.success(data.message || "Users added successfully!");
         setAddUserOpen(false);
+        setSelectedCampaignId(undefined);
+        fetchCampaigns();
       } else {
-        message.error(data.message || "Failed to add user.");
+        message.error(data.message || "Failed to add users.");
       }
     } catch {
-      message.error("Failed to add user.");
+      message.error("Failed to add users.");
     } finally {
       setAddUserLoading(false);
     }
@@ -221,6 +258,11 @@ const fetchEmailContents = async () => {
 
   // ── publish ───────────────────────────────────────────────────────────────
   const handlePublish = async (record) => {
+    if (!record?.recipient_count) {
+      message.error("Please select at least one user");
+      return;
+    }
+
     setPublishingId(record.id);
     try {
       const { data } = await axios.post(
@@ -230,12 +272,17 @@ const fetchEmailContents = async () => {
       );
       if (data.success) {
         message.success(data.message || "Campaign published!");
+        setSelectedUsersByCampaign((prev) => {
+          const next = { ...prev };
+          delete next[record.id];
+          return next;
+        });
         fetchCampaigns();
       } else {
         message.error(data.message || "Failed to publish campaign.");
       }
-    } catch {
-      message.error("Failed to publish campaign.");
+    } catch (error) {
+      message.error(error?.response?.data?.message || "Failed to publish campaign.");
     } finally {
       setPublishingId(null);
     }
@@ -282,7 +329,7 @@ const fetchEmailContents = async () => {
   const columns = [
     { title: "S.No", dataIndex: "sno", width: 60 },
     { title: "Campaign Name", dataIndex: "campaign_name" },
-    { title: "Template Name", dataIndex: "template_name" },
+    // { title: "Template Name", dataIndex: "template_name" },
     { title: "Event Key", dataIndex: "event_key" },
     { title: "Subject", dataIndex: "subject", render: (v) => v || "-" },
     {
@@ -316,7 +363,7 @@ const fetchEmailContents = async () => {
             onClick={() => openAddUser(record)}
             style={btnStyles.addUser}
           >
-            Add Existing Users
+            Select Users
           </Button>
           <Button
             size="small"
@@ -348,7 +395,7 @@ const fetchEmailContents = async () => {
   ];
 
   // ── shared modal wrapper ──────────────────────────────────────────────────
-  const CampaignModal = ({ open, onCancel, onFinish, form, title, loading, initialContentKey }) => (
+  const CampaignModal = ({ open, onCancel, onFinish, form, title, loading }) => (
     <ConfigProvider
       theme={{ token: { colorBgElevated: theme.sidebarSettings.backgroundColor } }}
     >
@@ -455,31 +502,42 @@ const fetchEmailContents = async () => {
         </div>
       </div>
 
-      {/* Table Header with Create button */}
       <TableHeader
         data={campaigns}
         showStatusFilter={false}
         showSearch={false}
-        showCreateButton
         showExportButton={true}
+        showCreateButton={true}
         exportFilename="email_campaigns"
         exportColumns={columns}
         getExportData={getCampaignsForExport}
         onCreate={() => setCreateOpen(true)}
+      // showCreateButton={false}
       />
 
+      {/* <div style={pageActionStyles.wrap}>
+
+        <Button
+          icon={<PlusOutlined />}
+          onClick={() => setCreateOpen(true)}
+          style={pageActionStyles.create}
+        >
+          Create
+        </Button>
+      </div> */}
+
       {/* Campaigns Table */}
-  <ReusableTable
-  columns={columns}
-  data={campaigns}
-  rowKey="id"
-  loading={tableLoading}
-  total={campaigns.length}
-  pageSize={PAGE_SIZE}
-  currentPage={page}
-  onPageChange={(p) => setPage(p)}
-  actionType={[]}
-/>
+      <ReusableTable
+        columns={columns}
+        data={campaigns}
+        rowKey="id"
+        loading={tableLoading}
+        total={campaigns.length}
+        pageSize={PAGE_SIZE}
+        currentPage={page}
+        onPageChange={(p) => setPage(p)}
+        actionType={[]}
+      />
 
       {/* ── Create Campaign Modal ── */}
       <CampaignModal
@@ -501,75 +559,38 @@ const fetchEmailContents = async () => {
         loading={updateLoading}
       />
 
-      {/* ── Add User Modal ── */}
-      <ConfigProvider
-        theme={{ token: { colorBgElevated: theme.sidebarSettings.backgroundColor } }}
-      >
-        <Modal
-          open={addUserOpen}
-          onCancel={() => { setAddUserOpen(false); }}
-          footer={null}
-          centered
-          width="90%"
-          style={{ maxWidth: 440 }}
-          destroyOnHidden
-          className="custom-modal modal-style"
-          styles={{
-            content: { background: theme.sidebarSettings.backgroundColor, borderRadius: 12 },
-            body: { paddingTop: 20, paddingBottom: 20 },
-          }}
-        >
-          <div style={modalStyles.header}>
-            <div style={modalStyles.iconWrap}>
-              <UserAddOutlined style={{ fontSize: 18, color: "#c9f07b" }} />
-            </div>
-            <div>
-              <p style={modalStyles.title}>Add Users to Campaign</p>
-              {/* <p style={modalStyles.subtitle}>Enter the user email to add.</p> */}
-            </div>
-          </div>
-          <div style={modalStyles.divider} />
-
-          Are you sure to add existing users of type {capitalize(selectedRow?.type)} to this campaign?
-
-          {/* <Form form={addUserForm} layout="vertical" onFinish={handleAddUser}>
-            <Form.Item
-              label={<span style={modalStyles.label}>User Email</span>}
-              name="email"
-              rules={[
-                { required: true, message: "Please enter an email" },
-                { type: "email", message: "Enter a valid email" },
-              ]}
-            >
-              <input
-                placeholder="user@example.com"
-                className="ec-text-input"
-                onChange={(e) => addUserForm.setFieldValue("email", e.target.value)}
+      <UserPickerModal
+        open={addUserOpen}
+        title="Select Users"
+        subtitle={selectedRow?.campaign_name || "Choose campaign recipients"}
+        submitText="Add Users"
+        submitLoading={addUserLoading}
+        initialSelectedUsers={pickerSelectedUsers}
+        userType={pickerUserType}
+        onCancel={() => {
+          setAddUserOpen(false);
+          setSelectedCampaignId(undefined);
+        }}
+        onSubmit={handleAddUser}
+        topContent={
+          !selectedRow && (
+            <>
+              <label style={modalStyles.label}>Campaign</label>
+              <Select
+                placeholder="Select campaign"
+                value={selectedCampaignId}
+                onChange={setSelectedCampaignId}
+                className="ec-select"
+                style={{ height: 44, width: "100%", marginTop: 8 }}
+                options={campaigns.map((campaign) => ({
+                  label: campaign.campaign_name,
+                  value: campaign.id,
+                }))}
               />
-            </Form.Item>
-
-            </Form> */}
-          <div style={modalStyles.btnRow}>
-            {!addUserLoading ? <>
-              <Button
-                onClick={() => { setAddUserOpen(false); }}
-                style={modalStyles.cancelBtn}
-                disabled={addUserLoading}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleAddUser}
-                loading={addUserLoading}
-                style={modalStyles.submitBtn}
-                className="ec-publish-btn"
-              >
-                Yes
-              </Button>
-            </> : <Spin {...sharedProps} styles={{ indicator: { color: "#C9F07B" } }} />}
-          </div>
-        </Modal>
-      </ConfigProvider>
+            </>
+          )
+        }
+      />
 
       {/* ── Delete Campaign Modal ── */}
       <ConfigProvider

@@ -124,14 +124,21 @@ export const offReceiveMessage = (callback) => {
 };
 
 // Get all tickets (admin)
-export const getAllTickets = async (status = null) => {
+export const getAllTickets = async (status = null, category = null) => {
   try {
     const token = localStorage.getItem("adminToken");
-    let url = `${API_BASE_URL}/ticket/all`;
-    
-    if (status) {
-      url += `?status=${status}`;
+    const params = new URLSearchParams();
+
+    if (status && status !== "all") {
+      params.append("status", status);
     }
+
+    if (category && category !== "all") {
+      params.append("category", category);
+    }
+
+    const query = params.toString();
+    const url = `${API_BASE_URL}/ticket/all${query ? `?${query}` : ""}`;
 
     const response = await fetch(url, {
       method: "GET",

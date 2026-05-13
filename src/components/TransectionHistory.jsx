@@ -34,8 +34,8 @@ const TransectionHistory = () => {
   const [chartData, setChartData] = useState([]);
 
 
-      const [deletemodal, setDeletemodal] = useState(false);
-    const [deleteRecord, setDeleteRecord] = useState(null);
+  const [deletemodal, setDeletemodal] = useState(false);
+  const [deleteRecord, setDeleteRecord] = useState(null);
 
   const formatDateMonth = (dateStr) => {
     const d = new Date(dateStr);
@@ -50,6 +50,7 @@ const TransectionHistory = () => {
         transactionDate: item.transactionDate,
         transactionTime: item.transactionTime,
         dateTimeDisplay: `${item.transactionDate} ${item.transactionTime}`,
+
       };
     }
 
@@ -151,48 +152,48 @@ const TransectionHistory = () => {
       };
     });
 
- const getTransation = async () => {
-  try {
-    setLoading(true);
+  const getTransation = async () => {
+    try {
+      setLoading(true);
 
-    const res = await axios.post(
-      `${constant.backend_url}/admin/getAllUsersWalletTransactions?page=${page}&limit=${PAGE_SIZE}`,
-      {
-        user_id: id,
-        search: filters.search,
-      },
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+      const res = await axios.post(
+        `${constant.backend_url}/admin/getAllUsersWalletTransactions?page=${page}&limit=${PAGE_SIZE}`,
+        {
+          user_id: id,
+          search: filters.search,
         },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+          },
+        }
+      );
+
+      if (res.data?.success) {
+        const trandata = res.data.result || [];
+        const trans = formatTransactions(trandata, page, PAGE_SIZE);
+
+        setTransactionData(trans);
+        setTotalUsers(res.data.total || 0);
       }
-    );
-
-    if (res.data?.success) {
-      const trandata = res.data.result || [];
-      const trans = formatTransactions(trandata, page, PAGE_SIZE);
-
-      setTransactionData(trans);
-      setTotalUsers(res.data.total || 0);
+    } catch (error) {
+      if (error?.response?.status === 401) return;
+      console.error(error);
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    if (error?.response?.status === 401) return;
-    console.error(error);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
 
 
 
 
-useEffect(() => {
-  if (id) {
-    getTransation();
-  }
-}, [id, page, filters.search]);
+  useEffect(() => {
+    if (id) {
+      getTransation();
+    }
+  }, [id, page, filters.search]);
 
   useEffect(() => {
     if (id && transactionData.length > 0) {
@@ -201,40 +202,40 @@ useEffect(() => {
   }, [transactionData, id]);
 
 
-const handleDelete = async (userId) => {
-  try {
-    setLoading(true);
+  const handleDelete = async (userId) => {
+    try {
+      setLoading(true);
 
-    const res = await axios.post(
-      `${constant.backend_url}/admin/delete-transaction`,
-      { transactionId: userId }, // ✅ FIX
-      {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
-        },
+      const res = await axios.post(
+        `${constant.backend_url}/admin/delete-transaction`,
+        { transactionId: userId }, // ✅ FIX
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+          },
+        }
+      );
+
+      if (res.data?.success) {
+        message.success("Transaction deleted successfully");
+        setDeletemodal(false);
+        getAllTransaction();
+      } else {
+        message.warning(res.data.message || "Delete failed");
       }
-    );
-
-    if (res.data?.success) {
-      message.success("Transaction deleted successfully");
-      setDeletemodal(false);
-      getAllTransaction();
-    } else {
-      message.warning(res.data.message || "Delete failed");
+    } catch (error) {
+      console.log(error);
+      message.error("Something went wrong");
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.log(error);
-    message.error("Something went wrong");
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
 
 
 
 
-  const getAllTransaction = async () => { 
+  const getAllTransaction = async () => {
     const startTime = Date.now();
 
     try {
@@ -245,7 +246,7 @@ const handleDelete = async (userId) => {
       const res = await axios.get(`${constant.backend_url}/admin/get-all-transactions`,
 
         {
-          
+
           params: {
             ...cleanFilters,
             page: page,
@@ -387,7 +388,9 @@ const handleDelete = async (userId) => {
       }
     },
     { title: "Token Symbol", dataIndex: "tokenSymbol" },
-    { title: "Date & Time", dataIndex: "dateTimeDisplay", key: "dateTimeDisplay" },
+    { title: "Date", dataIndex: "transactionDate", key: "transactionDate" },
+    { title: "Time", dataIndex: "transactionTime", key: "transactionTime" },
+
     // { title: "Updated At", dataIndex: "createdAt", key: "updatedAt" },
     // { title: "Status", dataIndex: "status" },
   ];
@@ -431,7 +434,7 @@ const handleDelete = async (userId) => {
     getNetwork();
   }, []);
 
-// transation chart
+  // transation chart
   const [dashboardData, setDashboardData] = useState({});
 
   const getDashboardData = async () => {
@@ -467,11 +470,11 @@ const handleDelete = async (userId) => {
         <h2 className="text-2xl font-semibold  white">Transaction History</h2>
       </div>
 
-            <div className="mt-5">
-        <ChartsSection dashboardData={ id ? { weeklyTransactions: chartData } : dashboardData } showtransactionChart={true}
-      />
-            </div>
-            
+      <div className="mt-5">
+        <ChartsSection dashboardData={id ? { weeklyTransactions: chartData } : dashboardData} showtransactionChart={true}
+        />
+      </div>
+
 
       {!id && (
         <TableHeader
@@ -513,65 +516,65 @@ const handleDelete = async (userId) => {
         </div>
       )}
 
-    <ReusableTable
-  columns={columns}
-  data={id ? transactionData : filteredTableData}
-  rowKey="key"
-  pageSize={PAGE_SIZE}
-  total={totalUsers}
-  currentPage={page}
-  onPageChange={(p) => setPage(p)}
-  loading={loading}
-  actionType={["viewMore","Remove"]}
-  onView={(record) => {
-    setSelectedTrans(record);
-    setModalOpen(true);
-  }}
+      <ReusableTable
+        columns={columns}
+        data={id ? transactionData : filteredTableData}
+        rowKey="key"
+        pageSize={PAGE_SIZE}
+        total={totalUsers}
+        currentPage={page}
+        onPageChange={(p) => setPage(p)}
+        loading={loading}
+        actionType={["viewMore", "Remove"]}
+        onView={(record) => {
+          setSelectedTrans(record);
+          setModalOpen(true);
+        }}
         onDelete={(record) => {
-        setDeleteRecord(record);
-        setDeletemodal(true);
-    }}
-/>
+          setDeleteRecord(record);
+          setDeletemodal(true);
+        }}
+      />
 
 
 
 
-            <ReusableModal
-  open={deletemodal}
-  onCancel={() => setDeletemodal(false)}
-  title="Delete Transcation"
-  description={"Are you sure you want to delete this Transcation?"}
-  showFooter={false}
-  extraContent={
-    <div className="text-center">
+      <ReusableModal
+        open={deletemodal}
+        onCancel={() => setDeletemodal(false)}
+        title="Delete Transcation"
+        description={"Are you sure you want to delete this Transcation?"}
+        showFooter={false}
+        extraContent={
+          <div className="text-center">
 
-      <p className="text-gray-300 text-base">
-        Are you sure you want to delete this Transcation?
-      </p>
+            <p className="text-gray-300 text-base">
+              Are you sure you want to delete this Transcation?
+            </p>
 
-      <div className="flex justify-between gap-4 mt-6">
+            <div className="flex justify-between gap-4 mt-6">
 
-        {/* ❌ NO BUTTON FIX */}
-        <button
-          className="px-6 py-2 rounded primaty-bg text-black"
-          onClick={() => setDeletemodal(false)}
-        >
-          No
-        </button>
+              {/* ❌ NO BUTTON FIX */}
+              <button
+                className="px-6 py-2 rounded primaty-bg text-black"
+                onClick={() => setDeletemodal(false)}
+              >
+                No
+              </button>
 
-        {/* ❌ YES BUTTON FIX */}
-        <button
-          className="px-6 py-2 rounded bg-red-600 text-white"
-          onClick={() => handleDelete(deleteRecord?.key)}
-        >
-          Yes
-        </button>
+              {/* ❌ YES BUTTON FIX */}
+              <button
+                className="px-6 py-2 rounded bg-red-600 text-white"
+                onClick={() => handleDelete(deleteRecord?.key)}
+              >
+                Yes
+              </button>
 
-      </div>
+            </div>
 
-    </div>
-  }
-/>
+          </div>
+        }
+      />
 
       {/* <ReusableModal
         open={modalOpen}
@@ -667,8 +670,13 @@ const handleDelete = async (userId) => {
             </div>
 
             <div className="flex items-center justify-between bg-[#1f252a] p-3 rounded">
-              <span className="text-gray-400">Date & Time</span>
-              <span className="text-white">{selectedTrans?.dateTimeDisplay}</span>
+              <span className="text-gray-400">Date</span>
+              <span className="text-white">{selectedTrans?.transactionDate}</span>
+            </div>
+
+            <div className="flex items-center justify-between bg-[#1f252a] p-3 rounded">
+              <span className="text-gray-400">Time</span>
+              <span className="text-white">{selectedTrans?.transactionTime}</span>
             </div>
 
           </div>

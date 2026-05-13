@@ -104,6 +104,8 @@ const Walletlist = () => {
       xrpaddress: item?.xrpAddress,
       trxAddress: item?.trxAddress,
       status: item?.walletStatus ? "Active" : "Inactive",
+      createdAt: item?.createdAt ? item.createdAt.split("T")[0] : "",
+      rawCreatedAt: item?.createdAt || "",
     }));
 
   const getAllWallets = async (id, item,index) => {

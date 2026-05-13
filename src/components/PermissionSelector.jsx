@@ -1,29 +1,33 @@
 const MODULES = [
   "Dashboard",
+  "User Details",
   "Assets",
   "Network",
-  "User Details",
-  "Wallet",
-  "Transaction",
   "Trending Currency",
+  "Wallet",
+  "Transaction History",
+
   "Push Notification",
   "Email Template",
   "Email Management",
   "Email Campaign",
   "Support",
-  // "Role Management",
+  "Role Management",
+  "Env",
   "Broadcast",
-  // "Staff Management",
-  "Providers",
+  "Staff Management",
+  "Onramper Orders",
+  "Oframper Orders",
   "CoinRabbit History",
-  "Buy/Sell Fiat Assets",
+  "Fiat Assets",
   "Buy/Sell Crypto",
   "Buy/Sell Network",
   "Buy/Sell CoinRabbit"
 ];
 
 const PermissionSelector = ({ value = [], onChange }) => {
-  const isAllSelected = value.length === MODULES.length;
+  const selectedValues = Array.isArray(value) ? value : [];
+  const isAllSelected = MODULES.every((module) => selectedValues.includes(module));
 
   const handleSelectAll = () => {
     if (isAllSelected) {
@@ -34,7 +38,7 @@ const PermissionSelector = ({ value = [], onChange }) => {
   };
 
   const handleChange = (module) => {
-    let updated = [...value];
+    let updated = [...selectedValues];
 
     if (updated.includes(module)) {
       updated = updated.filter((m) => m !== module);
@@ -85,7 +89,7 @@ const PermissionSelector = ({ value = [], onChange }) => {
           >
             <input
               type="checkbox"
-              checked={value?.includes(module)}
+              checked={selectedValues.includes(module)}
               onChange={() => handleChange(module)}
             />
             {module}

@@ -8,12 +8,12 @@ import ReusableModal from "../reuseable/ReusableModal";
 
 
 const columns = [
-  { title: "S.no",         dataIndex: "sno",          key: "sno"          },
-  { title: "Network",   dataIndex: "tokenName",    key: "tokenName"    },
+  { title: "S.no", dataIndex: "sno", key: "sno" },
+  { title: "Network", dataIndex: "tokenName", key: "tokenName" },
   // { title: "Token Symbol", dataIndex: "tokenSymbol",  key: "tokenSymbol"  },
-  { title: "Code",         dataIndex: "code",         key: "code"         },
+  { title: "Code", dataIndex: "code", key: "code" },
   // { title: "Type",         dataIndex: "type",         key: "type"         },
-  { title: "Status",       dataIndex: "verifyStatus", key: "verifyStatus" },
+  { title: "Status", dataIndex: "verifyStatus", key: "verifyStatus" },
 ];
 
 const PAGE_SIZE = 10;
@@ -31,11 +31,11 @@ const CoinRabbitCrypto = () => {
   const authHeader = { Authorization: `Bearer ${localStorage.getItem("adminToken")}` };
 
 
-      const [deletemodal, setDeletemodal] = useState(false);
-    const [deleteRecord, setDeleteRecord] = useState(null);
+  const [deletemodal, setDeletemodal] = useState(false);
+  const [deleteRecord, setDeleteRecord] = useState(null);
 
   const typeOptions = useMemo(() => [
-    { label: "Buy",  value: "Buy"  },
+    { label: "Buy", value: "Buy" },
     { label: "Sell", value: "Sell" },
   ], []);
 
@@ -66,11 +66,11 @@ const CoinRabbitCrypto = () => {
       if (data.success) {
         const docs = data.result || data.data || [];
         const formatted = docs.map((item) => ({
-          id:           item._id,
-          tokenName:    item.tokenName   || item.name   || "-",
-          tokenSymbol:  item.tokenSymbol || item.symbol || "-",
-          code:         item.code        || item.tokenSymbol || "-",
-          type:         item.type        || "-",
+          id: item._id,
+          tokenName: item.tokenName || item.name || "-",
+          tokenSymbol: item.tokenSymbol || item.symbol || "-",
+          code: item.code || item.tokenSymbol || "-",
+          type: item.type || "-",
           verifyStatus: item.verifyStatus === true ? "active" : "inactive",
         }));
         setAllData(formatted);
@@ -94,7 +94,7 @@ const CoinRabbitCrypto = () => {
   useEffect(() => {
     const filtered = allData.filter((item) => {
       const matchesStatus = !filters.verifyStatus || item.verifyStatus === filters.verifyStatus;
-      const matchesType   = !filters.type         || item.type         === filters.type;
+      const matchesType = !filters.type || item.type === filters.type;
       return matchesStatus && matchesType;
     });
     const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -104,37 +104,37 @@ const CoinRabbitCrypto = () => {
 
 
 
-     const handleDelete = async (userId) => {
-        try {
-            setLoading(true);
+  const handleDelete = async (userId) => {
+    try {
+      setLoading(true);
 
-            const res = await axios.post(
-                `${constant.backend_url}/admin/delete-coinrabbit-currency`,
-                {
-                  currencyId: userId
-                },
-                {
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
-                    },
-                }
-            );
-
-            if (res.data?.success) {
-                message.success("CoinRabbit Assets Deleted successfully");
-                setDeletemodal(false);
-                fetchCrypto();
-            } else {
-                message.warning(res.data.message || "Delete failed");
-            }
-
-        } catch (error) {
-            console.log(error);
-            message.error("Something went wrong");
-        } finally {
-            setLoading(false);
+      const res = await axios.post(
+        `${constant.backend_url}/admin/delete-coinrabbit-currency`,
+        {
+          currencyId: userId
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+          },
         }
-    };
+      );
+
+      if (res.data?.success) {
+        message.success("CoinRabbit Assets Deleted successfully");
+        setDeletemodal(false);
+        fetchCrypto();
+      } else {
+        message.warning(res.data.message || "Delete failed");
+      }
+
+    } catch (error) {
+      console.log(error);
+      message.error("Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  };
 
 
   // ── update status ─────────────────────────────────────────────────────────
@@ -187,42 +187,42 @@ const CoinRabbitCrypto = () => {
       />
 
 
-            <ReusableModal
-  open={deletemodal}
-  onCancel={() => setDeletemodal(false)}
-  title="Delete CoinRabbit Cryptos?"
-  description={"Are you sure you want to delete this CoinRabbit Cryptos?"}
-  showFooter={false}
-  extraContent={
-    <div className="text-center">
+      <ReusableModal
+        open={deletemodal}
+        onCancel={() => setDeletemodal(false)}
+        title="Delete CoinRabbit Cryptos?"
+        description={"Are you sure you want to delete this CoinRabbit Cryptos?"}
+        showFooter={false}
+        extraContent={
+          <div className="text-center">
 
-      <p className="text-gray-300 text-base">
-        Are you sure you want to delete this CoinRabbit Cryptos?
-      </p>
+            <p className="text-gray-300 text-base">
+              Are you sure you want to delete this CoinRabbit Cryptos?
+            </p>
 
-      <div className="flex justify-between gap-4 mt-6">
+            <div className="flex justify-between gap-4 mt-6">
 
-        {/* ❌ NO BUTTON FIX */}
-        <button
-          className="px-6 py-2 rounded primaty-bg text-black"
-          onClick={() => setDeletemodal(false)}
-        >
-          No
-        </button>
+              {/* ❌ NO BUTTON FIX */}
+              <button
+                className="px-6 py-2 rounded primaty-bg text-black"
+                onClick={() => setDeletemodal(false)}
+              >
+                No
+              </button>
 
-        {/* ❌ YES BUTTON FIX */}
-        <button
-          className="px-6 py-2 rounded bg-red-600 text-white"
-          onClick={() => handleDelete(deleteRecord?.key)}
-        >
-          Yes
-        </button>
+              {/* ❌ YES BUTTON FIX */}
+              <button
+                className="px-6 py-2 rounded bg-red-600 text-white"
+                onClick={() => handleDelete(deleteRecord?.key)}
+              >
+                Yes
+              </button>
 
-      </div>
+            </div>
 
-    </div>
-  }
-/>
+          </div>
+        }
+      />
       <ReusableTable
         columns={columns}
         data={originalData}
@@ -231,12 +231,12 @@ const CoinRabbitCrypto = () => {
         currentPage={page}
         onPageChange={(p) => setPage(p)}
         loading={loading}
-        actionType={["status","Remove"]}
+        actionType={["status", "Remove"]}
         onStatusChange={handleStatusChange}
-                onDelete={(record) => {
-        setDeleteRecord(record);
-        setDeletemodal(true);
-    }}
+        onDelete={(record) => {
+          setDeleteRecord(record);
+          setDeletemodal(true);
+        }}
       />
     </div>
   );

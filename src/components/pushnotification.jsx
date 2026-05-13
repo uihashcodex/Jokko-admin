@@ -3,11 +3,17 @@ import { message, Tag } from "antd";
 import { BellOutlined } from "@ant-design/icons";
 import axios from "axios";
 import { constant } from "../const";
-import ExportButton from "../reuseable/ExportButton";
 import ReusableTable from "../reuseable/ReusableTable";
 import DeleteAction from "../reuseable/DeleteAction";
 import TableHeader from "../reuseable/TableHeader";
 import ReusableModal from "../reuseable/ReusableModal";
+import { Button, Form, Input } from "antd";
+import { SendOutlined, UserAddOutlined } from "@ant-design/icons";
+
+import UserPickerModal from "../reuseable/UserPickerModal";
+
+const { TextArea } = Input;
+
 
 const PushNotification = () => {
   const [open, setOpen] = useState(false);
@@ -17,6 +23,10 @@ const PushNotification = () => {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const pageSize = 10;
+
+  const [form] = Form.useForm();
+  const [userPickerOpen, setUserPickerOpen] = useState(false);
+  const [selectedUsers, setSelectedUsers] = useState([]);
 
   const authHeader = useMemo(
     () => ({
@@ -64,25 +74,37 @@ const PushNotification = () => {
   }, []);
 
   const handleSend = async (values) => {
+    const userIds = selectedUsers.map((user) => user.id).filter(Boolean);
+
+    if (!userIds.length) {
+      message.error("Please select at least one user.");
+      return;
+    }
+
     setSendLoading(true);
     try {
-      // TODO: wire up to your API endpoint
       const { data } = await axios.post(
         `${constant.backend_url}/admin/send-batch`,
-        values,
         {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
-          },
-        }
+          title: values.title,
+          body: values.body,
+          user_id: userIds,
+        },
+        { headers: authHeader }
       );
-      // message.success("Push notification sent successfully!");
-      if (data.success === true) {
-        message.success(data.message);
+
+      if (data?.success === true) {
+        const result = data?.data || {};
+        console.log("Push notification send result:", result);
+        message.success(
+          "Notification sent successfully"
+        );
         setOpen(false);
         fetchNotifications(1);
+        form.resetFields();
+        setSelectedUsers([]);
       } else {
-        message.error(data.message);
+        message.error(data?.message || "Failed to send notification.");
       }
     } catch {
       message.error("Failed to send notification.");
@@ -112,7 +134,7 @@ const PushNotification = () => {
 
   const listColumns = [
     {
-      title: "Created At",
+      title: "Date & Time",
       dataIndex: "createdAt",
       key: "createdAt",
       render: (v) => (v ? new Date(v).toLocaleString() : "-"),
@@ -196,7 +218,139 @@ const PushNotification = () => {
         exportColumns={listColumns.filter((c) => c.dataIndex)}
         getExportData={getNotificationsForExport}
       />
+      {/* Notification Composer Card */}
+      <div style={styles.card}>
+        {/* Card Header */}
+        <div style={styles.cardHeader}>
+          <div style={styles.iconWrap}>
+            <BellOutlined style={{ fontSize: 20, color: "#c9f07b" }} />
+          </div>
+          <div>
+            <p style={styles.cardTitle}>Compose Notification</p>
+            <p style={styles.cardSubtitle}>
+              Select users, fill in the title and content, then click Send.
+            </p>
+          </div>
+        </div>
 
+
+        <ReusableModal
+          open={open}
+          onCancel={() => setOpen(false)}
+          onSubmit={handleSend}
+          title="Create Push Notification"
+          description="Send a push notification to all users who have an active device token."
+          fields={modalFields}
+          initialValues={{}}
+          maskClosable={false}
+        />
+        {/* Form */}
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={handleSend}
+          style={styles.form}
+        >
+          <div style={styles.recipientRow}>
+            <Button
+              htmlType="button"
+              icon={<UserAddOutlined />}
+              onClick={() => setUserPickerOpen(true)}
+              style={styles.selectUsersBtn}
+            >
+              Select Users
+            </Button>
+
+            <span style={styles.recipientCount}>
+              {selectedUsers.length
+                ? `${selectedUsers.length} selected`
+                : "No users selected"}
+            </span>
+          </div>
+
+          {/* {selectedUsers.length > 0 && (
+            <div style={styles.selectedUserPreview}>
+              {selectedUsers.slice(0, 4).map((user) => (
+                <Tag key={user.id} color="green" style={{ marginBottom: 6 }}>
+                  {user.name}
+                </Tag>
+              ))}
+              {selectedUsers.length > 4 && (
+                <Tag color="blue">+{selectedUsers.length - 4} more</Tag>
+              )}
+            </div>
+          )} */}
+
+          {/* Title Field */}
+          <Form.Item
+            label={<span style={styles.label}>Title</span>}
+            name="title"
+            rules={[{ required: true, message: "Please enter a notification title" }]}
+          >
+            <Input
+              placeholder="e.g. New Update Available"
+              maxLength={100}
+              showCount
+              style={styles.input}
+              className="pn-input"
+            />
+          </Form.Item>
+
+          {/* Content Field */}
+          <Form.Item
+            label={<span style={styles.label}>Content</span>}
+            name="body"
+            rules={[{ required: true, message: "Please enter the notification content" }]}
+          >
+            <TextArea
+              placeholder="Write the notification message here…"
+              rows={5}
+              maxLength={300}
+              showCount
+              style={styles.textarea}
+              className="pn-input"
+            />
+          </Form.Item>
+
+          {/* Send Button */}
+          <Form.Item style={{ marginBottom: 0 }}>
+            <div style={styles.btnRow}>
+              <Button
+                htmlType="reset"
+                onClick={() => {
+                  form.resetFields();
+                  setSelectedUsers([]);
+                }}
+                style={styles.clearBtn}
+              >
+                Clear
+              </Button>
+              <Button
+                type="primary"
+                htmlType="submit"
+                loading={sendLoading}
+                icon={<SendOutlined />}
+                style={styles.sendBtn}
+                className="pn-send-btn"
+              >
+                Send Notification
+              </Button>
+            </div>
+          </Form.Item>
+        </Form>
+      </div>
+      <UserPickerModal
+        open={userPickerOpen}
+        title="Select Users"
+        subtitle="Push notification recipients"
+        submitText="Use Selected Users"
+        initialSelectedUsers={selectedUsers}
+        onCancel={() => setUserPickerOpen(false)}
+        onSubmit={({ users }) => {
+          setSelectedUsers(users);
+          setUserPickerOpen(false);
+        }}
+      />
       <ReusableTable
         columns={listColumns}
         data={notifications}
@@ -210,17 +364,6 @@ const PushNotification = () => {
           fetchNotifications(p);
         }}
         actionType={[]}
-      />
-
-      <ReusableModal
-        open={open}
-        onCancel={() => setOpen(false)}
-        onSubmit={handleSend}
-        title="Create Push Notification"
-        description="Send a push notification to all users who have an active device token."
-        fields={modalFields}
-        initialValues={{}}
-        maskClosable={false}
       />
 
       {/* Scoped styles */}
@@ -255,8 +398,120 @@ const PushNotification = () => {
           transform: scale(0.98);
         }
       `}</style>
-    </div>
+    </div >
   );
+};
+
+const styles = {
+  card: {
+    background: "linear-gradient(135deg, #122f2a 0%, #0e2521 100%)",
+    border: "1px solid #1f4e40",
+    borderRadius: 16,
+    padding: "28px 32px",
+    maxWidth: 680,
+    boxShadow: "0 8px 32px rgba(0,0,0,0.35)",
+    margin: "auto",
+    marginBottom: 40,
+  },
+  cardHeader: {
+    display: "flex",
+    alignItems: "center",
+    gap: 14,
+    marginBottom: 20,
+  },
+  iconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    background: "rgba(201,240,123,0.1)",
+    border: "1px solid rgba(201,240,123,0.25)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+  cardTitle: {
+    color: "#fff",
+    fontWeight: 700,
+    fontSize: 17,
+    margin: 0,
+    lineHeight: "1.3",
+  },
+  cardSubtitle: {
+    color: "rgba(255,255,255,0.45)",
+    fontSize: 13,
+    margin: 0,
+    marginTop: 2,
+  },
+  divider: {
+    height: 1,
+    background: "rgba(255,255,255,0.07)",
+    marginBottom: 24,
+  },
+  form: {
+    marginTop: 0,
+  },
+  recipientRow: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    marginBottom: 14,
+  },
+  selectUsersBtn: {
+    background: "rgba(24,144,255,0.12)",
+    border: "1px solid rgba(24,144,255,0.4)",
+    color: "#40a9ff",
+    borderRadius: 8,
+    height: 40,
+    fontWeight: 650,
+  },
+  recipientCount: {
+    color: "rgba(255,255,255,0.55)",
+    fontSize: 13,
+  },
+  selectedUserPreview: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: 6,
+    marginBottom: 16,
+  },
+  label: {
+    color: "rgba(255,255,255,0.85)",
+    fontWeight: 600,
+    fontSize: 14,
+  },
+  input: {
+    height: 44,
+  },
+  textarea: {
+    resize: "none",
+  },
+  btnRow: {
+    display: "flex",
+    justifyContent: "flex-end",
+    gap: 12,
+    marginTop: 8,
+  },
+  clearBtn: {
+    background: "transparent",
+    border: "1px solid rgba(255,255,255,0.2)",
+    color: "rgba(255,255,255,0.65)",
+    borderRadius: 8,
+    height: 42,
+    paddingInline: 20,
+    cursor: "pointer",
+  },
+  sendBtn: {
+    background: "#c9f07b",
+    borderColor: "#c9f07b",
+    color: "#000",
+    fontWeight: 700,
+    borderRadius: 8,
+    height: 42,
+    paddingInline: 28,
+    transition: "all 0.2s ease",
+  },
 };
 
 export default PushNotification;

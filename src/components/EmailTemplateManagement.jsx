@@ -214,9 +214,9 @@ const TemplateDesignSelector = () => {
 
     return (
         <div style={{ padding: "20px" }}>
-            <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
+            {/* <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
                 <ExportButton filename="email_templates" columns={exportColumns} data={templates} />
-            </div>
+            </div> */}
             {/* 🔥 Selected Template */}
             <div
 
