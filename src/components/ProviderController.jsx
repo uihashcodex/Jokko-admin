@@ -1,55 +1,135 @@
-import React, { useState } from "react";
-import { Checkbox, Space, Typography, Card, Row, Col, Tabs } from "antd";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Card, Checkbox, Col, Empty, Row, Space, Spin, Tabs, Typography, message } from "antd";
 import { CaretDownOutlined, CaretUpOutlined } from "@ant-design/icons";
+import axios from "axios";
 import theme from "../config/theme.json";
+import { constant } from "../const";
 
 const { Text } = Typography;
 
-const onramperSubProviders = [
-  "alchemypay", "banxa", "binanceconnect", "binancep2p", "btcdirect",
-  "coinbasepay", "coinify", "dfx", "fonbnk", "gateconnect", "gatefi",
-  "guardarian", "koywe", "kraken", "localramp", "moongate", "moonpay",
-  "neocrypto", "onmeta", "onrampmoney", "paybis", "ramp", "revolut",
-  "sardine", "simplex", "skrill", "stripe", "swapped", "topper",
-  "transfi", "utorg", "wello", "yellowcard"
-];
-
 const ProviderController = () => {
-  const [activeTab, setActiveTab] = useState("onramp");
-  const [selectedProviders, setSelectedProviders] = useState({
-    onramper: false,
-    fonbnk: false,
-    transfi: false
-  });
+  const [activeTab, setActiveTab] = useState("buy");
+  const [providers, setProviders] = useState([]);
+  const [dropdowns, setDropdowns] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [updatingKey, setUpdatingKey] = useState("");
 
-  const [dropdowns, setDropdowns] = useState({
-    onramper: false,
-    fonbnk: false,
-    transfi: false
-  });
+  const authHeader = useMemo(
+    () => ({
+      Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+    }),
+    []
+  );
 
-  const handleCheckboxChange = (provider) => (e) => {
-    const checked = e.target.checked;
-    setSelectedProviders({
-      ...selectedProviders,
-      [provider]: checked
-    });
-    // Auto-close dropdown if unchecked
-    if (!checked) {
-      setDropdowns({ ...dropdowns, [provider]: false });
+  const activeProviders = useMemo(
+    () => providers.filter((provider) => provider.type === activeTab),
+    [providers, activeTab]
+  );
+
+  const fetchProviders = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { data } = await axios.get(`${constant.backend_url}/admin/get-provider-controller`, {
+        headers: authHeader,
+      });
+
+      if (data?.success) {
+        setProviders(Array.isArray(data.result) ? data.result : []);
+      } else {
+        message.error(data?.message || "Failed to load provider controller");
+      }
+    } catch (error) {
+      console.error("Failed to load provider controller:", error);
+      message.error("Failed to load provider controller");
+    } finally {
+      setLoading(false);
+    }
+  }, [authHeader]);
+
+  useEffect(() => {
+    fetchProviders();
+  }, [fetchProviders]);
+
+  const updateProviderStatus = async (provider, isActive) => {
+    const updateKey = `provider-${provider._id}`;
+    setUpdatingKey(updateKey);
+    try {
+      const { data } = await axios.post(
+        `${constant.backend_url}/admin/update-provider-controller`,
+        {
+          provider_id: provider._id,
+          isActive,
+        },
+        { headers: authHeader }
+      );
+
+      if (data?.success) {
+        message.success(data.message || "Provider updated");
+        setProviders((prev) =>
+          prev.map((item) => (item._id === provider._id ? { ...item, isActive } : item))
+        );
+        if (!isActive) {
+          setDropdowns((prev) => ({ ...prev, [provider._id]: false }));
+        }
+      } else {
+        message.error(data?.message || "Failed to update provider");
+      }
+    } catch (error) {
+      console.error("Failed to update provider:", error);
+      message.error("Failed to update provider");
+    } finally {
+      setUpdatingKey("");
     }
   };
 
-  const toggleDropdown = (provider) => {
-    setDropdowns({
-      ...dropdowns,
-      [provider]: !dropdowns[provider]
-    });
+  const updateSubProviderStatus = async (providerId, subProvider, isActive) => {
+    const updateKey = `sub-${subProvider._id}`;
+    setUpdatingKey(updateKey);
+    try {
+      const { data } = await axios.post(
+        `${constant.backend_url}/admin/update-onramper-subprovider`,
+        {
+          subProvider_id: subProvider._id,
+          isActive,
+        },
+        { headers: authHeader }
+      );
+
+      if (data?.success) {
+        message.success(data.message || "Sub provider updated");
+        setProviders((prev) =>
+          prev.map((provider) =>
+            provider._id === providerId
+              ? {
+                  ...provider,
+                  subProviders: (provider.subProviders || []).map((sub) =>
+                    sub._id === subProvider._id ? { ...sub, isActive } : sub
+                  ),
+                }
+              : provider
+          )
+        );
+      } else {
+        message.error(data?.message || "Failed to update sub provider");
+      }
+    } catch (error) {
+      console.error("Failed to update sub provider:", error);
+      message.error("Failed to update sub provider");
+    } finally {
+      setUpdatingKey("");
+    }
   };
 
-  const renderDropdownArrow = (provider) => (
+  const toggleDropdown = (providerId) => {
+    setDropdowns((prev) => ({
+      ...prev,
+      [providerId]: !prev[providerId],
+    }));
+  };
+
+  const renderDropdownArrow = (providerId) => (
     <div
-      onClick={() => toggleDropdown(provider)}
+      onClick={() => toggleDropdown(providerId)}
       style={{
         cursor: "pointer",
         display: "flex",
@@ -57,10 +137,10 @@ const ProviderController = () => {
         background: "rgba(201,240,123,0.1)",
         padding: "4px",
         borderRadius: "4px",
-        transition: "all 0.2s ease"
+        transition: "all 0.2s ease",
       }}
     >
-      {dropdowns[provider] ? (
+      {dropdowns[providerId] ? (
         <CaretUpOutlined style={{ color: theme.primaryColor, fontSize: "14px" }} />
       ) : (
         <CaretDownOutlined style={{ color: theme.primaryColor, fontSize: "14px" }} />
@@ -68,9 +148,90 @@ const ProviderController = () => {
     </div>
   );
 
+  const renderProvider = (provider) => {
+    const subProviders = provider.subProviders || [];
+    const hasSubProviders = subProviders.length > 0;
+
+    return (
+      <Col xs={24} md={8} key={provider._id}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <Checkbox
+              checked={Boolean(provider.isActive)}
+              disabled={updatingKey === `provider-${provider._id}`}
+              onChange={(event) => updateProviderStatus(provider, event.target.checked)}
+              className="custom-checkbox"
+            >
+              <span style={{ color: "#fff", fontSize: "16px", fontWeight: "600", textTransform: "capitalize" }}>
+                {provider.providerName}
+              </span>
+            </Checkbox>
+            {hasSubProviders && provider.isActive && renderDropdownArrow(provider._id)}
+          </div>
+
+          {hasSubProviders && provider.isActive && dropdowns[provider._id] && (
+            <div
+              style={{
+                padding: "16px",
+                background: "rgba(0,0,0,0.2)",
+                borderRadius: "12px",
+                marginTop: "4px",
+                maxHeight: "350px",
+                overflowY: "auto",
+                border: "1px solid rgba(255,255,255,0.05)",
+                scrollbarWidth: "thin",
+                scrollbarColor: `${theme.primaryColor} transparent`,
+              }}
+              className="custom-scrollbar"
+            >
+              <Space direction="vertical" style={{ width: "100%" }} size={12}>
+                {subProviders.map((subProvider) => (
+                  <Checkbox
+                    key={subProvider._id}
+                    checked={Boolean(subProvider.isActive)}
+                    disabled={updatingKey === `sub-${subProvider._id}`}
+                    onChange={(event) =>
+                      updateSubProviderStatus(provider._id, subProvider, event.target.checked)
+                    }
+                    className="custom-checkbox sub-checkbox"
+                  >
+                    <span
+                      style={{
+                        color: "rgba(255,255,255,0.65)",
+                        textTransform: "capitalize",
+                        fontSize: "13px",
+                      }}
+                    >
+                      {subProvider.providerName}
+                    </span>
+                  </Checkbox>
+                ))}
+              </Space>
+            </div>
+          )}
+
+          {!hasSubProviders && provider.isActive && dropdowns[provider._id] && (
+            <div
+              style={{
+                padding: "12px 16px",
+                background: "rgba(0,0,0,0.2)",
+                borderRadius: "12px",
+                marginTop: "4px",
+                border: "1px solid rgba(255,255,255,0.05)",
+              }}
+            >
+              <Text style={{ color: "rgba(255,255,255,0.35)", fontStyle: "italic", fontSize: "12px" }}>
+                No sub providers available
+              </Text>
+            </div>
+          )}
+        </div>
+      </Col>
+    );
+  };
+
   return (
     <div>
-      {/* Header */}
       <div className="mb-5 w-full rounded-lg bg-cover bg-center flex items-center header-content-img">
         <div className="display-3 w-full">
           <h1 className="text-white p-7 font-bold text-2xl">Provider Controller</h1>
@@ -85,7 +246,7 @@ const ProviderController = () => {
             borderRadius: "16px",
             boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
             width: "100%",
-            maxWidth: "850px"
+            maxWidth: "850px",
           }}
           styles={{ body: { padding: "28px" } }}
         >
@@ -94,122 +255,45 @@ const ProviderController = () => {
             onChange={setActiveTab}
             className="custom-tabs"
             items={[
-              { key: "onramp", label: "OnRamp" },
-              { key: "offramp", label: "OffRamp" }
+              { key: "buy", label: "OnRamp" },
+              { key: "sell", label: "OffRamp" },
             ]}
             style={{ marginBottom: "20px" }}
           />
 
-          <div style={{ marginBottom: "28px", borderBottom: "1px solid rgba(255,255,255,0.08)", paddingBottom: "16px" }}>
-            <h2 style={{
-              color: "White",
-              margin: 0,
-              fontSize: "16px",
-              fontWeight: "600",
-              letterSpacing: "1.5px",
-              opacity: 0.9
-            }}>
+          <div
+            style={{
+              marginBottom: "28px",
+              borderBottom: "1px solid rgba(255,255,255,0.08)",
+              paddingBottom: "16px",
+            }}
+          >
+            <h2
+              style={{
+                color: "White",
+                margin: 0,
+                fontSize: "16px",
+                fontWeight: "600",
+                letterSpacing: "1.5px",
+                opacity: 0.9,
+              }}
+            >
               Choose Provider and Sub Provider
             </h2>
           </div>
 
-          <Row gutter={[48, 24]} align="top">
-            {/* Onramper */}
-            <Col xs={24} md={8}>
-              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                  <Checkbox
-                    checked={selectedProviders.onramper}
-                    onChange={handleCheckboxChange("onramper")}
-                    className="custom-checkbox"
-                  >
-                    <span style={{ color: "#fff", fontSize: "16px", fontWeight: "600" }}>Onramper</span>
-                  </Checkbox>
-                  {selectedProviders.onramper && renderDropdownArrow("onramper")}
-                </div>
-
-                {selectedProviders.onramper && dropdowns.onramper && (
-                  <div style={{
-                    padding: "16px",
-                    background: "rgba(0,0,0,0.2)",
-                    borderRadius: "12px",
-                    marginTop: "4px",
-                    maxHeight: "350px",
-                    overflowY: "auto",
-                    border: "1px solid rgba(255,255,255,0.05)",
-                    scrollbarWidth: "thin",
-                    scrollbarColor: `${theme.primaryColor} transparent`
-                  }} className="custom-scrollbar">
-                    <Space direction="vertical" style={{ width: "100%" }} size={12}>
-                      {onramperSubProviders.map(sub => (
-                        <Checkbox key={sub} className="custom-checkbox sub-checkbox">
-                          <span style={{ color: "rgba(255,255,255,0.65)", textTransform: "capitalize", fontSize: "13px" }}>{sub}</span>
-                        </Checkbox>
-                      ))}
-                    </Space>
-                  </div>
-                )}
-              </div>
-            </Col>
-
-            {/* fonbnk */}
-            <Col xs={24} md={8}>
-              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                  <Checkbox
-                    checked={selectedProviders.fonbnk}
-                    onChange={handleCheckboxChange("fonbnk")}
-                    className="custom-checkbox"
-                  >
-                    <span style={{ color: "#fff", fontSize: "16px", fontWeight: "600" }}>fonbnk</span>
-                  </Checkbox>
-                  {selectedProviders.fonbnk && renderDropdownArrow("fonbnk")}
-                </div>
-                {selectedProviders.fonbnk && dropdowns.fonbnk && (
-                  <div style={{
-                    padding: "12px 16px",
-                    background: "rgba(0,0,0,0.2)",
-                    borderRadius: "12px",
-                    marginTop: "4px",
-                    border: "1px solid rgba(255,255,255,0.05)"
-                  }}>
-                    <Text style={{ color: "rgba(255,255,255,0.35)", fontStyle: "italic", fontSize: "12px" }}>
-                      No sub providers available
-                    </Text>
-                  </div>
-                )}
-              </div>
-            </Col>
-
-            {/* transfi */}
-            <Col xs={24} md={8}>
-              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                  <Checkbox
-                    checked={selectedProviders.transfi}
-                    onChange={handleCheckboxChange("transfi")}
-                    className="custom-checkbox"
-                  >
-                    <span style={{ color: "#fff", fontSize: "16px", fontWeight: "600" }}>transfi</span>
-                  </Checkbox>
-                  {selectedProviders.transfi && renderDropdownArrow("transfi")}
-                </div>
-                {selectedProviders.transfi && dropdowns.transfi && (
-                  <div style={{
-                    padding: "12px 16px",
-                    background: "rgba(0,0,0,0.2)",
-                    borderRadius: "12px",
-                    marginTop: "4px",
-                    border: "1px solid rgba(255,255,255,0.05)"
-                  }}>
-                    <Text style={{ color: "rgba(255,255,255,0.35)", fontStyle: "italic", fontSize: "12px" }}>
-                      No sub providers available
-                    </Text>
-                  </div>
-                )}
-              </div>
-            </Col>
-          </Row>
+          <Spin spinning={loading}>
+            {activeProviders.length ? (
+              <Row gutter={[48, 24]} align="top">
+                {activeProviders.map(renderProvider)}
+              </Row>
+            ) : (
+              <Empty
+                className="empty-data"
+                description={<span style={{ color: theme.primaryColor }}>No Providers Found</span>}
+              />
+            )}
+          </Spin>
         </Card>
       </div>
 

@@ -175,10 +175,10 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <ReCAPTCHA
+      {/* <ReCAPTCHA
         sitekey="6Lcjos4sAAAAAAZDn__ZT-A7Cwg9Ip7Eq1vCQFsJ"
         onChange={onChange}
-      />
+      /> */}
 
       <ChartsSection dashboardData={dashboardData} />
       {/* Cards Section */}

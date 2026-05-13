@@ -20,6 +20,8 @@ const TrendingCurrency = () => {
     const [deletemodal, setDeletemodal] = useState(false);
     const [totalUsers, setTotalUsers] = useState(0);
     const [deleteRecord, setDeleteRecord] = useState(null);
+    const [statusSelectDisabled, setStatusSelectDisabled] = useState(false);
+
     const columns = [
         { title: "S.no", dataIndex: "sno", key: "sno" },
         { title: "Token Name", dataIndex: "tokenName", key: "tokenName" },
@@ -102,9 +104,16 @@ const TrendingCurrency = () => {
     // const [select, setSelect] = useState(networkOptions);
 
 
-    const modalFields = selectedAsset
-        ? fields
-        : fields.filter(f => f.name !== "status");
+ const modalFields = useMemo(() => {
+        const base = selectedAsset
+            ? fields
+            : fields.filter((f) => f.name !== "status");
+        return base.map((f) =>
+            f.name === "status" ? { ...f, disabled: statusSelectDisabled } : f
+        );
+    }, [selectedAsset, statusSelectDisabled, networkOptions]);
+
+
 
     const handleCreate = () => {
         setSelectedAsset(null);
