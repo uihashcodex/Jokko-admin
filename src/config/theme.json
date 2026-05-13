@@ -160,6 +160,11 @@
           "label": "Broadcast"
         },
         {
+          "key": "/provider-controller",
+          "icon": "ControlOutlined",
+          "label": "Provider Controller"
+        },
+        {
           "key": "/support",
           "icon": "CommentOutlined",
           "label": "Support"

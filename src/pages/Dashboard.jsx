@@ -7,6 +7,7 @@ import { constant } from "../const";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { hasAccess } from "../utils/permissionCheck";
+import ReCAPTCHA from "react-google-recaptcha";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -33,7 +34,7 @@ const Dashboard = () => {
 
         setDashboardData(data);
 
-        
+
         const users = data.recentUsers.map((item) => ({
           id: item?._id,
           firstname: item?.firstname || "-",
@@ -75,7 +76,7 @@ const Dashboard = () => {
   // transaction table configuration
   const transactionColumns = [
 
-      {
+    {
       title: "Transaction Hash",
       dataIndex: "transactionHash",
       render: (hash) => {
@@ -95,7 +96,7 @@ const Dashboard = () => {
       dataIndex: "tokenSymbol",
     },
 
-  
+
     {
       title: "From",
       dataIndex: "from",
@@ -146,10 +147,13 @@ const Dashboard = () => {
   ];
 
 
-const user = JSON.parse(localStorage.getItem("user")) || {};
-const userPermissions = user?.permissions || [];
+  const user = JSON.parse(localStorage.getItem("user")) || {};
+  const userPermissions = user?.permissions || [];
 
 
+  function onChange(value) {
+    console.log("Captcha value:", value);
+  }
 
   return (
     <div className="">
@@ -158,10 +162,10 @@ const userPermissions = user?.permissions || [];
       </div> */}
       <div
         className="mb-5 w-full rounded-lg bg-cover bg-center flex items-center header-content-img"
-        // style={{
-        //   backgroundImage: `url(${theme.dashboardheaderimg.image})`,
-        //   height: theme.dashboardheaderimg.height
-        // }}
+      // style={{
+      //   backgroundImage: `url(${theme.dashboardheaderimg.image})`,
+      //   height: theme.dashboardheaderimg.height
+      // }}
 
       >
         <div className="display-3 w-full">
@@ -170,6 +174,11 @@ const userPermissions = user?.permissions || [];
           </h1>
         </div>
       </div>
+
+      <ReCAPTCHA
+        sitekey="6Lcjos4sAAAAAAZDn__ZT-A7Cwg9Ip7Eq1vCQFsJ"
+        onChange={onChange}
+      />
 
       <ChartsSection dashboardData={dashboardData} />
       {/* Cards Section */}
@@ -192,7 +201,7 @@ const userPermissions = user?.permissions || [];
 
       </div>
 
-    
+
 
       {/* <DashboardTable /> */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
@@ -210,16 +219,16 @@ const userPermissions = user?.permissions || [];
                 />
                 <div className="text-right mt-2">
 
-           {hasAccess(userPermissions, "User Details") && (
-  <div className="text-right mt-2">
-    <button
-      className="px-4 py-2 bg-blue-600 text-white rounded"
-      onClick={() => navigate(`/${constant.adminRoute}/viewdetails`)}
-    >
-      View More
-    </button>
-  </div>
-)}
+                  {hasAccess(userPermissions, "User Details") && (
+                    <div className="text-right mt-2">
+                      <button
+                        className="px-4 py-2 bg-blue-600 text-white rounded"
+                        onClick={() => navigate(`/${constant.adminRoute}/viewdetails`)}
+                      >
+                        View More
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -240,17 +249,17 @@ const userPermissions = user?.permissions || [];
             <div className="text-right mt-2">
 
 
-              
-             {hasAccess(userPermissions, "Transaction") && (
-  <div className="text-right mt-2">
-    <button
-      className="px-4 py-2 bg-blue-600 text-white rounded"
-      onClick={() => navigate(`/${constant.adminRoute}/transaction`)}
-    >
-      View More
-    </button>
-  </div>
-)}
+
+              {hasAccess(userPermissions, "Transaction") && (
+                <div className="text-right mt-2">
+                  <button
+                    className="px-4 py-2 bg-blue-600 text-white rounded"
+                    onClick={() => navigate(`/${constant.adminRoute}/transaction`)}
+                  >
+                    View More
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
