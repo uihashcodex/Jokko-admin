@@ -6,7 +6,7 @@ const MODULES = [
   "Trending Currency",
   "Wallet",
   "Transaction History",
-
+  "support Categories",
   "Push Notification",
   "Email Template",
   "Email Management",

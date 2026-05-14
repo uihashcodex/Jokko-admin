@@ -153,19 +153,19 @@ const SupportCategories = () => {
     }
   };
 
-  const handleStatusChange = async (record, nextStatus) => {
-    const response = await updateSupportCategory({
-      categoryId: record.id,
-      isActive: nextStatus === "active",
-    });
+  // const handleStatusChange = async (record, nextStatus) => {
+  //   const response = await updateSupportCategory({
+  //     categoryId: record.id,
+  //     isActive: nextStatus === "active",
+  //   });
 
-    if (response?.success) {
-      messageApi.success(response.message || "Status updated");
-      fetchCategories();
-    } else {
-      messageApi.error(response?.message || "Failed to update status");
-    }
-  };
+  //   if (response?.success) {
+  //     messageApi.success(response.message || "Status updated");
+  //     fetchCategories();
+  //   } else {
+  //     messageApi.error(response?.message || "Failed to update status");
+  //   }
+  // };
 
   const confirmDelete = async () => {
     if (!selectedRecord?.id) return;
@@ -193,8 +193,7 @@ const SupportCategories = () => {
       <TableHeader
         data={allData}
         showCreateButton
-        showStatusFilter
-        showDateFilter
+        
         showSearch
         showExportButton
         exportFilename="support_categories"
@@ -265,8 +264,8 @@ const SupportCategories = () => {
         currentPage={page}
         onPageChange={(p) => setPage(p)}
         loading={loading}
-        actionType={["status", "action"]}
-        onStatusChange={handleStatusChange}
+        actionType={["edit", "Remove"]}
+        // onStatusChange={handleStatusChange}
         onEdit={openEdit}
         onDelete={(record) => {
           setSelectedRecord(record);

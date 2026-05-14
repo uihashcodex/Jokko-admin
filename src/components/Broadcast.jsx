@@ -406,21 +406,21 @@ const Broadcast = () => {
                 padding: "2px 8px",
                 borderRadius: 10
               }}>
-                {charCount}/100 characters
+                {/* {charCount}/100 characters */}
               </span>
             </div>
           }
           name="description"
           rules={[
             { required: true, message: "Description is required" },
-            {
-              validator: (_, value) => {
-                if ((value || "").length > 100) {
-                  return Promise.reject(new Error("Description cannot exceed 100 characters"));
-                }
-                return Promise.resolve();
-              }
-            }
+            // {
+            //   validator: (_, value) => {
+            //     if ((value || "").length > 100) {
+            //       return Promise.reject(new Error("Description cannot exceed 100 characters"));
+            //     }
+            //     return Promise.resolve();
+            //   }
+            // }
           ]}
         >
           <Input.TextArea

@@ -50,6 +50,14 @@ const ProviderController = () => {
     fetchProviders();
   }, [fetchProviders]);
 
+  const replaceProvider = (updatedProvider) => {
+    if (!updatedProvider?._id) return;
+
+    setProviders((prev) =>
+      prev.map((provider) => (provider._id === updatedProvider._id ? updatedProvider : provider))
+    );
+  };
+
   const updateProviderStatus = async (provider, isActive) => {
     const updateKey = `provider-${provider._id}`;
     setUpdatingKey(updateKey);
@@ -65,18 +73,44 @@ const ProviderController = () => {
 
       if (data?.success) {
         message.success(data.message || "Provider updated");
-        setProviders((prev) =>
-          prev.map((item) => (item._id === provider._id ? { ...item, isActive } : item))
-        );
+        if (data.result) {
+          replaceProvider(data.result);
+        } else {
+          setProviders((prev) =>
+            prev.map((item) =>
+              item._id === provider._id
+                ? {
+                    ...item,
+                    isActive,
+                    subProviders:
+                      provider.providerName === "onramper" && !isActive
+                        ? (item.subProviders || []).map((subProvider) => ({
+                            ...subProvider,
+                            isActive: false,
+                          }))
+                        : item.subProviders,
+                  }
+                : item
+            )
+          );
+        }
         if (!isActive) {
           setDropdowns((prev) => ({ ...prev, [provider._id]: false }));
         }
       } else {
         message.error(data?.message || "Failed to update provider");
+        if (isActive && (provider.subProviders || []).length > 0) {
+          setDropdowns((prev) => ({ ...prev, [provider._id]: true }));
+        }
       }
     } catch (error) {
       console.error("Failed to update provider:", error);
-      message.error("Failed to update provider");
+      const errorMessage = error?.response?.data?.message || "Failed to update provider";
+      message.error(errorMessage);
+
+      if (isActive && (provider.subProviders || []).length > 0) {
+        setDropdowns((prev) => ({ ...prev, [provider._id]: true }));
+      }
     } finally {
       setUpdatingKey("");
     }
@@ -84,37 +118,45 @@ const ProviderController = () => {
 
   const updateSubProviderStatus = async (providerId, subProvider, isActive) => {
     const updateKey = `sub-${subProvider._id}`;
+    const provider = providers.find((item) => item._id === providerId);
     setUpdatingKey(updateKey);
     try {
       const { data } = await axios.post(
-        `${constant.backend_url}/admin/update-onramper-subprovider`,
+        `${constant.backend_url}/admin/update-provider-controller`,
         {
-          subProvider_id: subProvider._id,
-          isActive,
+          provider_id: providerId,
+          ...(provider?.providerName === "onramper" && isActive ? { isActive: true } : {}),
+          subProviderName: subProvider.providerName,
+          subProviderIsActive: isActive,
         },
         { headers: authHeader }
       );
 
       if (data?.success) {
         message.success(data.message || "Sub provider updated");
-        setProviders((prev) =>
-          prev.map((provider) =>
-            provider._id === providerId
-              ? {
-                  ...provider,
-                  subProviders: (provider.subProviders || []).map((sub) =>
-                    sub._id === subProvider._id ? { ...sub, isActive } : sub
-                  ),
-                }
-              : provider
-          )
-        );
+        if (data.result) {
+          replaceProvider(data.result);
+        } else {
+          setProviders((prev) =>
+            prev.map((provider) =>
+              provider._id === providerId
+                ? {
+                    ...provider,
+                    isActive: provider.providerName === "onramper" && isActive ? true : provider.isActive,
+                    subProviders: (provider.subProviders || []).map((sub) =>
+                      sub._id === subProvider._id ? { ...sub, isActive } : sub
+                    ),
+                  }
+                : provider
+            )
+          );
+        }
       } else {
         message.error(data?.message || "Failed to update sub provider");
       }
     } catch (error) {
       console.error("Failed to update sub provider:", error);
-      message.error("Failed to update sub provider");
+      message.error(error?.response?.data?.message || "Failed to update sub provider");
     } finally {
       setUpdatingKey("");
     }
@@ -226,10 +268,10 @@ const ProviderController = () => {
                 {provider.providerName}
               </span>
             </Checkbox>
-            {hasSubProviders && provider.isActive && renderDropdownArrow(provider._id)}
+            {hasSubProviders && renderDropdownArrow(provider._id)}
           </div>
 
-          {hasSubProviders && provider.isActive && dropdowns[provider._id] && (
+          {hasSubProviders && dropdowns[provider._id] && (
             <div
               style={{
                 padding: "16px",

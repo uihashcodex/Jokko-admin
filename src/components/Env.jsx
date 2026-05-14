@@ -14,16 +14,18 @@ const EMPTY_CREDENTIALS = {
   },
   transfi: {
     url: "",
-    apikey: "",
-    secretKey: "",
-    webhook: "",
+    username: "",
+    password: "",
+    webhookSecret: "",
     mid: "",
   },
   fonbnk: {
-    url: "",
-    apikey: "",
-    secretKey: "",
-    webhook: "",
+    FONBNK_CLIENT_ID: "",
+    FONBNK_CLIENT_SECRET: "",
+    FONBNK_CLIENT_URLSIGNATURE: "",
+    FONBNK_CLIENT_SOURCEPARAMS: "",
+    FONBNK_URL: "",
+    FONBNK_PAY_URL: "",
   },
 };
 
@@ -36,12 +38,19 @@ const PROVIDERS = [
   {
     key: "transfi",
     title: "TransFi",
-    fields: ["url", "apikey", "secretKey", "webhook", "mid"],
+    fields: ["url", "username", "password", "webhookSecret", "mid"],
   },
   {
     key: "fonbnk",
     title: "Fonbnk",
-    fields: ["url", "apikey", "secretKey", "webhook"],
+    fields: [
+      "FONBNK_CLIENT_ID",
+      "FONBNK_CLIENT_SECRET",
+      "FONBNK_CLIENT_URLSIGNATURE",
+      "FONBNK_CLIENT_SOURCEPARAMS",
+      "FONBNK_URL",
+      "FONBNK_PAY_URL",
+    ],
   },
 ];
 
@@ -50,31 +59,78 @@ const FIELD_LABELS = {
   apikey: "API Key",
   secretKey: "Secret Key",
   webhook: "Webhook",
+  username: "Username",
+  password: "Password",
+  webhookSecret: "Webhook Secret",
   mid: "MID",
+  FONBNK_CLIENT_ID: "FONBNK Client ID",
+  FONBNK_CLIENT_SECRET: "FONBNK Client Secret",
+  FONBNK_CLIENT_URLSIGNATURE: "FONBNK URL Signature",
+  FONBNK_CLIENT_SOURCEPARAMS: "FONBNK Source Params",
+  FONBNK_URL: "FONBNK URL",
+  FONBNK_PAY_URL: "FONBNK Pay URL",
 };
 
 const FIELD_PLACEHOLDERS = {
   url: "https://api.example.com",
   apikey: "Enter API key",
   secretKey: "Enter secret key",
-  webhook: "https://yourdomain.com/webhook",
-  mid: "MID123456",
+  webhook: "enter webhook",
+  username: "Enter username",
+  password: "Enter password",
+  webhookSecret: "Enter webhook secret",
+  mid: "enter mid",
+  FONBNK_CLIENT_ID: "enter client id",
+  FONBNK_CLIENT_SECRET: "enter client secret",
+  FONBNK_CLIENT_URLSIGNATURE: "enter client url signature",
+  FONBNK_CLIENT_SOURCEPARAMS: "enter source params",
+  FONBNK_URL: "https://sandbox-api.fonbnk.com",
+  FONBNK_PAY_URL: "https://sandbox-pay.fonbnk.com",
 };
 
-const mergeCredentials = (data = {}) => ({
-  onramper: {
-    ...EMPTY_CREDENTIALS.onramper,
-    ...(data.onramper || {}),
-  },
-  transfi: {
-    ...EMPTY_CREDENTIALS.transfi,
-    ...(Array.isArray(data.transfi) ? data.transfi[0] : data.transfi || {}),
-  },
-  fonbnk: {
-    ...EMPTY_CREDENTIALS.fonbnk,
-    ...(data.fonbnk || {}),
-  },
+const PROVIDER_LABELS = PROVIDERS.reduce(
+  (labels, provider) => ({
+    ...labels,
+    [provider.key]: provider.title,
+  }),
+  {}
+);
+
+const normalizeTransfi = (transfi = {}) => ({
+  ...transfi,
+  username: transfi.username ?? "",
+  password: transfi.password ?? transfi.secretKey ?? "",
+  webhookSecret: transfi.webhookSecret ?? transfi.webhook ?? "",
 });
+
+const normalizeFonbnk = (fonbnk = {}) => ({
+  ...fonbnk,
+  FONBNK_CLIENT_ID: fonbnk.FONBNK_CLIENT_ID ?? fonbnk.FONBNK_CLIENT_ID ?? "",
+  FONBNK_CLIENT_SECRET: fonbnk.FONBNK_CLIENT_SECRET ?? fonbnk.clientSecret ?? "",
+  FONBNK_CLIENT_URLSIGNATURE: fonbnk.FONBNK_CLIENT_URLSIGNATURE ?? fonbnk.urlSignature ?? "",
+  FONBNK_CLIENT_SOURCEPARAMS: fonbnk.FONBNK_CLIENT_SOURCEPARAMS ?? fonbnk.sourceParams ?? "",
+  FONBNK_URL: fonbnk.FONBNK_URL ?? fonbnk.url ?? "",
+  FONBNK_PAY_URL: fonbnk.FONBNK_PAY_URL ?? fonbnk.payUrl ?? "",
+});
+
+const mergeCredentials = (data = {}) => {
+  const transfi = Array.isArray(data.transfi) ? data.transfi[0] : data.transfi;
+
+  return {
+    onramper: {
+      ...EMPTY_CREDENTIALS.onramper,
+      ...(data.onramper || {}),
+    },
+    transfi: {
+      ...EMPTY_CREDENTIALS.transfi,
+      ...normalizeTransfi(transfi || {}),
+    },
+    fonbnk: {
+      ...EMPTY_CREDENTIALS.fonbnk,
+      ...normalizeFonbnk(data.fonbnk || {}),
+    },
+  };
+};
 
 const getCredentialsPayload = (responseData = {}) => {
   const payload = responseData.data || responseData.result || responseData;
@@ -122,6 +178,8 @@ const Env = () => {
       setLoading(false);
     }
   }, [form]);
+
+
 
   useEffect(() => {
     fetchCredentials();
@@ -293,20 +351,20 @@ const ProviderSection = ({ title, children }) => (
 
 const EnvField = ({ provider, field, onDelete, deleting }) => {
   const label = FIELD_LABELS[field];
+  const providerLabel = PROVIDER_LABELS[provider] || provider;
 
   return (
     <div style={styles.fieldWrap}>
       <Form.Item
         label={<span style={styles.label}>{label}</span>}
         name={[provider, field]}
-        rules={[{ required: true, message: `${label} is required` }]}
         style={styles.fieldItem}
       >
         <Input placeholder={FIELD_PLACEHOLDERS[field]} className="env-input" />
       </Form.Item>
       <Popconfirm
-        title={`Delete ${label}?`}
-        description="This will remove only this stored field."
+        title={`Are you sure you want to delete this ${label}?`}
+        description={`If you delete it, your ${providerLabel} will not work.`}
         okText="Delete"
         cancelText="Cancel"
         onConfirm={() => onDelete(provider, field)}
