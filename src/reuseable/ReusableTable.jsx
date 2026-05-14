@@ -196,6 +196,18 @@ const ReusableTable = ({
     });
   }
 
+    if (actionType?.includes("edit")) {
+    updatedColumns.push({
+      title: "Update",
+      key: "edit",
+      render: (_, record) => (
+        <Button type="primary" onClick={() => onEdit?.(record)}>
+          {actionLabel || "Update"}
+        </Button>
+      ),
+    });
+  }
+
 
   if (actionType?.includes("update")) {
     updatedColumns.push({
