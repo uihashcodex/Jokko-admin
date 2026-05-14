@@ -238,7 +238,7 @@ const ProviderController = () => {
         </div>
       </div>
 
-      <div style={{ padding: "0 12px", display: "flex", justifyContent: "flex-start" }}>
+      <div style={{display: "flex", justifyContent: "center" }}>
         <Card
           style={{
             background: theme.sidebarSettings.backgroundColor,
@@ -268,18 +268,18 @@ const ProviderController = () => {
               paddingBottom: "16px",
             }}
           >
-            <h2
+            <span
               style={{
                 color: "White",
                 margin: 0,
                 fontSize: "16px",
                 fontWeight: "600",
-                letterSpacing: "1.5px",
+                letterSpacing: "1.1px",
                 opacity: 0.9,
               }}
             >
               Choose Provider and Sub Provider
-            </h2>
+            </span>
           </div>
 
           <Spin spinning={loading}>
