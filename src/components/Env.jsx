@@ -281,6 +281,7 @@ const Env = () => {
                 {provider.fields.map((field) => (
                   <EnvField
                     key={`${provider.key}.${field}`}
+                    form={form}
                     provider={provider.key}
                     field={field}
                     onDelete={handleDeleteField}
@@ -349,12 +350,14 @@ const ProviderSection = ({ title, children }) => (
   </section>
 );
 
-const EnvField = ({ provider, field, onDelete, deleting }) => {
+const EnvField = ({ form, provider, field, onDelete, deleting }) => {
   const label = FIELD_LABELS[field];
   const providerLabel = PROVIDER_LABELS[provider] || provider;
+  const value = Form.useWatch([provider, field], form);
+  const hasValue = value !== undefined && value !== null && String(value).trim() !== "";
 
   return (
-    <div style={styles.fieldWrap}>
+    <div style={hasValue ? styles.fieldWrap : styles.fieldWrapWithoutDelete}>
       <Form.Item
         label={<span style={styles.label}>{label}</span>}
         name={[provider, field]}
@@ -362,21 +365,23 @@ const EnvField = ({ provider, field, onDelete, deleting }) => {
       >
         <Input placeholder={FIELD_PLACEHOLDERS[field]} className="env-input" />
       </Form.Item>
-      <Popconfirm
-        title={`Are you sure you want to delete this ${label}?`}
-        description={`If you delete it, your ${providerLabel} will not work.`}
-        okText="Delete"
-        cancelText="Cancel"
-        onConfirm={() => onDelete(provider, field)}
-      >
-        <Button
-          icon={<DeleteOutlined />}
-          loading={deleting}
-          disabled={deleting}
-          danger
-          style={styles.deleteBtn}
-        />
-      </Popconfirm>
+      {hasValue && (
+        <Popconfirm
+          title={`Are you sure you want to delete this ${label}?`}
+          description={`If you delete it, your ${providerLabel} will not work.`}
+          okText="Delete"
+          cancelText="Cancel"
+          onConfirm={() => onDelete(provider, field)}
+        >
+          <Button
+            icon={<DeleteOutlined />}
+            loading={deleting}
+            disabled={deleting}
+            danger
+            style={styles.deleteBtn}
+          />
+        </Popconfirm>
+      )}
     </div>
   );
 };
@@ -436,6 +441,11 @@ const styles = {
     gridTemplateColumns: "1fr 42px",
     alignItems: "end",
     gap: 8,
+  },
+  fieldWrapWithoutDelete: {
+    display: "grid",
+    gridTemplateColumns: "1fr",
+    alignItems: "end",
   },
   fieldItem: {
     marginBottom: 14,

@@ -59,6 +59,14 @@ const ProviderController = () => {
   };
 
   const updateProviderStatus = async (provider, isActive) => {
+    if (provider.providerName === "onramper" && isActive) {
+      setProviders((prev) =>
+        prev.map((item) => (item._id === provider._id ? { ...item, isActive: true } : item))
+      );
+      setDropdowns((prev) => ({ ...prev, [provider._id]: true }));
+      return;
+    }
+
     const updateKey = `provider-${provider._id}`;
     setUpdatingKey(updateKey);
     try {
@@ -170,39 +178,77 @@ const ProviderController = () => {
       (sub) => Boolean(sub.isActive) !== isActive
     );
 
-    if (subProvidersToUpdate.length === 0) return;
+    if (isActive && subProvidersToUpdate.length === 0 && provider.isActive) return;
 
     const updateKey = `bulk-sub-${providerId}`;
     setUpdatingKey(updateKey);
 
     try {
-      // Since there's no bulk update API, we update them in parallel
-      const updatePromises = subProvidersToUpdate.map((sub) =>
-        axios.post(
-          `${constant.backend_url}/admin/update-onramper-subprovider`,
-          { subProvider_id: sub._id, isActive },
+      if (!isActive) {
+        const { data } = await axios.post(
+          `${constant.backend_url}/admin/update-provider-controller`,
+          {
+            provider_id: providerId,
+            isActive: false,
+          },
           { headers: authHeader }
-        )
-      );
+        );
 
-      const results = await Promise.all(updatePromises);
-      const someFailed = results.some((res) => !res.data?.success);
-
-      if (someFailed) {
-        message.warning("Some sub providers failed to update");
-      } else {
-        message.success(`All sub providers ${isActive ? "enabled" : "disabled"}`);
+        if (data?.success) {
+          message.success(data.message || "All sub providers disabled");
+          if (data.result) {
+            replaceProvider(data.result);
+          } else {
+            setProviders((prev) =>
+              prev.map((p) =>
+                p._id === providerId
+                  ? {
+                      ...p,
+                      isActive: false,
+                      subProviders: (p.subProviders || []).map((sub) => ({
+                        ...sub,
+                        isActive: false,
+                      })),
+                    }
+                  : p
+              )
+            );
+          }
+          setDropdowns((prev) => ({ ...prev, [providerId]: false }));
+        } else {
+          message.error(data?.message || "Failed to update all sub providers");
+        }
+        return;
       }
 
-      // Update local state for all sub-providers of this provider
+      for (const subProvider of provider.subProviders || []) {
+        const { data } = await axios.post(
+          `${constant.backend_url}/admin/update-provider-controller`,
+          {
+            provider_id: providerId,
+            isActive: true,
+            subProviderName: subProvider.providerName,
+            subProviderIsActive: true,
+          },
+          { headers: authHeader }
+        );
+
+        if (!data?.success) {
+          message.error(data?.message || "Failed to update all sub providers");
+          return;
+        }
+      }
+
+      message.success("All sub providers enabled");
       setProviders((prev) =>
         prev.map((p) =>
           p._id === providerId
             ? {
                 ...p,
+                isActive: true,
                 subProviders: (p.subProviders || []).map((sub) => ({
                   ...sub,
-                  isActive: isActive,
+                  isActive: true,
                 })),
               }
             : p
@@ -210,7 +256,7 @@ const ProviderController = () => {
       );
     } catch (error) {
       console.error("Failed to update all sub providers:", error);
-      message.error("Failed to update all sub providers");
+      message.error(error?.response?.data?.message || "Failed to update all sub providers");
     } finally {
       setUpdatingKey("");
     }
