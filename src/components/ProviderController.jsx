@@ -120,6 +120,60 @@ const ProviderController = () => {
     }
   };
 
+  const handleToggleAllSubProviders = async (providerId, isActive) => {
+    const provider = providers.find((p) => p._id === providerId);
+    if (!provider) return;
+
+    const subProvidersToUpdate = (provider.subProviders || []).filter(
+      (sub) => Boolean(sub.isActive) !== isActive
+    );
+
+    if (subProvidersToUpdate.length === 0) return;
+
+    const updateKey = `bulk-sub-${providerId}`;
+    setUpdatingKey(updateKey);
+
+    try {
+      // Since there's no bulk update API, we update them in parallel
+      const updatePromises = subProvidersToUpdate.map((sub) =>
+        axios.post(
+          `${constant.backend_url}/admin/update-onramper-subprovider`,
+          { subProvider_id: sub._id, isActive },
+          { headers: authHeader }
+        )
+      );
+
+      const results = await Promise.all(updatePromises);
+      const someFailed = results.some((res) => !res.data?.success);
+
+      if (someFailed) {
+        message.warning("Some sub providers failed to update");
+      } else {
+        message.success(`All sub providers ${isActive ? "enabled" : "disabled"}`);
+      }
+
+      // Update local state for all sub-providers of this provider
+      setProviders((prev) =>
+        prev.map((p) =>
+          p._id === providerId
+            ? {
+                ...p,
+                subProviders: (p.subProviders || []).map((sub) => ({
+                  ...sub,
+                  isActive: isActive,
+                })),
+              }
+            : p
+        )
+      );
+    } catch (error) {
+      console.error("Failed to update all sub providers:", error);
+      message.error("Failed to update all sub providers");
+    } finally {
+      setUpdatingKey("");
+    }
+  };
+
   const toggleDropdown = (providerId) => {
     setDropdowns((prev) => ({
       ...prev,
@@ -151,6 +205,12 @@ const ProviderController = () => {
   const renderProvider = (provider) => {
     const subProviders = provider.subProviders || [];
     const hasSubProviders = subProviders.length > 0;
+
+    const activeSubProviders = subProviders.filter((sub) => sub.isActive);
+    const isAllSelected = subProviders.length > 0 && activeSubProviders.length === subProviders.length;
+    const isIndeterminate =
+      activeSubProviders.length > 0 && activeSubProviders.length < subProviders.length;
+    const isBulkUpdating = updatingKey === `bulk-sub-${provider._id}`;
 
     return (
       <Col xs={24} md={8} key={provider._id}>
@@ -185,11 +245,38 @@ const ProviderController = () => {
               className="custom-scrollbar"
             >
               <Space direction="vertical" style={{ width: "100%" }} size={12}>
+                <div
+                  style={{
+                    paddingBottom: "12px",
+                    borderBottom: "1px solid rgba(255,255,255,0.08)",
+                    marginBottom: "4px",
+                  }}
+                >
+                  <Checkbox
+                    indeterminate={isIndeterminate}
+                    checked={isAllSelected}
+                    disabled={isBulkUpdating}
+                    onChange={(e) => handleToggleAllSubProviders(provider._id, e.target.checked)}
+                    className="custom-checkbox sub-checkbox"
+                  >
+                    <span
+                      style={{
+                        color: theme.primaryColor,
+                        fontWeight: "600",
+                        fontSize: "13px",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.5px",
+                      }}
+                    >
+                      Select All
+                    </span>
+                  </Checkbox>
+                </div>
                 {subProviders.map((subProvider) => (
                   <Checkbox
                     key={subProvider._id}
                     checked={Boolean(subProvider.isActive)}
-                    disabled={updatingKey === `sub-${subProvider._id}`}
+                    disabled={updatingKey === `sub-${subProvider._id}` || isBulkUpdating}
                     onChange={(event) =>
                       updateSubProviderStatus(provider._id, subProvider, event.target.checked)
                     }
